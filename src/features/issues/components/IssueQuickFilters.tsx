@@ -1,0 +1,88 @@
+"use client";
+
+import type { IssueFilters, QuickFilterChip } from "../hooks/useIssueFilters";
+import type { Severity } from "@/types/domain";
+
+interface IssueQuickFiltersProps {
+  filters: IssueFilters;
+  hasActiveFilters: boolean;
+  onToggleSeverity: (s: Severity) => void;
+  onSetQuickFilter: (chip: QuickFilterChip | null) => void;
+  onReset: () => void;
+}
+
+const activeClass =
+  "bg-foreground text-background border-foreground focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-foreground";
+const inactiveClass =
+  "bg-background text-muted-foreground border-border hover:border-foreground/40 hover:text-foreground focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring";
+const baseClass =
+  "inline-flex items-center rounded-md border px-3 py-1 text-xs font-medium transition-colors outline-none";
+
+const IssueQuickFilters = ({
+  filters,
+  hasActiveFilters,
+  onToggleSeverity,
+  onSetQuickFilter,
+  onReset,
+}: IssueQuickFiltersProps) => {
+  const allActive = !hasActiveFilters;
+  const criticalActive = filters.severity.includes("critical");
+  const myIssuesActive = filters.quickFilter === "my-issues";
+  const unresolvedActive = filters.quickFilter === "unresolved";
+  const needsAttentionActive = filters.quickFilter === "needs-attention";
+
+  return (
+    <div
+      className="flex items-center gap-2 flex-wrap"
+      role="group"
+      aria-label="Quick filters"
+    >
+      <button
+        type="button"
+        onClick={onReset}
+        aria-pressed={allActive}
+        className={`${baseClass} ${allActive ? activeClass : inactiveClass}`}
+      >
+        All
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onSetQuickFilter("my-issues")}
+        aria-pressed={myIssuesActive}
+        className={`${baseClass} ${myIssuesActive ? activeClass : inactiveClass}`}
+      >
+        My Issues
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onToggleSeverity("critical")}
+        aria-pressed={criticalActive}
+        className={`${baseClass} ${criticalActive ? activeClass : inactiveClass}`}
+      >
+        Critical
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onSetQuickFilter("unresolved")}
+        aria-pressed={unresolvedActive}
+        className={`${baseClass} ${unresolvedActive ? activeClass : inactiveClass}`}
+      >
+        Unresolved
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onSetQuickFilter("needs-attention")}
+        aria-pressed={needsAttentionActive}
+        className={`${baseClass} ${needsAttentionActive ? activeClass : inactiveClass}`}
+      >
+        Needs Attention
+      </button>
+    </div>
+  );
+};
+
+export default IssueQuickFilters;
