@@ -1,9 +1,5 @@
-// src/lib/data/index.ts
-//
 // Single data access point for all features.
-// All functions are async even over local data — this enables real loading/error
 // states in components and keeps the access pattern swappable later.
-// Never import raw data files directly into feature components or pages.
 
 import { properties } from "./properties";
 import { pages } from "./pages";
@@ -11,7 +7,7 @@ import { scanRuns } from "./scan-runs";
 import { scanPages } from "./scan-pages";
 import { rules } from "./rules";
 import { violations } from "./violations";
-
+import { ruleContent } from "./rule-content";
 import type {
   Property,
   Page,
@@ -25,6 +21,14 @@ import type {
 
 export type { Property, Page, ScanRun, ScanPage, Rule, ViolationInstance };
 
+// ─── Private helpers ──────────────────────────────────────────────────────────
+// Merges authored explainability content into a raw rule object.
+
+const enrichRule = (rule: Rule): Rule => ({
+  ...rule,
+  ...ruleContent[rule.ruleId],
+});
+
 // ─── Simple accessors ─────────────────────────────────────────────────────────
 
 export const getProperties = async (): Promise<Property[]> => properties;
@@ -35,7 +39,8 @@ export const getScanRuns = async (): Promise<ScanRun[]> => scanRuns;
 
 export const getScanPages = async (): Promise<ScanPage[]> => scanPages;
 
-export const getRules = async (): Promise<Rule[]> => rules;
+export const getRules = async (): Promise<Rule[]> =>
+  rules.map((rule) => enrichRule(rule));
 
 export const getViolations = async (): Promise<ViolationInstance[]> =>
   violations;
@@ -49,7 +54,11 @@ export const getPropertyById = async (
 
 export const getRuleByRuleId = async (
   ruleId: string,
-): Promise<Rule | undefined> => rules.find((r) => r.ruleId === ruleId);
+): Promise<Rule | undefined> => {
+  const rule = rules.find((rule) => rule.ruleId === ruleId);
+  if (!rule) return undefined;
+  return enrichRule(rule);
+};
 
 export const getScanRunById = async (
   id: string,
@@ -196,10 +205,10 @@ export const getHydratedViolations = async (): Promise<HydratedViolation[]> => {
     scanPages.map((scanPage) => [scanPage.id, scanPage]),
   );
   const pageMap = new Map(pages.map((page) => [page.id, page]));
-  const ruleMap = new Map(rules.map((r) => [r.ruleId, r]));
   const propertyMap = new Map(
     properties.map((property) => [property.id, property]),
   );
+  const ruleMap = new Map(rules.map((rule) => [rule.ruleId, enrichRule(rule)]));
 
   return violations.map((violation) => {
     const scanPage = scanPageMap.get(violation.scanPageId);
@@ -215,7 +224,6 @@ export const getHydratedViolations = async (): Promise<HydratedViolation[]> => {
 //
 // Compares violations between scan A and scan B.
 // Match key: ruleId + first item in target array (selector).
-// This is intentionally simple for MVP — good enough for the seeded data stories.
 
 export type CompareState = "new" | "resolved" | "unchanged";
 

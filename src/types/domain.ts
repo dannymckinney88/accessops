@@ -66,6 +66,10 @@ export interface Rule {
   wcagCriteria: string[];
   category: RuleCategory;
   defaultImpact: Severity;
+  // Explainability layer — authored content for the issue drawer
+  whyItMatters?: string;
+  whoIsImpacted?: string;
+  howToFix?: string;
 }
 
 export interface ViolationInstance {
