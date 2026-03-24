@@ -44,7 +44,8 @@ export const getViolations = async (): Promise<ViolationInstance[]> =>
 
 export const getPropertyById = async (
   id: string,
-): Promise<Property | undefined> => properties.find((p) => p.id === id);
+): Promise<Property | undefined> =>
+  properties.find((property) => property.id === id);
 
 export const getRuleByRuleId = async (
   ruleId: string,
@@ -52,7 +53,8 @@ export const getRuleByRuleId = async (
 
 export const getScanRunById = async (
   id: string,
-): Promise<ScanRun | undefined> => scanRuns.find((sr) => sr.id === id);
+): Promise<ScanRun | undefined> =>
+  scanRuns.find((scanRun) => scanRun.id === id);
 
 // ─── Property-scoped queries ──────────────────────────────────────────────────
 
@@ -60,7 +62,7 @@ export const getScanRunsForProperty = async (
   propertyId: string,
 ): Promise<ScanRun[]> =>
   scanRuns
-    .filter((sr) => sr.propertyId === propertyId)
+    .filter((scanRun) => scanRun.propertyId === propertyId)
     .sort(
       (a, b) =>
         new Date(a.initiatedAt).getTime() - new Date(b.initiatedAt).getTime(),
@@ -68,23 +70,24 @@ export const getScanRunsForProperty = async (
 
 export const getPagesForProperty = async (
   propertyId: string,
-): Promise<Page[]> => pages.filter((p) => p.propertyId === propertyId);
+): Promise<Page[]> => pages.filter((page) => page.propertyId === propertyId);
 
 // ─── Scan-scoped queries ──────────────────────────────────────────────────────
 
 export const getScanPagesForScanRun = async (
   scanRunId: string,
-): Promise<ScanPage[]> => scanPages.filter((sp) => sp.scanRunId === scanRunId);
+): Promise<ScanPage[]> =>
+  scanPages.filter((scanPage) => scanPage.scanRunId === scanRunId);
 
 export const getViolationsForScanRun = async (
   scanRunId: string,
 ): Promise<ViolationInstance[]> =>
-  violations.filter((v) => v.scanRunId === scanRunId);
+  violations.filter((violation) => violation.scanRunId === scanRunId);
 
 export const getViolationsForScanPage = async (
   scanPageId: string,
 ): Promise<ViolationInstance[]> =>
-  violations.filter((v) => v.scanPageId === scanPageId);
+  violations.filter((violation) => violation.scanPageId === scanPageId);
 
 // ─── Dashboard: property health summaries ─────────────────────────────────────
 //
@@ -107,7 +110,8 @@ export const getPropertyHealthSummaries = async (): Promise<
   return properties.map((property) => {
     const propertyScans = scanRuns
       .filter(
-        (sr) => sr.propertyId === property.id && sr.status === "completed",
+        (scanRun) =>
+          scanRun.propertyId === property.id && scanRun.status === "completed",
       )
       .sort(
         (a, b) =>
@@ -118,17 +122,19 @@ export const getPropertyHealthSummaries = async (): Promise<
 
     // Violations for the latest scan run only
     const latestViolations = latestScanRun
-      ? violations.filter((v) => v.scanRunId === latestScanRun.id)
+      ? violations.filter(
+          (violation) => violation.scanRunId === latestScanRun.id,
+        )
       : [];
 
     const totalViolations = latestViolations.length;
 
     const criticalCount = latestViolations.filter(
-      (v) => v.impact === "critical",
+      (violation) => violation.impact === "critical",
     ).length;
 
     const seriousCount = latestViolations.filter(
-      (v) => v.impact === "serious",
+      (violation) => violation.impact === "serious",
     ).length;
 
     const unresolvedCount = latestViolations.filter(
@@ -142,18 +148,18 @@ export const getPropertyHealthSummaries = async (): Promise<
       const previousScanRun = propertyScans[1];
 
       const previousScanPages = scanPages.filter(
-        (sp) => sp.scanRunId === previousScanRun.id,
+        (scanPage) => scanPage.scanRunId === previousScanRun.id,
       );
       const latestScanPages = scanPages.filter(
-        (sp) => sp.scanRunId === latestScanRun!.id,
+        (scanPage) => scanPage.scanRunId === latestScanRun!.id,
       );
 
       const previousTotal = previousScanPages.reduce(
-        (sum, sp) => sum + sp.violationCount,
+        (sum, scanPage) => sum + scanPage.violationCount,
         0,
       );
       const latestTotal = latestScanPages.reduce(
-        (sum, sp) => sum + sp.violationCount,
+        (sum, scanPage) => sum + scanPage.violationCount,
         0,
       );
 
@@ -186,18 +192,22 @@ export type HydratedViolation = ViolationInstance & {
 };
 
 export const getHydratedViolations = async (): Promise<HydratedViolation[]> => {
-  const scanPageMap = new Map(scanPages.map((sp) => [sp.id, sp]));
-  const pageMap = new Map(pages.map((p) => [p.id, p]));
+  const scanPageMap = new Map(
+    scanPages.map((scanPage) => [scanPage.id, scanPage]),
+  );
+  const pageMap = new Map(pages.map((page) => [page.id, page]));
   const ruleMap = new Map(rules.map((r) => [r.ruleId, r]));
-  const propertyMap = new Map(properties.map((p) => [p.id, p]));
+  const propertyMap = new Map(
+    properties.map((property) => [property.id, property]),
+  );
 
-  return violations.map((v) => {
-    const scanPage = scanPageMap.get(v.scanPageId);
+  return violations.map((violation) => {
+    const scanPage = scanPageMap.get(violation.scanPageId);
     const page = scanPage ? pageMap.get(scanPage.pageId) : undefined;
     const property = page ? propertyMap.get(page.propertyId) : undefined;
-    const rule = ruleMap.get(v.ruleId);
+    const rule = ruleMap.get(violation.ruleId);
 
-    return { ...v, rule, page, property };
+    return { ...violation, rule, page, property };
   });
 };
 
@@ -227,24 +237,34 @@ export const getCompareResults = async (
   scanRunIdA: string,
   scanRunIdB: string,
 ): Promise<CompareResult> => {
-  const scanRunA = scanRuns.find((sr) => sr.id === scanRunIdA);
-  const scanRunB = scanRuns.find((sr) => sr.id === scanRunIdB);
+  const scanRunA = scanRuns.find((scanRun) => scanRun.id === scanRunIdA);
+  const scanRunB = scanRuns.find((scanRun) => scanRun.id === scanRunIdB);
 
   const allHydrated = await getHydratedViolations();
 
-  const violationsA = allHydrated.filter((v) => v.scanRunId === scanRunIdA);
-  const violationsB = allHydrated.filter((v) => v.scanRunId === scanRunIdB);
+  const violationsA = allHydrated.filter(
+    (violation) => violation.scanRunId === scanRunIdA,
+  );
+  const violationsB = allHydrated.filter(
+    (violation) => violation.scanRunId === scanRunIdB,
+  );
 
   // Match key: ruleId + primary selector
-  const matchKey = (v: HydratedViolation) =>
-    `${v.ruleId}::${v.target[0] ?? ""}`;
+  const matchKey = (violation: HydratedViolation) =>
+    `${violation.ruleId}::${violation.target[0] ?? ""}`;
 
   const keysA = new Set(violationsA.map(matchKey));
   const keysB = new Set(violationsB.map(matchKey));
 
-  const newViolations = violationsB.filter((v) => !keysA.has(matchKey(v)));
-  const resolvedViolations = violationsA.filter((v) => !keysB.has(matchKey(v)));
-  const unchangedViolations = violationsB.filter((v) => keysA.has(matchKey(v)));
+  const newViolations = violationsB.filter(
+    (violation) => !keysA.has(matchKey(violation)),
+  );
+  const resolvedViolations = violationsA.filter(
+    (violation) => !keysB.has(matchKey(violation)),
+  );
+  const unchangedViolations = violationsB.filter((violation) =>
+    keysA.has(matchKey(violation)),
+  );
 
   return {
     scanRunA,
