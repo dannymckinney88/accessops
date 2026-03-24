@@ -62,7 +62,7 @@ const IssuesTable = ({ violations, activeViolationId, onRowClick }: IssuesTableP
                         <button
                           type="button"
                           onClick={header.column.getToggleSortingHandler()}
-                          className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+                          className="inline-flex items-center gap-1 rounded-sm outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 transition-colors"
                         >
                           {flexRender(
                             header.column.columnDef.header,
@@ -108,10 +108,9 @@ const IssuesTable = ({ violations, activeViolationId, onRowClick }: IssuesTableP
                       onRowClick(row.original.id);
                     }
                   }}
-                  aria-current={isActive ? true : undefined}
                   className={[
                     "border-b last:border-0 cursor-pointer outline-none transition-colors",
-                    "hover:bg-muted/50 focus-visible:bg-muted/50",
+                    "hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
                     isActive ? "bg-accent" : "",
                   ]
                     .filter(Boolean)

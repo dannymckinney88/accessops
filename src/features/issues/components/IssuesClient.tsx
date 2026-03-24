@@ -29,7 +29,8 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
   const closeDrawer = () => {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("id");
-    router.replace(`${pathname}?${params.toString()}`);
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
   };
 
   const {

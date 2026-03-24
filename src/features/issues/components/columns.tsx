@@ -21,7 +21,7 @@ export const issueColumns = [
       severityOrder[a.original.impact] - severityOrder[b.original.impact],
   }),
 
-  col.accessor((row) => row.rule?.description ?? row.ruleId, {
+  col.accessor((row) => row.rule?.help ?? row.ruleId, {
     id: "rule",
     header: "Issue",
     cell: (info) => (

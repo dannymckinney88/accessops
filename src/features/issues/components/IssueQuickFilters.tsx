@@ -12,7 +12,7 @@ interface IssueQuickFiltersProps {
 }
 
 const activeClass =
-  "bg-foreground text-background border-foreground focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-foreground";
+  "bg-primary text-primary-foreground border-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring";
 const inactiveClass =
   "bg-background text-muted-foreground border-border hover:border-foreground/40 hover:text-foreground focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring";
 const baseClass =

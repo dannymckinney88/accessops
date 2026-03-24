@@ -48,9 +48,6 @@ export const useIssueFilters = (violations: HydratedViolation[]) => {
   const toggleSeverity = (s: Severity) =>
     setFilters((f) => ({ ...f, severity: toggle(f.severity, s) }));
 
-  const toggleStatus = (s: RemediationStatus) =>
-    setFilters((f) => ({ ...f, status: toggle(f.status, s) }));
-
   const setPropertyId = (id: string | null) =>
     setFilters((f) => ({ ...f, propertyId: id }));
 
@@ -114,7 +111,6 @@ export const useIssueFilters = (violations: HydratedViolation[]) => {
     hasActiveFilters,
     activeSearch,
     toggleSeverity,
-    toggleStatus,
     setPropertyId,
     setSearch,
     setQuickFilter,

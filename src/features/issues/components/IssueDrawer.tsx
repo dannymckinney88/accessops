@@ -52,7 +52,6 @@ const IssueDrawer = ({ violation, onClose }: IssueDrawerProps) => {
             </SheetHeader>
 
             <div className="flex flex-col gap-5 px-6 py-5 overflow-y-auto flex-1">
-              {/* Explainability — required per CLAUDE.md */}
               {violation.rule?.whyItMatters && (
                 <section aria-labelledby="drawer-why-heading">
                   <h2
@@ -97,7 +96,6 @@ const IssueDrawer = ({ violation, onClose }: IssueDrawerProps) => {
 
               <Separator />
 
-              {/* Occurrence detail */}
               <section aria-labelledby="drawer-occurrence-heading">
                 <h2
                   id="drawer-occurrence-heading"
@@ -174,9 +172,10 @@ const IssueDrawer = ({ violation, onClose }: IssueDrawerProps) => {
                     href={violation.rule.helpUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors"
+                    className="rounded-sm text-xs text-muted-foreground underline underline-offset-4 outline-none hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors"
                   >
-                    View rule documentation →
+                    View full guidance on Deque University
+                    <span className="sr-only"> (opens in new tab)</span>
                   </a>
                 </>
               )}
