@@ -84,7 +84,7 @@ const IssueFilterBar = ({
             value={filters.search}
             onChange={(e) => onSetSearch(e.target.value)}
             aria-label="Search issues"
-            className={`${inputClass} w-48`}
+            className={`${inputClass} w-52`}
           />
 
           <select
@@ -105,10 +105,10 @@ const IssueFilterBar = ({
             <button
               type="button"
               onClick={onReset}
-              aria-label="Clear all active filters"
+              aria-label="Clear all filters"
               className="h-8 rounded-md border border-transparent px-3 text-xs text-muted-foreground outline-none hover:text-foreground hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors"
             >
-              Clear filters
+              Clear all filters
             </button>
           )}
         </div>

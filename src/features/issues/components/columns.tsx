@@ -26,8 +26,10 @@ export const issueColumns = [
     header: "Issue",
     cell: (info) => (
       <div>
-        <p className="font-medium text-foreground leading-snug">{info.getValue()}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">
+        <p className="font-medium text-foreground leading-snug">
+          {info.getValue()}
+        </p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
           {info.row.original.ruleId}
         </p>
       </div>
@@ -61,11 +63,24 @@ export const issueColumns = [
 
   col.accessor("firstSeenAt", {
     header: "First seen",
-    cell: (info) =>
-      new Date(info.getValue()).toLocaleDateString("en-US", {
+    cell: (info) => {
+      const iso = info.getValue();
+      const display = new Date(iso).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
         year: "numeric",
-      }),
+      });
+      const full = new Date(iso).toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+      return (
+        <span className="whitespace-nowrap" title={full}>
+          {display}
+        </span>
+      );
+    },
   }),
 ];

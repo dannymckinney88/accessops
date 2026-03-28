@@ -131,6 +131,7 @@ const IssuesTable = ({
                     key={row.id}
                     tabIndex={0}
                     data-violation-id={row.original.id}
+                    aria-selected={isActive}
                     onClick={() => onRowClick(row.original.id)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
@@ -141,7 +142,7 @@ const IssuesTable = ({
                     className={[
                       "border-b last:border-0 cursor-pointer outline-none transition-colors",
                       "hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring focus-visible:bg-muted/40",
-                      isActive ? "bg-accent" : "",
+                      isActive ? "bg-accent border-l-2 border-l-primary" : "",
                     ]
                       .filter(Boolean)
                       .join(" ")}
@@ -149,7 +150,7 @@ const IssuesTable = ({
                     {row.getVisibleCells().map((cell) => (
                       <td
                         key={cell.id}
-                        className="px-3 py-3 text-sm text-foreground"
+                        className="px-3 py-2.5 align-top text-sm text-foreground"
                       >
                         {flexRender(
                           cell.column.columnDef.cell,

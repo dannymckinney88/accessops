@@ -46,8 +46,9 @@ const IssueDrawer = ({ violation, onClose, onFocusTrigger }: IssueDrawerProps) =
       >
         {violation && (
           <>
+            {/* SheetTitle renders as <h2>; section headings inside use <h3>. */}
             <SheetHeader className="px-6 py-5 border-b">
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 flex-wrap mb-3">
                 <SeverityBadge severity={violation.impact} />
                 <StatusBadge status={violation.status} />
                 <PriorityBadge priority={violation.priority} />
@@ -64,12 +65,12 @@ const IssueDrawer = ({ violation, onClose, onFocusTrigger }: IssueDrawerProps) =
             <div className="flex flex-col gap-5 px-6 py-5 overflow-y-auto flex-1">
               {violation.rule?.whyItMatters && (
                 <section aria-labelledby="drawer-why-heading">
-                  <h2
+                  <h3
                     id="drawer-why-heading"
                     className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                   >
                     Why it matters
-                  </h2>
+                  </h3>
                   <p className="text-sm leading-relaxed text-foreground">
                     {violation.rule.whyItMatters}
                   </p>
@@ -78,12 +79,12 @@ const IssueDrawer = ({ violation, onClose, onFocusTrigger }: IssueDrawerProps) =
 
               {violation.rule?.whoIsImpacted && (
                 <section aria-labelledby="drawer-who-heading">
-                  <h2
+                  <h3
                     id="drawer-who-heading"
                     className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                   >
                     Who is impacted
-                  </h2>
+                  </h3>
                   <p className="text-sm leading-relaxed text-foreground">
                     {violation.rule.whoIsImpacted}
                   </p>
@@ -92,12 +93,12 @@ const IssueDrawer = ({ violation, onClose, onFocusTrigger }: IssueDrawerProps) =
 
               {violation.rule?.howToFix && (
                 <section aria-labelledby="drawer-fix-heading">
-                  <h2
+                  <h3
                     id="drawer-fix-heading"
                     className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                   >
-                    What to do
-                  </h2>
+                    How to fix it
+                  </h3>
                   <p className="text-sm leading-relaxed text-foreground">
                     {violation.rule.howToFix}
                   </p>
@@ -106,71 +107,63 @@ const IssueDrawer = ({ violation, onClose, onFocusTrigger }: IssueDrawerProps) =
 
               <Separator />
 
-              <section aria-labelledby="drawer-occurrence-heading">
-                <h2
-                  id="drawer-occurrence-heading"
+              <section aria-labelledby="drawer-what-failed-heading">
+                <h3
+                  id="drawer-what-failed-heading"
                   className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                 >
-                  Occurrence
-                </h2>
-                <dl className="flex flex-col gap-3 text-sm">
-                  <div>
-                    <dt className="mb-1 text-xs text-muted-foreground">
-                      Failing element
-                    </dt>
-                    <dd>
+                  What failed
+                </h3>
+                {/* dl must only contain dt/dd as direct children — no div wrappers.
+                    gap-0 + mt-1 on dd (tight) and mt-4 on non-first dt (loose between pairs). */}
+                <dl className="flex flex-col gap-0 text-sm">
+                  <dt className="text-xs text-muted-foreground">Failing element</dt>
+                  <dd className="mt-1">
+                    {/* role="region" scopes this code block for AT users per spec */}
+                    <div role="region" aria-label="Failing HTML element">
                       <code className="block overflow-x-auto rounded-md bg-muted px-3 py-2 text-xs font-mono text-foreground">
                         {violation.html}
                       </code>
-                    </dd>
-                  </div>
+                    </div>
+                  </dd>
 
                   {violation.target.length > 0 && (
-                    <div>
-                      <dt className="mb-1 text-xs text-muted-foreground">
-                        Selector
-                      </dt>
-                      <dd>
+                    <>
+                      <dt className="mt-4 text-xs text-muted-foreground">Selector</dt>
+                      <dd className="mt-1">
                         <code className="block overflow-x-auto rounded-md bg-muted px-3 py-2 text-xs font-mono text-foreground">
                           {violation.target.join(" > ")}
                         </code>
                       </dd>
-                    </div>
+                    </>
                   )}
 
                   {violation.failureSummary && (
-                    <div>
-                      <dt className="mb-1 text-xs text-muted-foreground">
-                        Failure summary
-                      </dt>
-                      <dd className="text-sm text-foreground">
+                    <>
+                      <dt className="mt-4 text-xs text-muted-foreground">Failure summary</dt>
+                      <dd className="mt-1 text-sm text-foreground">
                         {violation.failureSummary}
                       </dd>
-                    </div>
+                    </>
                   )}
 
-                  <div className="flex gap-6">
-                    <div>
-                      <dt className="text-xs text-muted-foreground">First seen</dt>
-                      <dd>{formatDate(violation.firstSeenAt)}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-muted-foreground">Last seen</dt>
-                      <dd>{formatDate(violation.lastSeenAt)}</dd>
-                    </div>
-                  </div>
+                  <dt className="mt-4 text-xs text-muted-foreground">First seen</dt>
+                  <dd className="mt-1">{formatDate(violation.firstSeenAt)}</dd>
+
+                  <dt className="mt-4 text-xs text-muted-foreground">Last seen</dt>
+                  <dd className="mt-1">{formatDate(violation.lastSeenAt)}</dd>
 
                   {violation.page && (
-                    <div>
-                      <dt className="text-xs text-muted-foreground">Page</dt>
-                      <dd>
+                    <>
+                      <dt className="mt-4 text-xs text-muted-foreground">Page</dt>
+                      <dd className="mt-1">
                         {violation.page.title}
                         <span className="text-muted-foreground">
                           {" "}
                           · {violation.page.path}
                         </span>
                       </dd>
-                    </div>
+                    </>
                   )}
                 </dl>
               </section>

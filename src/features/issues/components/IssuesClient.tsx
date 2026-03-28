@@ -91,7 +91,7 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
   const propertyCount = new Set(
     openViolations.map((v) => v.property?.id).filter(Boolean),
   ).size;
-  const subtitle = `${openViolations.length} open issues across ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`;
+  const subtitle = `${openViolations.length} open issues · ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`;
 
   return (
     <div className="flex flex-col gap-6">
@@ -118,7 +118,7 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
         <div role="status" className="py-12 text-center">
           <p className="text-sm text-muted-foreground">
             {hasActiveFilters
-              ? "No issues match the current filters."
+              ? "No issues match your current filters. Try adjusting the filters above or clear all to start over."
               : "No violations found across all properties."}
           </p>
           {hasActiveFilters && (
@@ -127,7 +127,7 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
               onClick={reset}
               className="mt-3 text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm"
             >
-              Clear filters
+              Clear all filters
             </button>
           )}
         </div>
