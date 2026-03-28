@@ -14,10 +14,10 @@ const navItems = [
 export default function Sidebar() {
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-5 border-b">
+      <div className="px-4 py-5 border-b border-sidebar-border">
         <Link href="/dashboard" className="block">
-          <span className="text-sm font-semibold text-foreground">AccessOps</span>
-          <p className="text-xs text-muted-foreground mt-0.5">Veridian Financial</p>
+          <span className="text-sm font-semibold text-sidebar-accent-foreground">AccessOps</span>
+          <p className="text-xs text-sidebar-foreground mt-0.5">Veridian Financial</p>
         </Link>
       </div>
 
@@ -34,9 +34,9 @@ export default function Sidebar() {
         </ul>
       </nav>
 
-      <div className="px-4 py-4 border-t">
-        <p className="text-sm font-medium text-foreground">Alex Rivera</p>
-        <p className="text-xs text-muted-foreground mt-0.5">Accessibility Lead</p>
+      <div className="px-4 py-4 border-t border-sidebar-border">
+        <p className="text-sm font-medium text-sidebar-accent-foreground">Alex Rivera</p>
+        <p className="text-xs text-sidebar-foreground mt-0.5">Accessibility Lead</p>
       </div>
     </div>
   );

@@ -171,7 +171,10 @@ const IssuesTable = ({
       </div>
 
       {total > PAGE_SIZE_OPTIONS[0] && (
-        <nav aria-label="Pagination" className="flex items-center justify-between px-1">
+        <nav
+          aria-label="Pagination"
+          className="flex items-center justify-between px-1"
+        >
           <div className="flex items-center gap-2">
             <label
               htmlFor="issues-page-size"
@@ -193,7 +196,11 @@ const IssuesTable = ({
             </select>
           </div>
 
-          <p className="text-xs text-muted-foreground" aria-live="polite" aria-atomic="true">
+          <p
+            className="text-xs text-muted-foreground"
+            aria-live="polite"
+            aria-atomic="true"
+          >
             {total === 0 ? "No results" : `${start}–${end} of ${total}`}
           </p>
 

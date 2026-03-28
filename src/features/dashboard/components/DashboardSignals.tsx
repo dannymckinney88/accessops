@@ -70,7 +70,7 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
     <div
       role="group"
       aria-label="Accessibility health metrics"
-      className="grid grid-cols-[3fr_2fr_1fr_1fr_1fr] divide-x bg-muted/30 gap-8"
+      className="grid grid-cols-[3fr_2fr_1fr_1fr_1fr] divide-x gap-8"
     >
       {kpiCards.map((card) => (
         <div

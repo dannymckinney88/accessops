@@ -4,7 +4,7 @@ import Topbar from "./Topbar";
 export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex h-full min-h-screen">
-      <aside className="hidden md:flex w-60 shrink-0 border-r flex-col">
+      <aside className="hidden md:flex w-60 shrink-0 border-r border-sidebar-border flex-col bg-sidebar">
         <Sidebar />
       </aside>
       <div className="flex flex-col flex-1 min-w-0">
