@@ -5,7 +5,7 @@ import DashboardTopCriticalPattern from "./DashboardTopCriticalPattern";
 import DashboardCriticalByProperty from "./DashboardCriticalByProperty";
 import DashboardTopPages from "./DashboardTopPages";
 import DashboardAuditProgress from "./DashboardAuditProgress";
-import DashboardSeverityChart from "./DashboardSeverityChart";
+import DashboardSeverityByProperty from "./DashboardSeverityByProperty";
 import DashboardPropertyHealth from "./DashboardPropertyHealth";
 import DashboardCriticalAlert from "./DashboardCriticalAlert";
 import DashboardNeedsAttention from "./DashboardNeedsAttention";
@@ -48,33 +48,40 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
 
         {/* Main content grid: left analysis column + right action column */}
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_260px]">
-          {/* Left: analysis sections */}
+          {/* Left analysis column */}
           <div className="flex flex-col gap-8">
-            <section aria-labelledby="audit-progress-heading">
-              <h2
-                id="audit-progress-heading"
-                className="mb-4 text-base font-semibold tracking-tight"
+            {/* Audit Progress + Severity by Property */}
+            <div className="grid grid-cols-1 items-stretch gap-8 lg:grid-cols-[1.6fr_1fr]">
+              <section
+                aria-labelledby="audit-progress-heading"
+                className="flex flex-col"
               >
-                Audit Progress
-              </h2>
-              <div className="rounded-lg border p-5">
-                <DashboardAuditProgress summary={summary} />
-              </div>
-            </section>
+                <h2
+                  id="audit-progress-heading"
+                  className="mb-4 text-base font-semibold tracking-tight"
+                >
+                  Audit Progress
+                </h2>
+                <div className="flex h-full rounded-lg border p-5">
+                  <DashboardAuditProgress summary={summary} />
+                </div>
+              </section>
 
-            <section aria-labelledby="severity-distribution-heading">
-              <h2
-                id="severity-distribution-heading"
-                className="mb-4 text-base font-semibold tracking-tight"
+              <section
+                aria-labelledby="severity-by-property-heading"
+                className="flex flex-col"
               >
-                Severity Distribution
-              </h2>
-              <DashboardSeverityChart
-                distribution={summary.severityDistribution}
-                totalViolations={summary.unfixedCount}
-                highSeverityCount={summary.highSeverityCount}
-              />
-            </section>
+                <h2
+                  id="severity-by-property-heading"
+                  className="mb-4 text-base font-semibold tracking-tight"
+                >
+                  Severity by Property
+                </h2>
+                <div className="flex h-full">
+                  <DashboardSeverityByProperty summary={summary} />
+                </div>
+              </section>
+            </div>
 
             <section aria-labelledby="property-health-heading">
               <h2
@@ -93,8 +100,8 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
             </section>
           </div>
 
-          {/* Right: action/context panels */}
-          <div className="flex flex-col gap-6">
+          {/* Right action column */}
+          <div className="flex flex-col gap-4 lg:pt-10">
             <DashboardCriticalAlert summary={summary} />
             <DashboardNeedsAttention summary={summary} />
           </div>

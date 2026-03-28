@@ -278,6 +278,17 @@ export type DashboardCurrentState = {
     propertyName: string;
     criticalCount: number;
   }>;
+  // severityByProperty: unfixed violation counts split by severity for each property.
+  // Drives the Severity by Property stacked bar section.
+  severityByProperty: Array<{
+    propertyId: string;
+    propertyName: string;
+    critical: number;
+    serious: number;
+    moderate: number;
+    minor: number;
+    total: number;
+  }>;
 };
 
 // ─── Dashboard: composition type ─────────────────────────────────────────────
@@ -463,6 +474,38 @@ export const getDashboardCurrentState =
         };
       });
 
+    // severityByProperty: unfixed violation counts by severity for each property.
+    // Uses scanRunPropertyMap and unfixedViolations — both already computed above.
+    const severityByProperty = properties
+      .map((property) => {
+        const propertyUnfixed = unfixedViolations.filter(
+          (v) => scanRunPropertyMap.get(v.scanRunId) === property.id,
+        );
+        const critical = propertyUnfixed.filter(
+          (v) => v.impact === "critical",
+        ).length;
+        const serious = propertyUnfixed.filter(
+          (v) => v.impact === "serious",
+        ).length;
+        const moderate = propertyUnfixed.filter(
+          (v) => v.impact === "moderate",
+        ).length;
+        const minor = propertyUnfixed.filter(
+          (v) => v.impact === "minor",
+        ).length;
+        return {
+          propertyId: property.id,
+          propertyName: property.name,
+          critical,
+          serious,
+          moderate,
+          minor,
+          total: critical + serious + moderate + minor,
+        };
+      })
+      .filter((p) => p.total > 0)
+      .sort((a, b) => b.total - a.total);
+
     return {
       totalViolations,
       criticalCount,
@@ -479,6 +522,7 @@ export const getDashboardCurrentState =
       propertyHealthSummaries: summaries,
       topCriticalRule,
       topCriticalPages,
+      severityByProperty,
     };
   };
 

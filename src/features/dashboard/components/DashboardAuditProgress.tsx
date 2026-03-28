@@ -12,17 +12,19 @@ interface SegmentProps {
 }
 
 const Segment = ({ color, label, count, description }: SegmentProps) => (
-  <div className="flex flex-col gap-1">
+  <div className="flex flex-col gap-2">
     <div className="flex items-center gap-2">
       <span
-        className="inline-block h-3 w-3 rounded-sm flex-shrink-0"
+        className="inline-block h-3 w-3 shrink-0 rounded-sm"
         style={{ background: color }}
         aria-hidden="true"
       />
       <span className="text-sm font-medium tabular-nums">{count}</span>
       <span className="text-sm font-medium">{label}</span>
     </div>
-    <p className="pl-5 text-xs text-muted-foreground">{description}</p>
+    <p className="pl-5 text-sm leading-6 text-muted-foreground">
+      {description}
+    </p>
   </div>
 );
 
@@ -35,14 +37,12 @@ const DashboardAuditProgress = ({ summary }: DashboardAuditProgressProps) => {
     acceptedRiskCount,
   } = summary;
 
-  // Proportional widths — clamp to avoid sub-pixel gaps on rounding.
   const verifiedPct =
     totalViolations > 0 ? (verifiedCount / totalViolations) * 100 : 0;
   const fixedPct =
     totalViolations > 0 ? (fixedCount / totalViolations) * 100 : 0;
   const acceptedPct =
     totalViolations > 0 ? (acceptedRiskCount / totalViolations) * 100 : 0;
-  // Unfixed takes the remainder to ensure the bar always fills 100%.
   const unfixedPct = Math.max(0, 100 - verifiedPct - fixedPct - acceptedPct);
 
   const resolvedCount = verifiedCount + fixedCount;
@@ -62,12 +62,11 @@ const DashboardAuditProgress = ({ summary }: DashboardAuditProgressProps) => {
     .join(" ");
 
   return (
-    <div className="flex flex-col gap-5">
-      {/* Progress bar — order: verified | fixed | accepted-risk | unfixed (dominant remainder) */}
+    <div className="flex h-full flex-col gap-8">
       <div
         role="img"
         aria-label={ariaLabel}
-        className="flex h-5 w-full overflow-hidden rounded-full"
+        className="flex h-7 w-full overflow-hidden rounded-full"
       >
         {verifiedPct > 0 && (
           <div
@@ -102,8 +101,7 @@ const DashboardAuditProgress = ({ summary }: DashboardAuditProgressProps) => {
         />
       </div>
 
-      {/* Legend */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-x-6 gap-y-4 xl:grid-cols-4">
         <Segment
           color="var(--status-verified)"
           label="Verified"
@@ -130,30 +128,30 @@ const DashboardAuditProgress = ({ summary }: DashboardAuditProgressProps) => {
         />
       </div>
 
-      {/* Summary */}
-      <div className="flex flex-col gap-1 text-sm text-muted-foreground">
+      <div className="mt-auto flex flex-col gap-2 text-sm leading-7 text-muted-foreground">
         <p>{totalViolations} issues in the current audit baseline.</p>
+
         {unfixedCount === totalViolations ? (
           <p>Remediation has not yet started.</p>
         ) : (
           <>
             <p>
-              {resolvedCount} addressed so far ({resolvedPct}%)
-              {verifiedCount > 0 &&
-                fixedCount > 0 &&
-                ` — ${verifiedCount} verified, ${fixedCount} awaiting re-audit.`}
-              {verifiedCount > 0 &&
-                fixedCount === 0 &&
-                ` — all confirmed by re-audit.`}
-              {verifiedCount === 0 && fixedCount > 0 && ` — awaiting re-audit.`}
-              {verifiedCount === 0 && fixedCount === 0 && `.`}
+              {resolvedCount} addressed ({resolvedPct}% of baseline).
             </p>
+            {(verifiedCount > 0 || fixedCount > 0) && (
+              <p>
+                {verifiedCount > 0 && `${verifiedCount} verified`}
+                {verifiedCount > 0 && fixedCount > 0 && " · "}
+                {fixedCount > 0 && `${fixedCount} awaiting re-audit`}.
+              </p>
+            )}
             <p>
               {unfixedCount} {unfixedCount === 1 ? "issue" : "issues"} still{" "}
               {unfixedCount === 1 ? "requires" : "require"} remediation.
             </p>
           </>
         )}
+
         {acceptedRiskCount > 0 && (
           <p>{acceptedRiskCount} accepted as known risk.</p>
         )}
