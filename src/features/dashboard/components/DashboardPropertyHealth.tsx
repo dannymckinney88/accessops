@@ -16,7 +16,11 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
     .slice(0, 3);
 
   return (
-    <ul className="flex flex-col divide-y rounded-lg border" role="list">
+    <ul
+      className="flex flex-col divide-y rounded-lg border"
+      role="list"
+      aria-describedby="property-health-description"
+    >
       {top3.map((item) => {
         const { property, totalViolations, criticalCount } = item;
         return (
@@ -35,6 +39,7 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
                 </dd>
                 <dd className="text-xs text-muted-foreground">total</dd>
               </div>
+
               <div className="flex flex-col items-end">
                 <dt className="sr-only">Critical issues</dt>
                 <dd

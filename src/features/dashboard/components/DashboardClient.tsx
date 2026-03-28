@@ -33,10 +33,16 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
       <section aria-labelledby="property-health-heading">
         <h2
           id="property-health-heading"
-          className="mb-4 text-base font-semibold tracking-tight"
+          className="mb-1 text-base font-semibold tracking-tight"
         >
           Property Health
         </h2>
+        <p
+          className="mb-4 text-sm text-muted-foreground"
+          id="property-health-description"
+        >
+          Highest-risk properties based on current issue volume
+        </p>
         <DashboardPropertyHealth summary={summary} />
       </section>
     </div>
