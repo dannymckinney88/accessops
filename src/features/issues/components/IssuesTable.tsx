@@ -34,7 +34,7 @@ const IssuesTable = ({
   onRowClick,
 }: IssuesTableProps) => {
   const [sorting, setSorting] = useState<SortingState>([
-    { id: "severity", desc: false },
+    { id: "firstSeenAt", desc: false },
   ]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -45,7 +45,11 @@ const IssuesTable = ({
     data: violations,
     columns: issueColumns,
     state: { sorting, pagination },
-    onSortingChange: setSorting,
+    onSortingChange: (updater) => {
+      setSorting(updater);
+      // Reset to page 0 on sort change so users see the top of the new order.
+      setPagination((p) => ({ ...p, pageIndex: 0 }));
+    },
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),

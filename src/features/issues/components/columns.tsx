@@ -2,6 +2,7 @@ import { createColumnHelper } from "@tanstack/react-table";
 import type { HydratedViolation } from "@/lib/data/index";
 import SeverityBadge from "@/components/common/SeverityBadge";
 import StatusBadge from "@/components/common/StatusBadge";
+import PriorityBadge from "@/components/common/PriorityBadge";
 
 const col = createColumnHelper<HydratedViolation>();
 
@@ -10,6 +11,13 @@ const severityOrder: Record<string, number> = {
   serious: 1,
   moderate: 2,
   minor: 3,
+};
+
+const priorityOrder: Record<string, number> = {
+  urgent: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
 };
 
 export const issueColumns = [
@@ -59,6 +67,13 @@ export const issueColumns = [
   col.accessor("status", {
     header: "Status",
     cell: (info) => <StatusBadge status={info.getValue()} />,
+  }),
+
+  col.accessor("priority", {
+    header: "Priority",
+    cell: (info) => <PriorityBadge priority={info.getValue()} />,
+    sortingFn: (a, b) =>
+      priorityOrder[a.original.priority] - priorityOrder[b.original.priority],
   }),
 
   col.accessor("firstSeenAt", {
