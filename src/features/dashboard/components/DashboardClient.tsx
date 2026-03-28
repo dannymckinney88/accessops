@@ -4,6 +4,7 @@ import type { DashboardSummary } from "../types/dashboard";
 import DashboardHeader from "./DashboardHeader";
 import DashboardSignals from "./DashboardSignals";
 import DashboardTrendChart from "./DashboardTrendChart";
+import DashboardSeverityChart from "./DashboardSeverityChart";
 import DashboardPropertyHealth from "./DashboardPropertyHealth";
 
 interface DashboardClientProps {
@@ -42,6 +43,19 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
               Issue Trend
             </h2>
             <DashboardTrendChart trend={summary.trend} />
+          </section>
+
+          <section aria-labelledby="severity-distribution-heading">
+            <h2
+              id="severity-distribution-heading"
+              className="mb-4 text-base font-semibold tracking-tight"
+            >
+              Severity Distribution
+            </h2>
+            <DashboardSeverityChart
+              distribution={summary.severityDistribution}
+              totalViolations={summary.totalViolations}
+            />
           </section>
 
           <section aria-labelledby="property-health-heading">

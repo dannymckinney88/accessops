@@ -220,6 +220,13 @@ export const getHydratedViolations = async (): Promise<HydratedViolation[]> => {
   });
 };
 
+// ─── Dashboard: severity distribution ────────────────────────────────────────
+
+export type SeverityDistributionPoint = {
+  severity: "Critical" | "Serious" | "Moderate" | "Minor";
+  count: number;
+};
+
 // ─── Dashboard: trend time series ────────────────────────────────────────────
 
 export type TrendDataPoint = {
@@ -244,6 +251,7 @@ export type DashboardSummary = {
   propertyCount: number;
   propertiesWithCritical: number;
   propertyHealthSummaries: PropertyHealthSummary[];
+  severityDistribution: SeverityDistributionPoint[];
   trend: DashboardTrend;
 };
 
@@ -259,6 +267,35 @@ export const getDashboardSummary = async (): Promise<DashboardSummary> => {
   const propertiesWithCritical = summaries.filter(
     (s) => s.criticalCount > 0,
   ).length;
+
+  // Severity distribution: count violations by impact level across all latest
+  // scan runs. Uses the same latestScanRun IDs already resolved in summaries.
+  const latestScanRunIds = new Set(
+    summaries
+      .filter((s) => s.latestScanRun !== null)
+      .map((s) => s.latestScanRun!.id),
+  );
+  const latestViolations = violations.filter((v) =>
+    latestScanRunIds.has(v.scanRunId),
+  );
+  const severityDistribution: SeverityDistributionPoint[] = [
+    {
+      severity: "Critical",
+      count: latestViolations.filter((v) => v.impact === "critical").length,
+    },
+    {
+      severity: "Serious",
+      count: latestViolations.filter((v) => v.impact === "serious").length,
+    },
+    {
+      severity: "Moderate",
+      count: latestViolations.filter((v) => v.impact === "moderate").length,
+    },
+    {
+      severity: "Minor",
+      count: latestViolations.filter((v) => v.impact === "minor").length,
+    },
+  ];
 
   // Build the trend time series: aggregate total and critical violation counts
   // across all properties per scan slot. Scan runs are aligned by index —
@@ -342,6 +379,7 @@ export const getDashboardSummary = async (): Promise<DashboardSummary> => {
     propertyCount,
     propertiesWithCritical,
     propertyHealthSummaries: summaries,
+    severityDistribution,
     trend,
   };
 };
