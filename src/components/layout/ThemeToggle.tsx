@@ -1,15 +1,11 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Sun, Moon } from "lucide-react";
 
 export default function ThemeToggle() {
-  const [isDark, setIsDark] = useState(false);
-
-  // Sync with whatever the inline script already applied before hydration.
-  useEffect(() => {
-    setIsDark(document.documentElement.classList.contains("dark"));
-  }, []);
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return document.documentElement.classList.contains("dark");
+  });
 
   const toggle = () => {
     const next = !isDark;
@@ -30,9 +26,9 @@ export default function ThemeToggle() {
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       aria-pressed={isDark}
       className="inline-flex items-center justify-center h-9 w-9 rounded-md
-  text-foreground hover:bg-accent hover:text-accent-foreground
-  transition-colors outline-none focus-visible:ring-2
-  focus-visible:ring-ring focus-visible:ring-offset-2"
+        text-foreground hover:bg-accent hover:text-accent-foreground
+        transition-colors outline-none focus-visible:ring-2
+        focus-visible:ring-ring focus-visible:ring-offset-2"
     >
       {isDark ? (
         <Sun size={18} aria-hidden="true" />
