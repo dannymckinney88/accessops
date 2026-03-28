@@ -1,4 +1,5 @@
 export type {
+  DashboardCurrentState,
   DashboardSummary,
   DashboardTrend,
   SeverityDistributionPoint,

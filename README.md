@@ -57,7 +57,7 @@ The goal is to build the product model and user workflows first, then decide lat
 
 ## Accessibility Approach
 
-Accessibility is not being treated as a final QA step.
+Accessibility is treated as a first-class product requirement, not a final QA step.
 
 Because the product itself is centered around accessibility operations, the UI needs to reflect that from the start:
 
