@@ -30,31 +30,34 @@ const DashboardCriticalDistribution = ({
 
   return (
     <div className="rounded-lg border p-4 flex flex-col gap-4 h-full">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <p className="text-sm font-medium text-muted-foreground">
         Critical Distribution
       </p>
 
-      {/* By property */}
       <div className="flex flex-col gap-2">
-        <p className="text-xs font-medium text-foreground">By property</p>
+        <p className="text-sm font-medium text-foreground">By property</p>
         <ul
-          className="flex flex-col gap-2"
+          className="flex flex-col gap-3"
           aria-label="Critical issues by property"
         >
           {byProperty.map((s) => {
-            const pct = Math.round(
-              (s.criticalCount / maxPropertyCount) * 100,
-            );
+            const pct = Math.round((s.criticalCount / maxPropertyCount) * 100);
             return (
-              <li
-                key={s.property.id}
-                className="flex items-center gap-2 text-xs"
-              >
-                <span className="w-32 shrink-0 truncate text-muted-foreground">
-                  {s.property.name}
-                </span>
+              <li key={s.property.id} className="flex flex-col gap-1.5">
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-sm text-foreground">
+                    {s.property.name}
+                  </span>
+                  <span className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
+                    <span aria-hidden="true">{s.criticalCount}</span>
+                    <span className="sr-only">
+                      {s.criticalCount} critical{" "}
+                      {s.criticalCount === 1 ? "issue" : "issues"}
+                    </span>
+                  </span>
+                </div>
                 <div
-                  className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted"
+                  className="h-2 w-full overflow-hidden rounded-full bg-muted"
                   aria-hidden="true"
                 >
                   <div
@@ -62,9 +65,6 @@ const DashboardCriticalDistribution = ({
                     style={{ width: `${pct}%` }}
                   />
                 </div>
-                <span className="w-4 shrink-0 text-right tabular-nums font-medium text-foreground">
-                  {s.criticalCount}
-                </span>
               </li>
             );
           })}
@@ -75,30 +75,33 @@ const DashboardCriticalDistribution = ({
         <>
           <div className="h-px bg-border" aria-hidden="true" />
 
-          {/* Top pages */}
           <div className="flex flex-col gap-2">
-            <p className="text-xs font-medium text-foreground">Top pages</p>
+            <p className="text-sm font-medium text-foreground">Top pages</p>
             <ul
-              className="flex flex-col gap-2"
+              className="flex flex-col gap-3"
               aria-label="Critical issues by page"
             >
               {topCriticalPages.map((p) => {
-                const pct = Math.round(
-                  (p.criticalCount / maxPageCount) * 100,
-                );
+                const pct = Math.round((p.criticalCount / maxPageCount) * 100);
                 const label = isMultiProperty
                   ? `${p.pageTitle} · ${p.propertyName}`
                   : p.pageTitle;
                 return (
-                  <li
-                    key={p.pageId}
-                    className="flex items-center gap-2 text-xs"
-                  >
-                    <span className="w-32 shrink-0 truncate text-muted-foreground">
-                      {label}
-                    </span>
+                  <li key={p.pageId} className="flex flex-col gap-1.5">
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-sm text-foreground truncate">
+                        {label}
+                      </span>
+                      <span className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
+                        <span aria-hidden="true">{p.criticalCount}</span>
+                        <span className="sr-only">
+                          {p.criticalCount} critical{" "}
+                          {p.criticalCount === 1 ? "issue" : "issues"}
+                        </span>
+                      </span>
+                    </div>
                     <div
-                      className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted"
+                      className="h-2 w-full overflow-hidden rounded-full bg-muted"
                       aria-hidden="true"
                     >
                       <div
@@ -106,9 +109,6 @@ const DashboardCriticalDistribution = ({
                         style={{ width: `${pct}%` }}
                       />
                     </div>
-                    <span className="w-4 shrink-0 text-right tabular-nums font-medium text-foreground">
-                      {p.criticalCount}
-                    </span>
                   </li>
                 );
               })}

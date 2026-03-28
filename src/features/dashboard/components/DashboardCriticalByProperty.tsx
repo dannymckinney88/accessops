@@ -39,7 +39,11 @@ const DashboardCriticalByProperty = ({
                   {s.property.name}
                 </span>
                 <span className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
-                  {s.criticalCount}
+                  <span aria-hidden="true">{s.criticalCount}</span>
+                  <span className="sr-only">
+                    {s.criticalCount} critical{" "}
+                    {s.criticalCount === 1 ? "issue" : "issues"}
+                  </span>
                 </span>
               </div>
               <div

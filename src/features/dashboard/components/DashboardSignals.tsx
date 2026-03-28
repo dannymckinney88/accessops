@@ -19,12 +19,11 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
 
   return (
     <div
-      className="grid grid-cols-[3fr_2fr_1fr_1fr_1fr] divide-x bg-muted/30"
-      role="list"
+      role="group"
       aria-label="Accessibility health metrics"
+      className="grid grid-cols-[3fr_2fr_1fr_1fr_1fr] divide-x bg-muted/30"
     >
-      {/* Unfixed — primary risk signal, most prominent */}
-      <div role="listitem" className="flex flex-col gap-1.5 px-4 py-4">
+      <div className="flex flex-col gap-1.5 px-4 py-4">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Unfixed Issues
         </p>
@@ -38,11 +37,7 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
         </p>
       </div>
 
-      {/* Critical — urgency signal, severity color */}
-      <div
-        role="listitem"
-        className="flex flex-col gap-1.5 px-4 py-4 border-l border-destructive/40"
-      >
+      <div className="flex flex-col gap-1.5 px-4 py-4 border-l border-destructive/40">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Critical Unfixed
         </p>
@@ -60,8 +55,7 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
         </p>
       </div>
 
-      {/* Fixed — progress signal */}
-      <div role="listitem" className="flex flex-col gap-1.5 px-4 py-4">
+      <div className="flex flex-col gap-1.5 px-4 py-4">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Fixed
         </p>
@@ -73,8 +67,7 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
         </p>
       </div>
 
-      {/* Verified — completion signal */}
-      <div role="listitem" className="flex flex-col gap-1.5 px-4 py-4">
+      <div className="flex flex-col gap-1.5 px-4 py-4">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Verified
         </p>
@@ -86,8 +79,7 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
         </p>
       </div>
 
-      {/* Accepted Risk — scoping signal */}
-      <div role="listitem" className="flex flex-col gap-1.5 px-4 py-4">
+      <div className="flex flex-col gap-1.5 px-4 py-4">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Accepted Risk
         </p>
