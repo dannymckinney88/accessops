@@ -10,6 +10,7 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
     totalViolations,
     criticalCount,
     propertyCount,
+    propertiesWithIssues,
     propertiesWithCritical,
   } = summary;
 
@@ -19,9 +20,9 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
   );
 
   const criticalSublabel =
-    propertiesWithCritical === 0
-      ? "Across all properties"
-      : `Across ${propertiesWithCritical} ${propertiesWithCritical === 1 ? "property" : "properties"}`;
+    criticalCount === 0
+      ? "None currently"
+      : `In ${propertiesWithCritical} of ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`;
 
   return (
     <div
@@ -41,8 +42,8 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
         critical={criticalCount > 0}
       />
       <DashboardSignalCard
-        label="Properties affected"
-        value={propertyCount}
+        label="Properties with issues"
+        value={propertiesWithIssues}
         sublabel={`${propertiesWithCritical} with critical issues`}
       />
     </div>

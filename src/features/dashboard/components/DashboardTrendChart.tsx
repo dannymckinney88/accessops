@@ -62,17 +62,17 @@ const DashboardTrendChart = ({ trend, range }: DashboardTrendChartProps) => {
 
     const totalTrend =
       totalDelta < 0
-        ? `Issues decreased by ${Math.abs(totalDelta)} over ${rangeLabel}`
+        ? `Issues down ${Math.abs(totalDelta)} over ${rangeLabel}`
         : totalDelta > 0
-          ? `Issues increased by ${totalDelta} over ${rangeLabel}`
-          : `Total issues unchanged over ${rangeLabel}`;
+          ? `Issues up ${totalDelta} over ${rangeLabel}`
+          : `Issue count stable over ${rangeLabel}`;
 
     const criticalTrend =
       criticalDelta < 0
-        ? `critical issues are down ${Math.abs(criticalDelta)}`
+        ? `critical down ${Math.abs(criticalDelta)}`
         : criticalDelta > 0
-          ? `critical issues are up ${criticalDelta}`
-          : `critical issue count is unchanged`;
+          ? `critical up ${criticalDelta}`
+          : `critical stable`;
 
     return `${totalTrend}; ${criticalTrend}.`;
   }, [range, filteredPoints, trend.summaryText]);

@@ -224,6 +224,7 @@ export type DashboardCurrentState = {
   totalViolations: number;
   criticalCount: number;
   propertyCount: number;
+  propertiesWithIssues: number;
   propertiesWithCritical: number;
   severityDistribution: SeverityDistributionPoint[];
   propertyHealthSummaries: PropertyHealthSummary[];
@@ -276,6 +277,9 @@ export const getDashboardCurrentState =
       0,
     );
     const propertyCount = summaries.length;
+    const propertiesWithIssues = summaries.filter(
+      (s) => s.totalViolations > 0,
+    ).length;
     const propertiesWithCritical = summaries.filter(
       (s) => s.criticalCount > 0,
     ).length;
@@ -312,6 +316,7 @@ export const getDashboardCurrentState =
       totalViolations,
       criticalCount,
       propertyCount,
+      propertiesWithIssues,
       propertiesWithCritical,
       severityDistribution,
       propertyHealthSummaries: summaries,
@@ -385,17 +390,17 @@ export const getDashboardTrend = async (): Promise<DashboardTrend> => {
 
   const totalTrend =
     totalDelta < 0
-      ? `Issues decreased by ${Math.abs(totalDelta)} since ${sinceLabel}`
+      ? `Issues down ${Math.abs(totalDelta)} since ${sinceLabel}`
       : totalDelta > 0
-        ? `Issues increased by ${totalDelta} since ${sinceLabel}`
-        : `Total issue count unchanged since ${sinceLabel}`;
+        ? `Issues up ${totalDelta} since ${sinceLabel}`
+        : `Issue count stable since ${sinceLabel}`;
 
   const criticalTrend =
     criticalDelta < 0
-      ? `critical issues are down ${Math.abs(criticalDelta)}`
+      ? `critical down ${Math.abs(criticalDelta)}`
       : criticalDelta > 0
-        ? `critical issues are up ${criticalDelta}`
-        : "critical issue count is unchanged";
+        ? `critical up ${criticalDelta}`
+        : "critical stable";
 
   return {
     dataPoints,

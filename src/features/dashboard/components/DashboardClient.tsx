@@ -33,7 +33,7 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
               id="signals-heading"
               className="mb-4 text-base font-semibold tracking-tight"
             >
-              Accessibility Overview
+              Current state
             </h2>
             <DashboardSignals summary={summary} />
           </section>
@@ -75,7 +75,7 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
               className="mb-4 text-sm text-muted-foreground"
               id="property-health-description"
             >
-              Highest-risk properties based on current issue volume
+              Ranked by current issues — latest scan per property
             </p>
             <DashboardPropertyHealth summary={summary} />
           </section>
