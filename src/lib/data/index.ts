@@ -224,12 +224,12 @@ export const getHydratedViolations = async (): Promise<HydratedViolation[]> => {
 
 export type TrendDataPoint = {
   label: string;
-  [propertyId: string]: string | number;
+  total: number;
+  critical: number;
 };
 
 export type DashboardTrend = {
   dataPoints: TrendDataPoint[];
-  properties: Array<{ id: string; name: string }>;
   summaryText: string;
 };
 
@@ -260,86 +260,79 @@ export const getDashboardSummary = async (): Promise<DashboardSummary> => {
     (s) => s.criticalCount > 0,
   ).length;
 
-  // Build per-property scan totals (from scanPages, not violations) for the
-  // trend chart. scanPage.violationCount is the authoritative per-page total.
-  const propertyTrends = properties.map((property) => {
-    const runs = scanRuns
+  // Build the trend time series: aggregate total and critical violation counts
+  // across all properties per scan slot. Scan runs are aligned by index —
+  // all four properties scan on approximately the same calendar dates.
+  // Uses the violations array (not scanPages) so total and critical come from
+  // the same source and are always consistent with each other.
+  const propertyRuns = properties.map((property) =>
+    scanRuns
       .filter(
         (r) => r.propertyId === property.id && r.status === "completed",
       )
       .sort(
         (a, b) =>
           new Date(a.initiatedAt).getTime() - new Date(b.initiatedAt).getTime(),
-      );
-
-    const runTotals = runs.map((run) => {
-      const pages = scanPages.filter((sp) => sp.scanRunId === run.id);
-      const total = pages.reduce((sum, sp) => sum + sp.violationCount, 0);
-      return { date: run.initiatedAt, total };
-    });
-
-    return { property, runTotals };
-  });
-
-  // Use Marketing Site scan dates as the x-axis labels (most regular schedule).
-  // All four properties scan on approximately the same dates, so aligning by
-  // index gives accurate enough time labels for a summary trend view.
-  const referenceRunTotals =
-    propertyTrends.find((pt) => pt.property.id === "prop-marketing")
-      ?.runTotals ?? propertyTrends[0]?.runTotals ?? [];
-
-  const dataPoints: TrendDataPoint[] = referenceRunTotals.map((ref, i) => {
-    const label = new Date(ref.date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
-    const point: TrendDataPoint = { label };
-    for (const { property, runTotals } of propertyTrends) {
-      point[property.id] = runTotals[i]?.total ?? 0;
-    }
-    return point;
-  });
-
-  // Plain-language summary: compare first vs last slot total, identify driver.
-  const firstTotal = propertyTrends.reduce(
-    (sum, { runTotals }) => sum + (runTotals[0]?.total ?? 0),
-    0,
+      ),
   );
-  const lastTotal = propertyTrends.reduce(
-    (sum, { runTotals }) =>
-      sum + (runTotals[runTotals.length - 1]?.total ?? 0),
-    0,
+
+  // Marketing Site has the most regular schedule; use its scan dates as labels.
+  const referenceRuns =
+    propertyRuns.find((runs) =>
+      runs[0]?.propertyId === "prop-marketing",
+    ) ?? propertyRuns[0] ?? [];
+
+  const slotCount = referenceRuns.length;
+
+  const dataPoints: TrendDataPoint[] = Array.from(
+    { length: slotCount },
+    (_, i) => {
+      const label = new Date(
+        referenceRuns[i]!.initiatedAt,
+      ).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+      let total = 0;
+      let critical = 0;
+      for (const runs of propertyRuns) {
+        const run = runs[i];
+        if (!run) continue;
+        const runViolations = violations.filter(
+          (v) => v.scanRunId === run.id,
+        );
+        total += runViolations.length;
+        critical += runViolations.filter(
+          (v) => v.impact === "critical",
+        ).length;
+      }
+
+      return { label, total, critical };
+    },
   );
-  const delta = lastTotal - firstTotal;
 
-  let driverName = "";
-  let maxAbsDelta = 0;
-  for (const { property, runTotals } of propertyTrends) {
-    const d = Math.abs(
-      (runTotals[runTotals.length - 1]?.total ?? 0) -
-        (runTotals[0]?.total ?? 0),
-    );
-    if (d > maxAbsDelta) {
-      maxAbsDelta = d;
-      driverName = property.name;
-    }
-  }
+  // Summary: two-sentence plain-language description of the overall trend.
+  const firstPoint = dataPoints[0];
+  const lastPoint = dataPoints[dataPoints.length - 1];
+  const totalDelta = (lastPoint?.total ?? 0) - (firstPoint?.total ?? 0);
+  const criticalDelta = (lastPoint?.critical ?? 0) - (firstPoint?.critical ?? 0);
 
-  let summaryText: string;
-  if (delta < 0) {
-    summaryText = `Issues decreased by ${Math.abs(delta)} since October, driven by improvements in ${driverName}.`;
-  } else if (delta > 0) {
-    summaryText = `Issues increased by ${delta} since October, driven by regressions in ${driverName}.`;
-  } else {
-    summaryText = "Total issue count is unchanged since October.";
-  }
+  const totalTrend =
+    totalDelta < 0
+      ? `Issues decreased by ${Math.abs(totalDelta)} since October`
+      : totalDelta > 0
+        ? `Issues increased by ${totalDelta} since October`
+        : "Total issue count is unchanged since October";
+
+  const criticalTrend =
+    criticalDelta < 0
+      ? `critical issues are down ${Math.abs(criticalDelta)}`
+      : criticalDelta > 0
+        ? `critical issues are up ${criticalDelta}`
+        : "critical issue count is unchanged";
+
+  const summaryText = `${totalTrend}; ${criticalTrend}.`;
 
   const trend: DashboardTrend = {
     dataPoints,
-    properties: propertyTrends.map(({ property }) => ({
-      id: property.id,
-      name: property.name,
-    })),
     summaryText,
   };
 

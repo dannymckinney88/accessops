@@ -34,9 +34,9 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
             <DashboardSignals summary={summary} />
           </section>
 
-          <section aria-labelledby="trend-heading">
+          <section aria-labelledby="issue-trend-heading">
             <h2
-              id="trend-heading"
+              id="issue-trend-heading"
               className="mb-4 text-base font-semibold tracking-tight"
             >
               Issue Trend
