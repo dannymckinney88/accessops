@@ -9,20 +9,32 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
   const {
     totalViolations,
     criticalCount,
+    highSeverityCount,
     propertyCount,
     propertiesWithIssues,
     propertiesWithCritical,
+    regressingCount,
   } = summary;
 
-  const unresolvedCount = summary.propertyHealthSummaries.reduce(
-    (sum, s) => sum + s.unresolvedCount,
-    0,
-  );
+  // Card 1: overall risk volume — sublabel surfaces severity concentration,
+  // not unresolved count, because "how urgent is this?" is a stronger decision signal
+  // than "how much work is left?"
+  const issueSublabel = `${highSeverityCount} critical or serious`;
 
+  // Card 2: critical issue concentration — "across N properties" tells you
+  // whether critical issues are isolated or spread
   const criticalSublabel =
     criticalCount === 0
       ? "None currently"
-      : `In ${propertiesWithCritical} of ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`;
+      : `Across ${propertiesWithCritical} of ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`;
+
+  // Card 3: momentum signal — tells whether the system is actively getting worse.
+  // "Regressing" means the latest scan has more violations than the one before.
+  // A value > 0 means action is needed now, not eventually.
+  const regressingSublabel =
+    regressingCount === 0
+      ? "No active regressions"
+      : `${regressingCount} of ${propertiesWithIssues} affected ${propertiesWithIssues === 1 ? "property" : "properties"}`;
 
   return (
     <div
@@ -31,9 +43,9 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
       aria-labelledby="summary-signals-heading"
     >
       <DashboardSignalCard
-        label="Total issues"
+        label="Open issues"
         value={totalViolations}
-        sublabel={`${unresolvedCount} unresolved`}
+        sublabel={issueSublabel}
       />
       <DashboardSignalCard
         label="Critical issues"
@@ -42,9 +54,9 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
         critical={criticalCount > 0}
       />
       <DashboardSignalCard
-        label="Properties with issues"
-        value={propertiesWithIssues}
-        sublabel={`${propertiesWithCritical} with critical issues`}
+        label="Properties regressing"
+        value={regressingCount}
+        sublabel={regressingSublabel}
       />
     </div>
   );

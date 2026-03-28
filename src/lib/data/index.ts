@@ -223,9 +223,16 @@ export type SeverityDistributionPoint = {
 export type DashboardCurrentState = {
   totalViolations: number;
   criticalCount: number;
+  // highSeverityCount: critical + serious violations — tells how urgent the issue mix is.
+  // Exposed here so signal cards and summaries share a single computed value.
+  highSeverityCount: number;
   propertyCount: number;
   propertiesWithIssues: number;
   propertiesWithCritical: number;
+  // regressingCount: how many properties are trend = "regressing" in the latest scan comparison.
+  // This is the key momentum signal — tells whether the system is getting worse.
+  regressingCount: number;
+  unresolvedCount: number;
   severityDistribution: SeverityDistributionPoint[];
   propertyHealthSummaries: PropertyHealthSummary[];
 };
@@ -246,7 +253,10 @@ export type TrendDataPoint = {
 
 export type DashboardTrend = {
   dataPoints: TrendDataPoint[];
-  summaryText: string; // base summary for the "all" range
+  summaryText: string; // base summary for the "all" range — trend direction and delta
+  // attributionText: present when overall improvement is offset by a specific property
+  // regressing. Rendered separately from summaryText so components can style it distinctly.
+  attributionText?: string;
 };
 
 // ─── Dashboard: composition type ─────────────────────────────────────────────
@@ -312,12 +322,34 @@ export const getDashboardCurrentState =
       },
     ];
 
+    // highSeverityCount: violations that are critical or serious.
+    // Used by signal cards and summaries to communicate issue urgency, not just volume.
+    const highSeverityCount =
+      severityDistribution[0].count + severityDistribution[1].count;
+
+    // regressingCount: properties whose last two scans show an increase in violations.
+    // This is the key direction signal — a non-zero value means the system is
+    // getting worse somewhere even if the overall trend looks flat or improving.
+    const regressingCount = summaries.filter(
+      (s) => s.trend === "regressing",
+    ).length;
+
+    // unresolvedCount: total violations not in "resolved" status across latest scans.
+    // Kept in the data layer to avoid inline reduction in components.
+    const unresolvedCount = summaries.reduce(
+      (sum, s) => sum + s.unresolvedCount,
+      0,
+    );
+
     return {
       totalViolations,
       criticalCount,
+      highSeverityCount,
       propertyCount,
       propertiesWithIssues,
       propertiesWithCritical,
+      regressingCount,
+      unresolvedCount,
       severityDistribution,
       propertyHealthSummaries: summaries,
     };
@@ -402,10 +434,11 @@ export const getDashboardTrend = async (): Promise<DashboardTrend> => {
         ? `critical up ${criticalDelta}`
         : "critical stable";
 
-  // Per-property attribution: identify if a regressing property is now
-  // the primary driver of open risk, even when the overall trend looks positive.
-  // Only append when overall is improving — the aggregate can hide a regression.
-  let attributionClause = "";
+  // Per-property attribution: when the aggregate trend is improving but a specific
+  // property is regressing, surface that separately so it isn't masked by the overall number.
+  // Only computed when totalDelta < 0 (overall improving) — that's when the aggregate
+  // is most likely to hide a worsening property beneath a cleanup elsewhere.
+  let attributionText: string | undefined;
   if (totalDelta < 0) {
     let worstPropertyName: string | null = null;
     let worstDelta = 0;
@@ -427,13 +460,14 @@ export const getDashboardTrend = async (): Promise<DashboardTrend> => {
       }
     }
     if (worstPropertyName) {
-      attributionClause = ` ${worstPropertyName} regression is now the primary driver of open risk.`;
+      attributionText = `${worstPropertyName} regression is now the primary driver of open risk.`;
     }
   }
 
   return {
     dataPoints,
-    summaryText: `${totalTrend}; ${criticalTrend}.${attributionClause}`,
+    summaryText: `${totalTrend}; ${criticalTrend}.`,
+    attributionText,
   };
 };
 

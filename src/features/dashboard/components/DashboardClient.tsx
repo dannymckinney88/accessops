@@ -14,12 +14,13 @@ interface DashboardClientProps {
 }
 
 const DashboardClient = ({ summary }: DashboardClientProps) => {
-  const { totalViolations, criticalCount, propertyCount } = summary;
+  const { totalViolations, criticalCount, propertiesWithIssues } = summary;
   const [trendRange, setTrendRange] = useState<TrendRange>("all");
 
-  const affectedCount = summary.propertiesWithIssues;
+  // Subtitle scopes to properties with active issues — Marketing is clean so it
+  // does not count toward the "X properties" figure in the header.
   const subtitle =
-    `${totalViolations} issues across ${affectedCount} ${affectedCount === 1 ? "property" : "properties"}` +
+    `${totalViolations} issues across ${propertiesWithIssues} ${propertiesWithIssues === 1 ? "property" : "properties"}` +
     (criticalCount > 0 ? ` · ${criticalCount} critical` : "");
 
   return (
@@ -62,6 +63,7 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
             <DashboardSeverityChart
               distribution={summary.severityDistribution}
               totalViolations={summary.totalViolations}
+              highSeverityCount={summary.highSeverityCount}
             />
           </section>
 
@@ -76,7 +78,7 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
               className="mb-4 text-sm text-muted-foreground"
               id="property-health-description"
             >
-              Ranked by current issues — latest scan per property
+              Ranked by severity — latest scan per property
             </p>
             <DashboardPropertyHealth summary={summary} />
           </section>

@@ -140,7 +140,14 @@ const DashboardTrendChart = ({ trend, range }: DashboardTrendChartProps) => {
         )}
       </div>
       {filteredPoints.length >= 2 && (
-        <p className="text-sm text-muted-foreground">{summaryText}</p>
+        <div className="flex flex-col gap-1">
+          <p className="text-sm text-muted-foreground">{summaryText}</p>
+          {trend.attributionText && range === "all" && (
+            <p className="text-sm text-foreground">
+              {trend.attributionText}
+            </p>
+          )}
+        </div>
       )}
     </div>
   );

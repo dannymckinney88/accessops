@@ -24,16 +24,14 @@ const SEVERITY_FILL: Record<SeverityDistributionPoint["severity"], string> = {
 interface DashboardSeverityChartProps {
   distribution: SeverityDistributionPoint[];
   totalViolations: number;
+  highSeverityCount: number;
 }
 
 const DashboardSeverityChart = ({
   distribution,
   totalViolations,
+  highSeverityCount,
 }: DashboardSeverityChartProps) => {
-  const highSeverityCount = distribution
-    .filter((d) => d.severity === "Critical" || d.severity === "Serious")
-    .reduce((sum, d) => sum + d.count, 0);
-
   const summaryText =
     highSeverityCount > 0
       ? `${highSeverityCount} of ${totalViolations} issues are critical or serious — these need priority attention.`
