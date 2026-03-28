@@ -125,7 +125,7 @@
   --chart-1: oklch(0.72 0.15 185);
   --chart-2: oklch(0.65 0.18 145);
   --chart-3: oklch(0.68 0.15 250);
-  --chart-4: oklch(0.65 0.18 50);
+  --chart-4: oklch(0.65 0.18 60);
   --chart-5: oklch(0.6 0.12 310);
 
   /* ── Sidebar (light) ────────────────────────────────────────────────── */
@@ -160,7 +160,27 @@
   --secondary: oklch(0.22 0.02 260);
   --secondary-foreground: oklch(0.85 0.01 260);
   --muted: oklch(0.22 0.015 260);
-  --muted-foreground: oklch(0.6 0.02 260);
+  --muted-foreground: oklch(0.65 0.02 260);
+
+  /* ── Severity — L ≥ 0.72 so text-severity-* on dark surfaces passes
+        4.5:1, and solid badge bg achieves 4.5:1 with dark:text-background ── */
+  --severity-critical: oklch(0.72 0.22 25);
+  --severity-serious: oklch(0.78 0.18 50);
+  --severity-moderate: oklch(0.82 0.14 85);
+  --severity-minor: oklch(0.76 0.08 250);
+
+  /* ── Status — same brightness targets; badges use dark:text-background ── */
+  --status-open: oklch(0.72 0.22 25);
+  --status-in-progress: oklch(0.72 0.16 250);
+  --status-fixed: oklch(0.76 0.15 185);
+  --status-verified: oklch(0.76 0.18 145);
+  --status-accepted-risk: oklch(0.7 0.04 260);
+
+  /* ── Trend — elevated so icon labels read on dark card surfaces ─────── */
+  --trend-improving: oklch(0.76 0.18 145);
+  --trend-regressing: oklch(0.72 0.22 25);
+  --trend-stable: oklch(0.7 0.04 260);
+  --trend-insufficient: oklch(0.65 0.02 260);
 
   /* ── Accent (hover / active backgrounds) ────────────────────────────── */
   --accent: oklch(0.25 0.025 260);
@@ -169,8 +189,9 @@
   /* ── Semantic ───────────────────────────────────────────────────────── */
   --destructive: oklch(0.55 0.2 25);
   --destructive-foreground: oklch(0.95 0.01 25);
-  --border: oklch(0.28 0.02 260);
-  --input: oklch(0.25 0.02 260);
+  /* In .dark */
+  --border: oklch(0.6 0.02 260);
+  --input: oklch(0.35 0.02 260);
   --ring: oklch(0.72 0.15 185);
 
   /* ── Sidebar: darkest layer in the surface hierarchy ───────────────── */

@@ -4,11 +4,11 @@ import type { Priority } from "@/types/domain";
 const config: Record<Priority, { label: string; className: string }> = {
   urgent: {
     label: "Urgent",
-    className: "bg-severity-critical text-white",
+    className: "bg-severity-critical text-white dark:text-background",
   },
   high: {
     label: "High",
-    className: "bg-severity-serious text-white",
+    className: "bg-severity-serious text-white dark:text-background",
   },
   medium: {
     label: "Medium",
@@ -16,7 +16,7 @@ const config: Record<Priority, { label: string; className: string }> = {
   },
   low: {
     label: "Low",
-    className: "bg-muted text-muted-foreground",
+    className: "border border-border text-muted-foreground bg-transparent",
   },
 };
 

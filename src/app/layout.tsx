@@ -24,30 +24,17 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `
-        try {
-          const theme = localStorage.getItem('theme');
-          if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-          }
-        } catch {}
-      `,
-          }}
-        />
-      </head>
-
-      <body className="min-h-full flex flex-col">
-        {/* Runs before hydration to apply saved theme without flash */}
-        <script
-          dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}}catch(e){}})();`,
           }}
         />
+      </head>
+      <body className="min-h-full flex flex-col">
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:ring-2 focus:ring-ring focus:ring-offset-2"
