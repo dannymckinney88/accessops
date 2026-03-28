@@ -12,17 +12,17 @@ interface SegmentProps {
 }
 
 const Segment = ({ color, label, count, description }: SegmentProps) => (
-  <div className="flex flex-col gap-2 ">
+  <div className="flex flex-col gap-1.5">
     <div className="flex items-center gap-2">
       <span
         className="inline-block h-3 w-3 shrink-0 rounded-sm"
         style={{ background: color }}
         aria-hidden="true"
       />
-      <span className="text-sm font-medium tabular-nums">{count}</span>
-      <span className="text-sm font-medium">{label}</span>
+      <span className="text-sm font-semibold tabular-nums text-foreground">{count}</span>
+      <span className="text-sm text-muted-foreground">{label}</span>
     </div>
-    <p className="pl-5 text-sm leading-6 text-muted-foreground">
+    <p className="pl-5 text-xs text-muted-foreground">
       {description}
     </p>
   </div>

@@ -7,7 +7,6 @@ import DashboardTopPages from "./DashboardTopPages";
 import DashboardAuditProgress from "./DashboardAuditProgress";
 import DashboardSeverityByProperty from "./DashboardSeverityByProperty";
 import DashboardPropertyHealth from "./DashboardPropertyHealth";
-import DashboardNeedsAttention from "./DashboardNeedsAttention";
 
 interface DashboardClientProps {
   summary: DashboardSummary;
@@ -41,62 +40,51 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
         </div>
       </section>
 
-      {/* Main content + right rail */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_260px]">
-        {/* Left: Row 2 charts + Row 3 property health */}
-        <div className="flex flex-col gap-6">
-          {/* Row 2: Two chart panels */}
-          <div className="grid grid-cols-2 gap-4">
-            <section
-              aria-labelledby="severity-by-property-heading"
-              className="surface-card p-5 flex flex-col gap-4"
-            >
-              <h2
-                id="severity-by-property-heading"
-                className="text-base font-semibold tracking-tight"
-              >
-                Severity by Property
-              </h2>
-              <DashboardSeverityByProperty summary={summary} />
-            </section>
+      {/* Row 2: Two chart panels */}
+      <div className="grid grid-cols-2 gap-4">
+        <section
+          aria-labelledby="severity-by-property-heading"
+          className="bg-card border border-border rounded-lg p-5 flex flex-col gap-4"
+        >
+          <h2
+            id="severity-by-property-heading"
+            className="text-sm font-semibold text-foreground"
+          >
+            Severity by Property
+          </h2>
+          <DashboardSeverityByProperty summary={summary} />
+        </section>
 
-            <section
-              aria-labelledby="audit-progress-heading"
-              className="surface-card p-5 flex flex-col gap-4"
-            >
-              <h2
-                id="audit-progress-heading"
-                className="text-base font-semibold tracking-tight"
-              >
-                Audit Progress
-              </h2>
-              <DashboardAuditProgress summary={summary} />
-            </section>
-          </div>
-
-          {/* Row 3: Property Health — full width */}
-          <section aria-labelledby="property-health-heading">
-            <h2
-              id="property-health-heading"
-              className="mb-1 text-base font-semibold tracking-tight"
-            >
-              Property Health
-            </h2>
-            <p
-              id="property-health-description"
-              className="mb-4 text-sm text-muted-foreground"
-            >
-              Ranked by unfixed issues · current audit scope
-            </p>
-            <DashboardPropertyHealth summary={summary} />
-          </section>
-        </div>
-
-        {/* Right rail: anchored to top of Row 2 */}
-        <div className="flex flex-col gap-4">
-          <DashboardNeedsAttention summary={summary} />
-        </div>
+        <section
+          aria-labelledby="audit-progress-heading"
+          className="bg-card border border-border rounded-lg p-5 flex flex-col gap-4"
+        >
+          <h2
+            id="audit-progress-heading"
+            className="text-sm font-semibold text-foreground"
+          >
+            Audit Progress
+          </h2>
+          <DashboardAuditProgress summary={summary} />
+        </section>
       </div>
+
+      {/* Row 3: Property Health — full width */}
+      <section aria-labelledby="property-health-heading">
+        <h2
+          id="property-health-heading"
+          className="mb-1 text-base font-semibold tracking-tight"
+        >
+          Property Health
+        </h2>
+        <p
+          id="property-health-description"
+          className="mb-4 text-sm text-muted-foreground"
+        >
+          Ranked by unfixed issues · current audit scope
+        </p>
+        <DashboardPropertyHealth summary={summary} />
+      </section>
     </div>
   );
 };

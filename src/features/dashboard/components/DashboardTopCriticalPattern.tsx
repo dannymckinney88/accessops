@@ -85,7 +85,7 @@ const DashboardTopCriticalPattern = ({
           </p>
           <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full rounded-full bg-foreground/50"
+              className="h-full rounded-full bg-severity-critical/60"
               style={{ width: `${fillPct}%` }}
             />
           </div>

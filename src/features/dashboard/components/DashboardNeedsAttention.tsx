@@ -24,7 +24,7 @@ const DashboardNeedsAttention = ({ summary }: DashboardNeedsAttentionProps) => {
 
   return (
     <section aria-labelledby="needs-attention-heading">
-      <div className="rounded-lg border p-4 flex flex-col gap-4">
+      <div className="rounded-lg border border-l-2 [border-left-color:var(--severity-critical)] bg-surface-raised p-4 flex flex-col gap-3">
         <h2
           id="needs-attention-heading"
           className="text-sm font-semibold tracking-tight"
@@ -32,7 +32,7 @@ const DashboardNeedsAttention = ({ summary }: DashboardNeedsAttentionProps) => {
           Needs Attention
         </h2>
 
-        <ul className="flex flex-col gap-4">
+        <ul className="flex flex-col gap-3">
           {top2.map((item, index) => {
             const {
               property,
@@ -54,7 +54,7 @@ const DashboardNeedsAttention = ({ summary }: DashboardNeedsAttentionProps) => {
                     {index + 1}. {property.name}
                   </p>
                   {trend === "regressing" && (
-                    <span className="shrink-0 text-xs font-medium text-foreground">
+                    <span className="shrink-0 text-xs font-medium text-trend-regressing">
                       Regressing
                     </span>
                   )}
@@ -63,7 +63,7 @@ const DashboardNeedsAttention = ({ summary }: DashboardNeedsAttentionProps) => {
                 {/* Mini progress bar — unfixed as proportion of baseline */}
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                   <div
-                    className="h-full rounded-full bg-foreground/25"
+                    className="h-full rounded-full bg-primary"
                     style={{ width: `${unfixedPct}%` }}
                   />
                 </div>

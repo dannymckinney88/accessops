@@ -1,21 +1,22 @@
 import type { Priority } from "@/types/domain";
 
+// Priority maps to severity colors — urgent=critical, high=serious, medium=moderate, low=muted.
 const config: Record<Priority, { label: string; className: string }> = {
   urgent: {
     label: "Urgent",
-    className: "bg-priority-urgent text-priority-urgent-foreground",
+    className: "bg-severity-critical text-white",
   },
   high: {
     label: "High",
-    className: "bg-priority-high text-priority-high-foreground",
+    className: "bg-severity-serious text-white",
   },
   medium: {
     label: "Medium",
-    className: "bg-priority-medium text-priority-medium-foreground",
+    className: "bg-severity-moderate text-background",
   },
   low: {
     label: "Low",
-    className: "bg-priority-low text-priority-low-foreground",
+    className: "bg-muted text-muted-foreground",
   },
 };
 
@@ -27,7 +28,7 @@ const PriorityBadge = ({ priority }: PriorityBadgeProps) => {
   const { label, className } = config[priority];
   return (
     <span
-      className={`inline-flex items-center whitespace-nowrap rounded-md border border-foreground/10 px-2 py-0.5 text-xs font-medium ${className}`}
+      className={`inline-flex items-center whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-medium ${className}`}
     >
       {label}
     </span>

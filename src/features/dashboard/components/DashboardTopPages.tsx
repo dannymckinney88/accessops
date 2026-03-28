@@ -21,7 +21,7 @@ const DashboardTopPages = ({ summary }: DashboardTopPagesProps) => {
 
   return (
     <div className="rounded-lg border p-5 flex flex-col gap-4 h-full">
-      <p className="text-sm font-medium text-muted-foreground">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
         Critical by Page
       </p>
 
@@ -54,7 +54,7 @@ const DashboardTopPages = ({ summary }: DashboardTopPagesProps) => {
                 aria-hidden="true"
               >
                 <div
-                  className="h-full rounded-full bg-foreground/30"
+                  className="h-full rounded-full bg-severity-critical/50"
                   style={{ width: `${pct}%` }}
                 />
               </div>

@@ -25,7 +25,7 @@ const DashboardCriticalByProperty = ({
 
   return (
     <div className="rounded-lg border p-5 flex flex-col gap-4 h-full">
-      <p className="text-sm font-medium text-muted-foreground">
+      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
         Critical by Property
       </p>
 
@@ -38,7 +38,7 @@ const DashboardCriticalByProperty = ({
                 <span className="text-sm text-foreground">
                   {s.property.name}
                 </span>
-                <span className="shrink-0 text-sm font-semibold tabular-nums text-foreground">
+                <span className="shrink-0 text-sm font-semibold tabular-nums text-severity-critical">
                   <span aria-hidden="true">{s.criticalCount}</span>
                   <span className="sr-only">
                     {s.criticalCount} critical{" "}
@@ -51,7 +51,7 @@ const DashboardCriticalByProperty = ({
                 aria-hidden="true"
               >
                 <div
-                  className="h-full rounded-full bg-foreground/30"
+                  className="h-full rounded-full bg-severity-critical/50"
                   style={{ width: `${pct}%` }}
                 />
               </div>

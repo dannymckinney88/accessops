@@ -14,7 +14,6 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
     propertiesWithIssues,
     fixedCount,
     verifiedCount,
-    acceptedRiskCount,
   } = summary;
 
   type KpiCard = {
@@ -23,7 +22,6 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
     subtext: (value: number) => string;
     variant?: "primary" | "standard";
     valueClassName?: (value: number) => string;
-    containerClassName?: string;
   };
 
   const kpiCards: KpiCard[] = [
@@ -38,7 +36,6 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
       label: "Critical Unfixed",
       value: criticalCount,
       variant: "standard",
-      containerClassName: "border-l border-destructive/40",
       valueClassName: (v) =>
         v > 0 ? "text-severity-critical" : "text-foreground",
       subtext: (v) =>
@@ -58,24 +55,18 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
       variant: "standard",
       subtext: (v) => (v === 0 ? "None confirmed" : "Confirmed by re-audit"),
     },
-    {
-      label: "Accepted Risk",
-      value: acceptedRiskCount,
-      variant: "standard",
-      subtext: (v) => (v === 0 ? "None deferred" : "Intentionally deferred"),
-    },
   ];
 
   return (
     <div
       role="group"
       aria-label="Accessibility health metrics"
-      className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr] divide-x border rounded-lg bg-card overflow-hidden"
+      className="grid grid-cols-[2fr_1.5fr_1fr_1fr] gap-4"
     >
       {kpiCards.map((card) => (
         <div
           key={card.label}
-          className={`flex flex-col gap-1.5 px-4 py-4 ${card.containerClassName ?? ""}`}
+          className="bg-card border border-border rounded-lg flex flex-col gap-1.5 px-5 py-4"
         >
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {card.label}

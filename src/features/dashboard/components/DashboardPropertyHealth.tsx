@@ -46,15 +46,15 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
                 ? "Stable"
                 : "No data";
 
-        const trendStyle =
+        const trendClassName =
           trend === "regressing"
-            ? { color: "var(--destructive)" }
+            ? "text-trend-regressing"
             : trend === "improving"
-              ? { color: "var(--status-verified)" }
-              : { color: "var(--muted-foreground)" };
+              ? "text-trend-improving"
+              : "text-muted-foreground";
 
         return (
-          <li key={property.id} className="flex items-center gap-4 px-4 py-3.5">
+          <li key={property.id} className="flex items-center gap-4 px-4 py-3">
             {/* Rank */}
             <span
               className="w-4 shrink-0 text-xs tabular-nums text-muted-foreground"
@@ -73,7 +73,7 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
                 role="presentation"
               >
                 <div
-                  className="h-full rounded-full bg-foreground/25"
+                  className="h-full rounded-full bg-primary"
                   style={{ width: `${unfixedPct}%` }}
                 />
               </div>
@@ -91,8 +91,8 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
                 <dd
                   className={
                     criticalCount > 0
-                      ? "tabular-nums font-medium text-severity-critical"
-                      : "tabular-nums font-medium text-muted-foreground"
+                      ? "tabular-nums font-semibold text-severity-critical"
+                      : "tabular-nums font-semibold text-muted-foreground"
                   }
                 >
                   {criticalCount}
@@ -102,11 +102,10 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
 
               <div className="flex flex-col items-center gap-0.5">
                 <TrendIcon
-                  className="h-4 w-4"
-                  style={trendStyle}
+                  className={`h-4 w-4 ${trendClassName}`}
                   aria-label={`Trend: ${trendLabel}`}
                 />
-                <span className="text-xs text-muted-foreground">
+                <span className={`text-xs ${trendClassName}`}>
                   {trendLabel}
                 </span>
               </div>
