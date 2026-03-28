@@ -17,34 +17,42 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
     (criticalCount > 0 ? ` · ${criticalCount} critical` : "");
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="mx-auto w-full max-w-7xl flex flex-col gap-8">
       <DashboardHeader subtitle={subtitle} />
 
-      <section aria-labelledby="signals-heading">
-        <h2
-          id="signals-heading"
-          className="mb-4 text-base font-semibold tracking-tight"
-        >
-          Accessibility Overview
-        </h2>
-        <DashboardSignals summary={summary} />
-      </section>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        {/* Left column — primary content */}
+        <div className="flex flex-col gap-8">
+          <section aria-labelledby="signals-heading">
+            <h2
+              id="signals-heading"
+              className="mb-4 text-base font-semibold tracking-tight"
+            >
+              Accessibility Overview
+            </h2>
+            <DashboardSignals summary={summary} />
+          </section>
 
-      <section aria-labelledby="property-health-heading">
-        <h2
-          id="property-health-heading"
-          className="mb-1 text-base font-semibold tracking-tight"
-        >
-          Property Health
-        </h2>
-        <p
-          className="mb-4 text-sm text-muted-foreground"
-          id="property-health-description"
-        >
-          Highest-risk properties based on current issue volume
-        </p>
-        <DashboardPropertyHealth summary={summary} />
-      </section>
+          <section aria-labelledby="property-health-heading">
+            <h2
+              id="property-health-heading"
+              className="mb-1 text-base font-semibold tracking-tight"
+            >
+              Property Health
+            </h2>
+            <p
+              className="mb-4 text-sm text-muted-foreground"
+              id="property-health-description"
+            >
+              Highest-risk properties based on current issue volume
+            </p>
+            <DashboardPropertyHealth summary={summary} />
+          </section>
+        </div>
+
+        {/* Right column — contextual panels (future phases) */}
+        <div className="flex flex-col gap-8" />
+      </div>
     </div>
   );
 };
