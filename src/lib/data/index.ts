@@ -150,30 +150,19 @@ export const getPropertyHealthSummaries = async (): Promise<
       (violation) => violation.status !== "resolved",
     ).length;
 
-    // Trend: compare violation counts between the two most recent scans
+    // Trend direction: compare violation counts between the two most recent scans.
+    // Uses violations.length (same source as totalViolations above) so the
+    // direction signal is consistent with the counts shown alongside it.
     let trend: PropertyHealthSummary["trend"] = "insufficient-data";
 
     if (propertyScans.length >= 2) {
       const previousScanRun = propertyScans[1];
+      const previousViolationCount = violations.filter(
+        (v) => v.scanRunId === previousScanRun.id,
+      ).length;
 
-      const previousScanPages = scanPages.filter(
-        (scanPage) => scanPage.scanRunId === previousScanRun.id,
-      );
-      const latestScanPages = scanPages.filter(
-        (scanPage) => scanPage.scanRunId === latestScanRun!.id,
-      );
-
-      const previousTotal = previousScanPages.reduce(
-        (sum, scanPage) => sum + scanPage.violationCount,
-        0,
-      );
-      const latestTotal = latestScanPages.reduce(
-        (sum, scanPage) => sum + scanPage.violationCount,
-        0,
-      );
-
-      if (latestTotal < previousTotal) trend = "improving";
-      else if (latestTotal > previousTotal) trend = "regressing";
+      if (totalViolations < previousViolationCount) trend = "improving";
+      else if (totalViolations > previousViolationCount) trend = "regressing";
       else trend = "stable";
     }
 
@@ -390,12 +379,16 @@ export const getDashboardTrend = async (): Promise<DashboardTrend> => {
   const totalDelta = (lastPoint?.total ?? 0) - (firstPoint?.total ?? 0);
   const criticalDelta = (lastPoint?.critical ?? 0) - (firstPoint?.critical ?? 0);
 
+  // Use the actual first data point label so the summary is not hardcoded to
+  // a specific month. With the seeded data this reads "since Oct 1".
+  const sinceLabel = firstPoint?.label ?? "the first scan";
+
   const totalTrend =
     totalDelta < 0
-      ? `Issues decreased by ${Math.abs(totalDelta)} since October`
+      ? `Issues decreased by ${Math.abs(totalDelta)} since ${sinceLabel}`
       : totalDelta > 0
-        ? `Issues increased by ${totalDelta} since October`
-        : "Total issue count is unchanged since October";
+        ? `Issues increased by ${totalDelta} since ${sinceLabel}`
+        : `Total issue count unchanged since ${sinceLabel}`;
 
   const criticalTrend =
     criticalDelta < 0
