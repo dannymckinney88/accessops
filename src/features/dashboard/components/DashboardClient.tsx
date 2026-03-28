@@ -3,6 +3,7 @@
 import type { DashboardSummary } from "../types/dashboard";
 import DashboardHeader from "./DashboardHeader";
 import DashboardSignals from "./DashboardSignals";
+import DashboardPropertyHealth from "./DashboardPropertyHealth";
 
 interface DashboardClientProps {
   summary: DashboardSummary;
@@ -36,7 +37,7 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
         >
           Property Health
         </h2>
-        {/* Property health rows — Phase 2 */}
+        <DashboardPropertyHealth summary={summary} />
       </section>
     </div>
   );
