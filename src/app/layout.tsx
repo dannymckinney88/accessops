@@ -26,6 +26,21 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+        try {
+          const theme = localStorage.getItem('theme');
+          if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+          }
+        } catch {}
+      `,
+          }}
+        />
+      </head>
+
       <body className="min-h-full flex flex-col">
         {/* Runs before hydration to apply saved theme without flash */}
         <script
