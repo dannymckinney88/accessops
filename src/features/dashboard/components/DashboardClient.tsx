@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import type { DashboardSummary } from "../types/dashboard";
 import DashboardHeader from "./DashboardHeader";
 import DashboardSignals from "./DashboardSignals";
 import DashboardTrendChart from "./DashboardTrendChart";
+import TrendRangeControl, { type TrendRange } from "./TrendRangeControl";
 import DashboardSeverityChart from "./DashboardSeverityChart";
 import DashboardPropertyHealth from "./DashboardPropertyHealth";
 
@@ -13,6 +15,7 @@ interface DashboardClientProps {
 
 const DashboardClient = ({ summary }: DashboardClientProps) => {
   const { totalViolations, criticalCount, propertyCount } = summary;
+  const [trendRange, setTrendRange] = useState<TrendRange>("all");
 
   const subtitle =
     `${totalViolations} issues across ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}` +
@@ -36,13 +39,16 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
           </section>
 
           <section aria-labelledby="issue-trend-heading">
-            <h2
-              id="issue-trend-heading"
-              className="mb-4 text-base font-semibold tracking-tight"
-            >
-              Issue Trend
-            </h2>
-            <DashboardTrendChart trend={summary.trend} />
+            <div className="flex items-center justify-between mb-4">
+              <h2
+                id="issue-trend-heading"
+                className="text-base font-semibold tracking-tight"
+              >
+                Issue Trend
+              </h2>
+              <TrendRangeControl range={trendRange} onChange={setTrendRange} />
+            </div>
+            <DashboardTrendChart trend={summary.trend} range={trendRange} />
           </section>
 
           <section aria-labelledby="severity-distribution-heading">

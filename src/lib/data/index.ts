@@ -231,6 +231,7 @@ export type SeverityDistributionPoint = {
 
 export type TrendDataPoint = {
   label: string;
+  date: string; // ISO initiatedAt from the reference scan run — used for client-side range filtering
   total: number;
   critical: number;
 };
@@ -324,9 +325,11 @@ export const getDashboardSummary = async (): Promise<DashboardSummary> => {
   const dataPoints: TrendDataPoint[] = Array.from(
     { length: slotCount },
     (_, i) => {
-      const label = new Date(
-        referenceRuns[i]!.initiatedAt,
-      ).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      const date = referenceRuns[i]!.initiatedAt;
+      const label = new Date(date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
 
       let total = 0;
       let critical = 0;
@@ -342,7 +345,7 @@ export const getDashboardSummary = async (): Promise<DashboardSummary> => {
         ).length;
       }
 
-      return { label, total, critical };
+      return { label, date, total, critical };
     },
   );
 
