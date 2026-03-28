@@ -114,9 +114,7 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
                   className={`h-4 w-4 ${trendClassName}`}
                   aria-label={`Trend: ${trendLabel}`}
                 />
-                <span className={`text-xs ${trendClassName}`}>
-                  {trendLabel}
-                </span>
+                <span className="text-xs text-foreground">{trendLabel}</span>
               </div>
             </div>
           </li>

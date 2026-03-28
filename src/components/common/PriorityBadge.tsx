@@ -1,18 +1,21 @@
 import type { Priority } from "@/types/domain";
 
-// Priority maps to severity colors — urgent=critical, high=serious, medium=moderate, low=muted.
+// Priority maps to severity colors — urgent=critical, high=serious, medium=moderate, low=neutral.
 const config: Record<Priority, { label: string; className: string }> = {
   urgent: {
     label: "Urgent",
-    className: "bg-severity-critical text-white dark:text-background",
+    className:
+      "bg-severity-critical/15 text-severity-critical border border-severity-critical/40",
   },
   high: {
     label: "High",
-    className: "bg-severity-serious text-white dark:text-background",
+    className:
+      "bg-severity-serious/15 text-severity-serious border border-severity-serious/40",
   },
   medium: {
     label: "Medium",
-    className: "bg-severity-moderate text-background",
+    className:
+      "bg-severity-moderate/15 text-severity-moderate border border-severity-moderate/40",
   },
   low: {
     label: "Low",

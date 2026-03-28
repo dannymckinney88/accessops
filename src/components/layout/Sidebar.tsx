@@ -1,13 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { LayoutDashboard, ScanLine, AlertTriangle, GitCompare } from "lucide-react";
+import {
+  LayoutDashboard,
+  ScanLine,
+  AlertTriangle,
+  GitCompare,
+} from "lucide-react";
 import SidebarNavItem from "./SidebarNavItem";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Scans", href: "/scans", icon: ScanLine },
   { label: "Issues", href: "/issues", icon: AlertTriangle },
+  { label: "Scans", href: "/scans", icon: ScanLine },
   { label: "Compare", href: "/compare", icon: GitCompare },
 ];
 
@@ -16,8 +21,12 @@ export default function Sidebar() {
     <div className="flex flex-col h-full">
       <div className="px-4 py-5 border-b border-sidebar-border">
         <Link href="/dashboard" className="block">
-          <span className="text-sm font-semibold text-sidebar-accent-foreground">AccessOps</span>
-          <p className="text-xs text-sidebar-foreground mt-0.5">Veridian Financial</p>
+          <span className="text-sm font-semibold text-sidebar-accent-foreground">
+            AccessOps
+          </span>
+          <p className="text-xs text-sidebar-foreground mt-0.5">
+            Veridian Financial
+          </p>
         </Link>
       </div>
 
@@ -35,8 +44,12 @@ export default function Sidebar() {
       </nav>
 
       <div className="px-4 py-4 border-t border-sidebar-border">
-        <p className="text-sm font-medium text-sidebar-accent-foreground">Alex Rivera</p>
-        <p className="text-xs text-sidebar-foreground mt-0.5">Accessibility Lead</p>
+        <p className="text-sm font-medium text-sidebar-accent-foreground">
+          Alex Rivera
+        </p>
+        <p className="text-xs text-sidebar-foreground mt-0.5">
+          Accessibility Lead
+        </p>
       </div>
     </div>
   );

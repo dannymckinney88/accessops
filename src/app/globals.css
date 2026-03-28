@@ -92,7 +92,7 @@
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
+  --muted-foreground: oklch(0.5 0 0);
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
@@ -103,20 +103,20 @@
   --radius: 0.5rem;
 
   /* ── Severity — only for severity meaning ───────────────────────────── */
-  --severity-critical: oklch(0.55 0.22 25);
-  --severity-serious: oklch(0.65 0.18 50);
-  --severity-moderate: oklch(0.72 0.14 85);
-  --severity-minor: oklch(0.65 0.08 250);
+  /* In :root — darker values so colored text passes on white background */
+  --severity-critical: oklch(0.45 0.22 25); /* darker red */
+  --severity-serious: oklch(0.48 0.18 55); /* darker amber */
+  --severity-moderate: oklch(0.48 0.16 85); /* darker gold */
+  --severity-minor: oklch(0.45 0.08 250); /* darker slate */
 
-  /* ── Remediation status ─────────────────────────────────────────────── */
-  --status-open: oklch(0.55 0.22 25);
-  --status-in-progress: oklch(0.68 0.15 250);
-  --status-fixed: oklch(0.72 0.15 185);
-  --status-verified: oklch(0.65 0.18 145);
-  --status-accepted-risk: oklch(0.6 0.02 260);
+  --status-open: oklch(0.45 0.22 25);
+  --status-in-progress: oklch(0.45 0.15 250);
+  --status-fixed: oklch(0.45 0.15 185);
+  --status-verified: oklch(0.45 0.18 145);
+  --status-accepted-risk: oklch(0.4 0.02 260);
 
   /* ── Trend ──────────────────────────────────────────────────────────── */
-  --trend-improving: oklch(0.65 0.18 145);
+  --trend-improving: oklch(0.65 0.28 145);
   --trend-regressing: oklch(0.55 0.22 25);
   --trend-stable: oklch(0.6 0.02 260);
   --trend-insufficient: oklch(0.5 0.01 260);
@@ -170,7 +170,8 @@
   --severity-minor: oklch(0.76 0.08 250);
 
   /* ── Status — same brightness targets; badges use dark:text-background ── */
-  --status-open: oklch(0.72 0.22 25);
+  --status-open: oklch(0.78 0.22 25);
+
   --status-in-progress: oklch(0.72 0.16 250);
   --status-fixed: oklch(0.76 0.15 185);
   --status-verified: oklch(0.76 0.18 145);
