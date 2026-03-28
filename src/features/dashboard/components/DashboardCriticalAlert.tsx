@@ -51,14 +51,14 @@ const DashboardCriticalAlert = ({ summary }: DashboardCriticalAlertProps) => {
                   <span className="truncate text-foreground">
                     {property.name}
                   </span>
-                  <span className="ml-3 shrink-0 tabular-nums font-medium text-destructive">
+                  <span className="ml-3 shrink-0 tabular-nums font-semibold text-foreground">
                     {count}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {unfixedCount} unfixed total
                   {trend === "regressing" && (
-                    <span className="text-destructive"> · Regressing</span>
+                    <span className="font-medium text-foreground"> · Regressing</span>
                   )}
                 </p>
               </li>

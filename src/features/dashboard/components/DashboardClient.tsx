@@ -1,6 +1,9 @@
 import type { DashboardSummary } from "../types/dashboard";
 import DashboardHeader from "./DashboardHeader";
 import DashboardSignals from "./DashboardSignals";
+import DashboardTopCriticalPattern from "./DashboardTopCriticalPattern";
+import DashboardCriticalByProperty from "./DashboardCriticalByProperty";
+import DashboardTopPages from "./DashboardTopPages";
 import DashboardAuditProgress from "./DashboardAuditProgress";
 import DashboardSeverityChart from "./DashboardSeverityChart";
 import DashboardPropertyHealth from "./DashboardPropertyHealth";
@@ -24,19 +27,27 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
       <DashboardHeader subtitle={subtitle} />
 
       <div className="flex flex-col gap-8">
-        {/* Signals: full-width hero + supporting KPIs */}
-        <section aria-labelledby="signals-heading">
+        {/* Top summary zone: full-width KPI strip + supporting signal cards */}
+        <section
+          aria-labelledby="signals-heading"
+          className="flex flex-col gap-3"
+        >
           <h2
             id="signals-heading"
-            className="mb-4 text-base font-semibold tracking-tight"
+            className="text-base font-semibold tracking-tight"
           >
             Current Accessibility Health
           </h2>
           <DashboardSignals summary={summary} />
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <DashboardTopCriticalPattern summary={summary} />
+            <DashboardCriticalByProperty summary={summary} />
+            <DashboardTopPages summary={summary} />
+          </div>
         </section>
 
         {/* Main content grid: left analysis column + right action column */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_260px]">
           {/* Left: analysis sections */}
           <div className="flex flex-col gap-8">
             <section aria-labelledby="audit-progress-heading">

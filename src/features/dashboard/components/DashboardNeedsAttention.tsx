@@ -54,7 +54,7 @@ const DashboardNeedsAttention = ({ summary }: DashboardNeedsAttentionProps) => {
                     {index + 1}. {property.name}
                   </p>
                   {trend === "regressing" && (
-                    <span className="shrink-0 text-xs font-medium text-destructive">
+                    <span className="shrink-0 text-xs font-medium text-foreground">
                       Regressing
                     </span>
                   )}
@@ -71,7 +71,7 @@ const DashboardNeedsAttention = ({ summary }: DashboardNeedsAttentionProps) => {
                 <div className="flex items-center gap-3 text-xs text-muted-foreground">
                   <span>{unfixedCount} unfixed</span>
                   {criticalCount > 0 && (
-                    <span className="font-medium text-severity-critical">
+                    <span className="font-semibold text-foreground">
                       {criticalCount} critical
                     </span>
                   )}
