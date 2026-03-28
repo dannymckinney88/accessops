@@ -7,11 +7,11 @@ interface DashboardPropertyHealthProps {
 const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
   const top3 = [...summary.propertyHealthSummaries]
     .sort((a, b) => {
-      // Sort worst-first: critical desc, then total violations desc
-      if (b.criticalCount !== a.criticalCount) {
-        return b.criticalCount - a.criticalCount;
+      // Sort worst-first: unfixed desc, then critical desc as tiebreak
+      if (b.unfixedCount !== a.unfixedCount) {
+        return b.unfixedCount - a.unfixedCount;
       }
-      return b.totalViolations - a.totalViolations;
+      return b.criticalCount - a.criticalCount;
     })
     .slice(0, 3);
 
@@ -22,7 +22,7 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
       aria-describedby="property-health-description"
     >
       {top3.map((item) => {
-        const { property, totalViolations, criticalCount, trend } = item;
+        const { property, unfixedCount, criticalCount, trend } = item;
 
         const trendLabel =
           trend === "regressing"
@@ -55,11 +55,11 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
             </div>
             <dl className="flex items-center gap-4 shrink-0 text-sm">
               <div className="flex flex-col items-end">
-                <dt className="sr-only">Total issues</dt>
+                <dt className="sr-only">Unfixed issues</dt>
                 <dd className="font-medium tabular-nums text-foreground">
-                  {totalViolations}
+                  {unfixedCount}
                 </dd>
-                <dd className="text-xs text-muted-foreground">total</dd>
+                <dd className="text-xs text-muted-foreground">unfixed</dd>
               </div>
 
               <div className="flex flex-col items-end">

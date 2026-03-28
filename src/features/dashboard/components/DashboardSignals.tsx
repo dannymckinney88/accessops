@@ -7,7 +7,7 @@ interface DashboardSignalsProps {
 
 const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
   const {
-    totalViolations,
+    unfixedCount,
     criticalCount,
     highSeverityCount,
     propertyCount,
@@ -16,9 +16,8 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
     regressingCount,
   } = summary;
 
-  // Card 1: overall risk volume — sublabel surfaces severity concentration,
-  // not unresolved count, because "how urgent is this?" is a stronger decision signal
-  // than "how much work is left?"
+  // Card 1: primary work-remaining signal — how many issues still need action.
+  // Sublabel surfaces urgency concentration within the unfixed set.
   const issueSublabel = `${highSeverityCount} critical or serious`;
 
   // Card 2: critical issue concentration — "across N properties" tells you
@@ -43,8 +42,8 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
       aria-labelledby="summary-signals-heading"
     >
       <DashboardSignalCard
-        label="Open issues"
-        value={totalViolations}
+        label="Unfixed issues"
+        value={unfixedCount}
         sublabel={issueSublabel}
       />
       <DashboardSignalCard

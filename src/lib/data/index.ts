@@ -101,7 +101,9 @@ export const getViolationsForScanPage = async (
 // ─── Dashboard: property health summaries ─────────────────────────────────────
 //
 // Returns one summary row per property for the dashboard property health table.
-// Derives trend direction from the last two completed scan runs per property.
+// Counts are derived from all violations across all scan runs for the property
+// (full audit baseline), not just the latest scan.
+// Trend direction is still scan-based: compares the two most recent completed scans.
 
 export type PropertyHealthSummary = {
   property: Property;
@@ -109,7 +111,8 @@ export type PropertyHealthSummary = {
   totalViolations: number;
   criticalCount: number;
   seriousCount: number;
-  unresolvedCount: number;
+  // unfixedCount: violations still requiring work — status "open" or "in-progress"
+  unfixedCount: number;
   trend: "improving" | "regressing" | "stable" | "insufficient-data";
 };
 
@@ -129,40 +132,41 @@ export const getPropertyHealthSummaries = async (): Promise<
 
     const latestScanRun = propertyScans[0] ?? null;
 
-    // Violations for the latest scan run only
-    const latestViolations = latestScanRun
-      ? violations.filter(
-          (violation) => violation.scanRunId === latestScanRun.id,
-        )
-      : [];
+    // All violations across every scan run for this property — the full audit baseline.
+    const propertyScanIds = new Set(propertyScans.map((s) => s.id));
+    const propertyViolations = violations.filter((v) =>
+      propertyScanIds.has(v.scanRunId),
+    );
 
-    const totalViolations = latestViolations.length;
+    const totalViolations = propertyViolations.length;
 
-    const criticalCount = latestViolations.filter(
-      (violation) => violation.impact === "critical",
+    const criticalCount = propertyViolations.filter(
+      (v) => v.impact === "critical",
     ).length;
 
-    const seriousCount = latestViolations.filter(
-      (violation) => violation.impact === "serious",
+    const seriousCount = propertyViolations.filter(
+      (v) => v.impact === "serious",
     ).length;
 
-    const unresolvedCount = latestViolations.filter(
-      (violation) => violation.status !== "resolved",
+    const unfixedCount = propertyViolations.filter(
+      (v) => v.status === "open" || v.status === "in-progress",
     ).length;
 
-    // Trend direction: compare violation counts between the two most recent scans.
-    // Uses violations.length (same source as totalViolations above) so the
-    // direction signal is consistent with the counts shown alongside it.
+    // Trend: compare raw violation counts between the two most recent scans.
+    // Scan-based comparison is intentional here — it tells whether the most recent
+    // deploy made things better or worse, independent of remediation state.
     let trend: PropertyHealthSummary["trend"] = "insufficient-data";
 
     if (propertyScans.length >= 2) {
-      const previousScanRun = propertyScans[1];
-      const previousViolationCount = violations.filter(
-        (v) => v.scanRunId === previousScanRun.id,
+      const latestCount = violations.filter(
+        (v) => v.scanRunId === propertyScans[0]!.id,
+      ).length;
+      const previousCount = violations.filter(
+        (v) => v.scanRunId === propertyScans[1]!.id,
       ).length;
 
-      if (totalViolations < previousViolationCount) trend = "improving";
-      else if (totalViolations > previousViolationCount) trend = "regressing";
+      if (latestCount < previousCount) trend = "improving";
+      else if (latestCount > previousCount) trend = "regressing";
       else trend = "stable";
     }
 
@@ -172,7 +176,7 @@ export const getPropertyHealthSummaries = async (): Promise<
       totalViolations,
       criticalCount,
       seriousCount,
-      unresolvedCount,
+      unfixedCount,
       trend,
     };
   });
@@ -211,8 +215,10 @@ export const getHydratedViolations = async (): Promise<HydratedViolation[]> => {
 
 // ─── Dashboard: current-state types ──────────────────────────────────────────
 //
-// Reflects each property as of its most recent completed scan.
-// All fields in DashboardCurrentState share this scope.
+// Represents the full audit baseline and current remediation state.
+// totalViolations = every violation in the dataset across all scans.
+// criticalCount, highSeverityCount, unfixedCount, and severityDistribution
+// are derived from unfixed violations (status "open" | "in-progress") only.
 // Used by: subtitle, summary signals, severity distribution, property health.
 
 export type SeverityDistributionPoint = {
@@ -221,18 +227,23 @@ export type SeverityDistributionPoint = {
 };
 
 export type DashboardCurrentState = {
+  // totalViolations: full audit baseline — every violation tracked across all scans.
   totalViolations: number;
+  // criticalCount: critical violations that are still unfixed (open or in-progress).
   criticalCount: number;
-  // highSeverityCount: critical + serious violations — tells how urgent the issue mix is.
-  // Exposed here so signal cards and summaries share a single computed value.
+  // highSeverityCount: critical + serious violations that are still unfixed.
+  // Shared across signal cards and summaries so both show the same number.
   highSeverityCount: number;
   propertyCount: number;
+  // propertiesWithIssues: properties with at least one unfixed violation.
   propertiesWithIssues: number;
+  // propertiesWithCritical: properties with at least one critical unfixed violation.
   propertiesWithCritical: number;
-  // regressingCount: how many properties are trend = "regressing" in the latest scan comparison.
-  // This is the key momentum signal — tells whether the system is getting worse.
+  // regressingCount: properties whose last two scans show an increase in violations.
   regressingCount: number;
-  unresolvedCount: number;
+  // unfixedCount: violations still requiring work — status "open" or "in-progress".
+  // This is the primary work-remaining signal.
+  unfixedCount: number;
   severityDistribution: SeverityDistributionPoint[];
   propertyHealthSummaries: PropertyHealthSummary[];
 };
@@ -271,75 +282,78 @@ export type DashboardSummary = DashboardCurrentState & {
 
 // ─── Dashboard: current-state query ──────────────────────────────────────────
 //
-// Aggregates violation counts from the most recent completed scan per property.
-// Every field uses the same snapshot so the numbers are internally consistent.
+// Derives dashboard KPIs from the full violation dataset grouped by lifecycle status.
+// totalViolations = every violation ever tracked (full audit baseline).
+// All urgency and distribution metrics use unfixed violations only (open | in-progress)
+// so the dashboard answers "what still needs to be fixed?" not "what was last found?"
 
 export const getDashboardCurrentState =
   async (): Promise<DashboardCurrentState> => {
     const summaries = await getPropertyHealthSummaries();
 
-    const totalViolations = summaries.reduce(
-      (sum, s) => sum + s.totalViolations,
-      0,
+    // Full baseline: every violation in the dataset across all scans and properties.
+    const allViolations = violations;
+    const totalViolations = allViolations.length;
+
+    // Lifecycle buckets — the primary lens for all dashboard KPIs.
+    const unfixedViolations = allViolations.filter(
+      (v) => v.status === "open" || v.status === "in-progress",
     );
-    const criticalCount = summaries.reduce(
-      (sum, s) => sum + s.criticalCount,
-      0,
-    );
-    const propertyCount = summaries.length;
-    const propertiesWithIssues = summaries.filter(
-      (s) => s.totalViolations > 0,
-    ).length;
-    const propertiesWithCritical = summaries.filter(
-      (s) => s.criticalCount > 0,
+    const unfixedCount = unfixedViolations.length;
+
+    // criticalCount: critical violations that still need work.
+    const criticalCount = unfixedViolations.filter(
+      (v) => v.impact === "critical",
     ).length;
 
-    // Severity distribution drawn from the same latest-scan violation set.
-    const latestScanRunIds = new Set(
-      summaries
-        .filter((s) => s.latestScanRun !== null)
-        .map((s) => s.latestScanRun!.id),
-    );
-    const latestViolations = violations.filter((v) =>
-      latestScanRunIds.has(v.scanRunId),
-    );
+    // Severity distribution scoped to unfixed violations — shows the urgency mix
+    // of remaining work, not the shape of historical findings.
     const severityDistribution: SeverityDistributionPoint[] = [
       {
         severity: "Critical",
-        count: latestViolations.filter((v) => v.impact === "critical").length,
+        count: unfixedViolations.filter((v) => v.impact === "critical").length,
       },
       {
         severity: "Serious",
-        count: latestViolations.filter((v) => v.impact === "serious").length,
+        count: unfixedViolations.filter((v) => v.impact === "serious").length,
       },
       {
         severity: "Moderate",
-        count: latestViolations.filter((v) => v.impact === "moderate").length,
+        count: unfixedViolations.filter((v) => v.impact === "moderate").length,
       },
       {
         severity: "Minor",
-        count: latestViolations.filter((v) => v.impact === "minor").length,
+        count: unfixedViolations.filter((v) => v.impact === "minor").length,
       },
     ];
 
-    // highSeverityCount: violations that are critical or serious.
-    // Used by signal cards and summaries to communicate issue urgency, not just volume.
+    // highSeverityCount: critical + serious unfixed violations.
     const highSeverityCount =
       severityDistribution[0].count + severityDistribution[1].count;
 
+    const propertyCount = summaries.length;
+
+    // propertiesWithIssues / propertiesWithCritical: scoped to unfixed violations
+    // so these counts reflect active risk, not historical accumulation.
+    const scanRunPropertyMap = new Map<string, string>(
+      scanRuns.map((sr) => [sr.id, sr.propertyId]),
+    );
+
+    const propertiesWithUnfixedIssues = new Set<string>();
+    const propertiesWithCriticalUnfixed = new Set<string>();
+    for (const v of unfixedViolations) {
+      const propId = scanRunPropertyMap.get(v.scanRunId);
+      if (!propId) continue;
+      propertiesWithUnfixedIssues.add(propId);
+      if (v.impact === "critical") propertiesWithCriticalUnfixed.add(propId);
+    }
+    const propertiesWithIssues = propertiesWithUnfixedIssues.size;
+    const propertiesWithCritical = propertiesWithCriticalUnfixed.size;
+
     // regressingCount: properties whose last two scans show an increase in violations.
-    // This is the key direction signal — a non-zero value means the system is
-    // getting worse somewhere even if the overall trend looks flat or improving.
     const regressingCount = summaries.filter(
       (s) => s.trend === "regressing",
     ).length;
-
-    // unresolvedCount: total violations not in "resolved" status across latest scans.
-    // Kept in the data layer to avoid inline reduction in components.
-    const unresolvedCount = summaries.reduce(
-      (sum, s) => sum + s.unresolvedCount,
-      0,
-    );
 
     return {
       totalViolations,
@@ -349,7 +363,7 @@ export const getDashboardCurrentState =
       propertiesWithIssues,
       propertiesWithCritical,
       regressingCount,
-      unresolvedCount,
+      unfixedCount,
       severityDistribution,
       propertyHealthSummaries: summaries,
     };
