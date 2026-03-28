@@ -252,41 +252,19 @@ export type DashboardCurrentState = {
   fixedCount: number;
   // verifiedCount: confirmed resolved by a later audit — fully complete.
   verifiedCount: number;
+  // acceptedRiskCount: known issues intentionally not fixed.
+  acceptedRiskCount: number;
   severityDistribution: SeverityDistributionPoint[];
   propertyHealthSummaries: PropertyHealthSummary[];
-};
-
-// ─── Dashboard: trend types ───────────────────────────────────────────────────
-//
-// Historical time series across all scan rounds.
-// Separate from current-state — the trend chart is an exploratory section
-// that supports time range controls. Those controls must not affect the
-// current-state numbers above.
-
-export type TrendDataPoint = {
-  label: string;
-  date: string; // ISO initiatedAt from the reference scan run — used for client-side range filtering
-  total: number;
-  critical: number;
-};
-
-export type DashboardTrend = {
-  dataPoints: TrendDataPoint[];
-  summaryText: string; // base summary for the "all" range — trend direction and delta
-  // attributionText: present when overall improvement is offset by a specific property
-  // regressing. Rendered separately from summaryText so components can style it distinctly.
-  attributionText?: string;
 };
 
 // ─── Dashboard: composition type ─────────────────────────────────────────────
 //
 // DashboardSummary is the Dashboard route's data contract.
-// It is DashboardCurrentState plus DashboardTrend — both scopes are present
-// and clearly named. Fields are kept flat so components access them directly.
+// Alias of DashboardCurrentState — the dashboard shows current audit state only.
+// Fields are kept flat so components access them directly.
 
-export type DashboardSummary = DashboardCurrentState & {
-  trend: DashboardTrend;
-};
+export type DashboardSummary = DashboardCurrentState;
 
 // ─── Dashboard: current-state query ──────────────────────────────────────────
 //
@@ -311,6 +289,9 @@ export const getDashboardCurrentState =
     const fixedCount = allViolations.filter((v) => v.status === "fixed").length;
     const verifiedCount = allViolations.filter(
       (v) => v.status === "verified",
+    ).length;
+    const acceptedRiskCount = allViolations.filter(
+      (v) => v.status === "accepted-risk",
     ).length;
 
     // criticalCount: critical violations that still need work.
@@ -378,139 +359,19 @@ export const getDashboardCurrentState =
       unfixedCount,
       fixedCount,
       verifiedCount,
+      acceptedRiskCount,
       severityDistribution,
       propertyHealthSummaries: summaries,
     };
   };
 
-// ─── Dashboard: trend query ───────────────────────────────────────────────────
-//
-// Builds the full historical time series across all scan rounds.
-// Scan runs are aligned by index — all four properties scan approximately
-// the same calendar dates, so per-slot totals represent a consistent point
-// in time. Uses the violations array for both total and critical so counts
-// are internally consistent.
-
-export const getDashboardTrend = async (): Promise<DashboardTrend> => {
-  const propertyRuns = properties.map((property) =>
-    scanRuns
-      .filter(
-        (r) => r.propertyId === property.id && r.status === "completed",
-      )
-      .sort(
-        (a, b) =>
-          new Date(a.initiatedAt).getTime() - new Date(b.initiatedAt).getTime(),
-      ),
-  );
-
-  // Marketing Site has the most regular schedule; use its scan dates as labels.
-  const referenceRuns =
-    propertyRuns.find((runs) => runs[0]?.propertyId === "prop-marketing") ??
-    propertyRuns[0] ??
-    [];
-
-  const slotCount = referenceRuns.length;
-
-  const dataPoints: TrendDataPoint[] = Array.from(
-    { length: slotCount },
-    (_, i) => {
-      const date = referenceRuns[i]!.initiatedAt;
-      const label = new Date(date).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      });
-
-      let total = 0;
-      let critical = 0;
-      for (const runs of propertyRuns) {
-        const run = runs[i];
-        if (!run) continue;
-        const runViolations = violations.filter((v) => v.scanRunId === run.id);
-        total += runViolations.length;
-        critical += runViolations.filter(
-          (v) => v.impact === "critical",
-        ).length;
-      }
-
-      return { label, date, total, critical };
-    },
-  );
-
-  // Base summary text for the "all" range.
-  // Components derive range-specific text from filtered dataPoints when a
-  // time control is active.
-  const firstPoint = dataPoints[0];
-  const lastPoint = dataPoints[dataPoints.length - 1];
-  const totalDelta = (lastPoint?.total ?? 0) - (firstPoint?.total ?? 0);
-  const criticalDelta = (lastPoint?.critical ?? 0) - (firstPoint?.critical ?? 0);
-
-  // Use the actual first data point label so the summary is not hardcoded to
-  // a specific month. With the seeded data this reads "since Oct 1".
-  const sinceLabel = firstPoint?.label ?? "the first scan";
-
-  const totalTrend =
-    totalDelta < 0
-      ? `Issues down ${Math.abs(totalDelta)} since ${sinceLabel}`
-      : totalDelta > 0
-        ? `Issues up ${totalDelta} since ${sinceLabel}`
-        : `Issue count stable since ${sinceLabel}`;
-
-  const criticalTrend =
-    criticalDelta < 0
-      ? `critical down ${Math.abs(criticalDelta)}`
-      : criticalDelta > 0
-        ? `critical up ${criticalDelta}`
-        : "critical stable";
-
-  // Per-property attribution: when the aggregate trend is improving but a specific
-  // property is regressing, surface that separately so it isn't masked by the overall number.
-  // Only computed when totalDelta < 0 (overall improving) — that's when the aggregate
-  // is most likely to hide a worsening property beneath a cleanup elsewhere.
-  let attributionText: string | undefined;
-  if (totalDelta < 0) {
-    let worstPropertyName: string | null = null;
-    let worstDelta = 0;
-    for (let pi = 0; pi < properties.length; pi++) {
-      const runs = propertyRuns[pi];
-      if (!runs || runs.length < 2) continue;
-      const firstRun = runs[0]!;
-      const lastRun = runs[runs.length - 1]!;
-      const firstCount = violations.filter(
-        (v) => v.scanRunId === firstRun.id,
-      ).length;
-      const lastCount = violations.filter(
-        (v) => v.scanRunId === lastRun.id,
-      ).length;
-      const delta = lastCount - firstCount;
-      if (delta > worstDelta) {
-        worstDelta = delta;
-        worstPropertyName = properties[pi]!.name;
-      }
-    }
-    if (worstPropertyName) {
-      attributionText = `${worstPropertyName} regression is now the primary driver of open risk.`;
-    }
-  }
-
-  return {
-    dataPoints,
-    summaryText: `${totalTrend}; ${criticalTrend}.`,
-    attributionText,
-  };
-};
-
 // ─── Dashboard: composition entry point ──────────────────────────────────────
 //
-// Fetches current-state and trend in parallel and merges them into
-// DashboardSummary for the Dashboard route.
+// Returns current audit state for the Dashboard route.
 // Route files call this; components receive DashboardSummary as props.
 
 export const getDashboardSummary = async (): Promise<DashboardSummary> => {
-  const [currentState, trend] = await Promise.all([
-    getDashboardCurrentState(),
-    getDashboardTrend(),
-  ]);
-  return { ...currentState, trend };
+  return getDashboardCurrentState();
 };
 
 // ─── Compare: two scan runs for the same property ────────────────────────────
