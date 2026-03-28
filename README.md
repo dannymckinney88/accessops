@@ -1,31 +1,86 @@
 # AccessOps
 
-AccessOps is a production-minded accessibility operations dashboard built to simulate how teams monitor scan health, triage WCAG violations, track remediation progress, and compare results across properties over time.
+AccessOps is a production-minded accessibility operations dashboard built to simulate how teams **triage, prioritize, and remediate accessibility issues after an audit**.
 
-This project is meant to feel like a real internal product, not just another scanner form or fake analytics dashboard.
+This project is meant to feel like a real internal tool — not a scanner UI or a generic analytics dashboard.
+
+---
 
 ## Why I’m Building This
 
 I wanted to build something that better reflects the kind of frontend and accessibility work I’ve done in real enterprise environments.
 
-Instead of creating another generic dashboard or a simple audit form, this project focuses on the operational side of accessibility:
+Instead of creating another audit form or “metrics dashboard,” this project focuses on the **operational side of accessibility**:
 
-- tracking accessibility health across multiple properties
-- reviewing violations in context
-- managing remediation status
-- comparing scan results over time
-- surfacing regressions and improvement trends
+- understanding what still needs to be fixed
+- prioritizing high-risk accessibility issues
+- tracking remediation progress across teams
+- validating what has actually been resolved
 
-The goal is to show stronger product thinking, frontend architecture, accessibility-first implementation, and more realistic internal-tool UX.
+The goal is to demonstrate strong product thinking, frontend architecture, and accessibility-first implementation in a realistic internal-tool workflow.
+
+---
+
+## Product Model
+
+AccessOps follows an **audit-driven remediation model**, not continuous monitoring.
+
+- An audit establishes a baseline of issues
+- Teams work through remediation over time
+- Issues move through lifecycle states:
+  - Open
+  - In Progress
+  - Fixed
+  - Verified
+  - Accepted Risk
+- A future audit verifies what is truly resolved
+
+The system represents **work remaining**, not just what a scan found.
+
+---
 
 ## MVP Scope
 
-The initial MVP is focused on four core product areas:
+The MVP is focused on four core product areas:
 
-- **Dashboard** — accessibility health overview including summary signals, issue trends, severity distribution, and property-level risk ranking
-- **Scans** — scan history and scan-level drill-down views
-- **Issues** — triage-focused violation management with filters and detail views
-- **Compare** — side-by-side scan comparison to show new, resolved, and unchanged issues
+- **Dashboard** — current audit state and remediation progress (what still needs to be fixed)
+- **Issues** — triage workspace for managing violations
+- **Scans** — audit and re-audit records
+- **Compare** — audit-to-audit comparison (what changed, what was resolved)
+
+---
+
+## Dashboard Direction
+
+The dashboard is a **current-state decision surface**, not a historical analytics view.
+
+It answers:
+
+- Where is current risk concentrated?
+- What still needs to be fixed?
+- What progress has been made?
+
+It intentionally does **not** show:
+
+- trend charts
+- time-series analysis
+- scan-over-scan history
+
+### Current Dashboard Features
+
+- lifecycle-based summary signals:
+  - Unfixed
+  - Critical Unfixed
+  - Fixed (awaiting verification)
+  - Verified
+- audit progress visualization (including accepted risk)
+- severity distribution (scoped to remaining work)
+- property health ranking (based on unfixed issues)
+- right-column action panels:
+  - critical risk alert
+  - “needs attention now” focus area
+
+---
 
 ## Tech Stack
 
@@ -38,41 +93,40 @@ The initial MVP is focused on four core product areas:
 - lucide-react
 - TanStack Table
 - Recharts
-- React Hook Form
-- Zod
+
+---
 
 ## Project Direction
 
 This project is intentionally **frontend-first**.
 
-The current approach is:
-
 - seeded/mock data first
-- no heavy backend in the early phase
-- no Redux unless real complexity justifies it later
-- async data-access wrappers to keep the UI decoupled from the underlying data source
-- derived selectors and view-model shaping for dashboard, issue, and compare workflows
+- async data-access layer (no direct data imports in components)
+- no Redux unless clearly justified
+- UI built around real workflows before backend concerns
 
-The goal is to build the product model and user workflows first, then decide later whether a mock API or real backend adds meaningful value.
+The goal is to establish strong product and UI architecture before introducing persistence.
+
+---
 
 ## Accessibility Approach
 
-Accessibility is treated as a first-class product requirement, not a final QA step.
-
-Because the product itself is centered around accessibility operations, the UI needs to reflect that from the start:
+Accessibility is treated as a first-class requirement.
 
 - semantic HTML first
-- keyboard-accessible interactions
+- full keyboard accessibility
 - visible focus states
-- accessible names and labels
-- careful handling of tables, filters, drawers, and status messaging
-- responsive without sacrificing desktop usability for a data-heavy workflow
+- proper labeling and ARIA usage
+- accessible tables, filters, and drawers
+- explainability for every issue (why it matters, who is impacted, how to fix)
 
-This app is designed primarily for desktop use, but it should still scale down responsibly.
+Because the product is about accessibility, the UI itself must be credible.
+
+---
 
 ## Data Model
 
-The app is built around a normalized domain model:
+Core entities:
 
 - `Property`
 - `Page`
@@ -81,58 +135,45 @@ The app is built around a normalized domain model:
 - `Rule`
 - `ViolationInstance`
 
-From there, the project derives richer, UI-ready models for things like:
+Derived models:
 
-- hydrated issue records
-- property health summaries
-- compare results
-- workflow-oriented dashboard data
+- hydrated violations (for Issues page)
+- property health summaries (for Dashboard)
+- compare results (for audit comparisons)
 
-That separation helps keep the core data model clean while still making the UI easier to build.
+All data access flows through a centralized async layer.
+
+---
 
 ## Current Status
 
-The Issues workflow is complete and behaves like a real triage tool, including:
+### ✅ Issues (complete)
 
-- additive filters (status, severity, property)
-- semantic table with sorting and pagination
+- semantic, accessible data table
+- additive filters (property, severity, status, search)
 - keyboard-accessible row interaction
 - URL-driven detail drawer with focus management
-- explainability content (why it matters, who is impacted, how to fix)
+- explainability content integrated into every issue
 
-The Dashboard is in active development and currently includes:
+### 🚧 Dashboard (in progress)
 
-- summary signals (total issues, critical issues, affected properties)
-- issue trend visualization with time-range controls (7d, 30d, 90d, all)
-- severity distribution
-- property health ranking based on issue volume
+- lifecycle-driven current-state signals
+- audit progress visualization
+- severity distribution (remaining work)
+- property health ranking
+- right-column action panels (risk + attention focus)
 
-Ongoing work is focused on:
+Next steps:
 
-- refining dashboard data meaning and scope
-- improving trend data fidelity
-- expanding seeded data for more realistic scenarios
+- layout refinement (desktop width and spacing)
+- visual polish and consistency
+- scans and compare workflows
+
+---
 
 ## Getting Started
 
-Clone the repo and install dependencies:
-
-````bash
+```bash
 npm install
-Run the development server:
-
-```bash
 npm run dev
-````
-
-Run linting:
-
-```bash
-npm run lint
-```
-
-Format the codebase:
-
-```bash
-npm run format
 ```
