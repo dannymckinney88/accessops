@@ -22,7 +22,7 @@ The goal is to show stronger product thinking, frontend architecture, accessibil
 
 The initial MVP is focused on four core product areas:
 
-- **Dashboard** — property health summaries, recent scan activity, and regression signals
+- **Dashboard** — accessibility health overview including summary signals, issue trends, severity distribution, and property-level risk ranking
 - **Scans** — scan history and scan-level drill-down views
 - **Issues** — triage-focused violation management with filters and detail views
 - **Compare** — side-by-side scan comparison to show new, resolved, and unchanged issues
@@ -92,18 +92,26 @@ That separation helps keep the core data model clean while still making the UI e
 
 ## Current Status
 
-This project is currently in the early architecture and seeded-data phase.
+The Issues workflow is complete and behaves like a real triage tool, including:
 
-So far the work has focused on:
+- additive filters (status, severity, property)
+- semantic table with sorting and pagination
+- keyboard-accessible row interaction
+- URL-driven detail drawer with focus management
+- explainability content (why it matters, who is impacted, how to fix)
 
-- project scaffolding
-- folder structure
-- shared domain types
-- seeded data strategy
-- async data-access layer
-- derived selectors for dashboard and issue workflows
+The Dashboard is in active development and currently includes:
 
-The next major step is building out the seeded rule, scan, and violation data that powers the first real screens.
+- summary signals (total issues, critical issues, affected properties)
+- issue trend visualization with time-range controls (7d, 30d, 90d, all)
+- severity distribution
+- property health ranking based on issue volume
+
+Ongoing work is focused on:
+
+- refining dashboard data meaning and scope
+- improving trend data fidelity
+- expanding seeded data for more realistic scenarios
 
 ## Getting Started
 
