@@ -16,6 +16,7 @@ interface IssueFilterBarProps {
   onSetPropertyId: (id: string | null) => void;
   onSetSearch: (q: string) => void;
   onSetQuickFilter: (chip: QuickFilterChip | null) => void;
+  onSetAll: () => void;
   onReset: () => void;
 }
 
@@ -54,6 +55,7 @@ const IssueFilterBar = ({
   onSetPropertyId,
   onSetSearch,
   onSetQuickFilter,
+  onSetAll,
   onReset,
 }: IssueFilterBarProps) => {
   // Build human-readable labels for the active filter summary.
@@ -75,6 +77,7 @@ const IssueFilterBar = ({
           hasActiveFilters={hasActiveFilters}
           onToggleSeverity={onToggleSeverity}
           onSetQuickFilter={onSetQuickFilter}
+          onSetAll={onSetAll}
           onReset={onReset}
         />
 

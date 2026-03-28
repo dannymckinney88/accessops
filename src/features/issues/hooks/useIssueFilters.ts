@@ -21,12 +21,15 @@ export type IssueFilters = {
   quickFilter: QuickFilterChip | null;
 };
 
+// The Issues page is a remediation workspace, not an audit ledger.
+// Default to the unfixed view so users land on active work, not the full history.
+// "All" is an explicit opt-in available via the chip.
 const defaultFilters: IssueFilters = {
   severity: [],
   status: [],
   propertyId: null,
   search: "",
-  quickFilter: null,
+  quickFilter: "unfixed",
 };
 
 const toggle = <T,>(arr: T[], item: T): T[] =>
@@ -60,17 +63,27 @@ export const useIssueFilters = (violations: HydratedViolation[]) => {
       quickFilter: f.quickFilter === chip ? null : chip,
     }));
 
+  // reset: returns to the default unfixed view. Used by "Clear all filters".
   const reset = () => {
     setFilters(defaultFilters);
     setDebouncedSearch("");
   };
 
-  // Only true when filtering is actually active. Search only counts at 2+ chars.
+  // setAll: shows all violations with no filtering. Used by the "All" quick filter chip.
+  // Distinct from reset() so "All" is an explicit opt-in, not a default.
+  const setAll = () => {
+    setFilters({ ...defaultFilters, quickFilter: null });
+    setDebouncedSearch("");
+  };
+
+  // hasActiveFilters: true when the view differs from the default (unfixed, no other filters).
+  // The unfixed chip alone is the default — it does not count as a user-applied filter.
+  // This controls whether the filter summary and "Clear all filters" button are visible.
   const hasActiveFilters =
     filters.severity.length > 0 ||
     filters.status.length > 0 ||
     filters.propertyId !== null ||
-    filters.quickFilter !== null ||
+    filters.quickFilter !== "unfixed" ||
     activeSearch !== "";
 
   const filteredViolations = useMemo(() => {
@@ -114,6 +127,7 @@ export const useIssueFilters = (violations: HydratedViolation[]) => {
     setPropertyId,
     setSearch,
     setQuickFilter,
+    setAll,
     reset,
   };
 };

@@ -79,6 +79,7 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
     setPropertyId,
     setSearch,
     setQuickFilter,
+    setAll,
     reset,
   } = useIssueFilters(violations);
 
@@ -113,6 +114,7 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
         onSetPropertyId={setPropertyId}
         onSetSearch={setSearch}
         onSetQuickFilter={setQuickFilter}
+        onSetAll={setAll}
         onReset={reset}
       />
 

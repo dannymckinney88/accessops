@@ -8,6 +8,7 @@ interface IssueQuickFiltersProps {
   hasActiveFilters: boolean;
   onToggleSeverity: (s: Severity) => void;
   onSetQuickFilter: (chip: QuickFilterChip | null) => void;
+  onSetAll: () => void;
   onReset: () => void;
 }
 
@@ -27,9 +28,16 @@ const IssueQuickFilters = ({
   hasActiveFilters,
   onToggleSeverity,
   onSetQuickFilter,
+  onSetAll,
   onReset,
 }: IssueQuickFiltersProps) => {
-  const allActive = !hasActiveFilters;
+  // "All" is active when no quick filter chip is set and no other filters narrow the view.
+  // It cannot use !hasActiveFilters because the default state is "unfixed", not "all".
+  const allActive =
+    filters.quickFilter === null &&
+    filters.severity.length === 0 &&
+    filters.status.length === 0 &&
+    filters.propertyId === null;
   const criticalActive = filters.severity.includes("critical");
   const myIssuesActive = filters.quickFilter === "my-issues";
   const unfixedActive = filters.quickFilter === "unfixed";
@@ -43,7 +51,7 @@ const IssueQuickFilters = ({
     >
       <button
         type="button"
-        onClick={onReset}
+        onClick={onSetAll}
         aria-pressed={allActive}
         className={`${baseClass} ${allActive ? activeClass : inactiveClass}`}
       >

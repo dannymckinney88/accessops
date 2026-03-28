@@ -109,6 +109,7 @@ export type PropertyHealthSummary = {
   property: Property;
   latestScanRun: ScanRun | null;
   totalViolations: number;
+  // criticalCount: critical violations that are still unfixed — active risk scope.
   criticalCount: number;
   seriousCount: number;
   // unfixedCount: violations still requiring work — status "open" or "in-progress"
@@ -140,16 +141,19 @@ export const getPropertyHealthSummaries = async (): Promise<
 
     const totalViolations = propertyViolations.length;
 
-    const criticalCount = propertyViolations.filter(
-      (v) => v.impact === "critical",
-    ).length;
-
     const seriousCount = propertyViolations.filter(
       (v) => v.impact === "serious",
     ).length;
 
-    const unfixedCount = propertyViolations.filter(
+    const unfixedViolations = propertyViolations.filter(
       (v) => v.status === "open" || v.status === "in-progress",
+    );
+    const unfixedCount = unfixedViolations.length;
+
+    // criticalCount: critical violations that are still unfixed.
+    // Scoped to active work so it aligns with what the team actually needs to address.
+    const criticalCount = unfixedViolations.filter(
+      (v) => v.impact === "critical",
     ).length;
 
     // Trend: compare raw violation counts between the two most recent scans.

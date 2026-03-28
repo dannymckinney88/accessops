@@ -26,15 +26,13 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
       ? "None currently"
       : `Across ${propertiesWithCritical} of ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`;
 
-  // Card 3: fixed — work completed, awaiting re-audit verification.
+  // Card 3: fixed — work completed internally, not yet confirmed by a re-audit.
   const fixedSublabel =
-    fixedCount === 0
-      ? "No fixes awaiting verification"
-      : "Awaiting re-audit verification";
+    fixedCount === 0 ? "No fixes pending verification" : "Pending re-audit";
 
   // Card 4: verified — confirmed resolved by a later audit.
   const verifiedSublabel =
-    verifiedCount === 0 ? "None verified yet" : "Confirmed by re-audit";
+    verifiedCount === 0 ? "None confirmed yet" : "Confirmed by re-audit";
 
   return (
     <div
@@ -54,12 +52,12 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
         critical={criticalCount > 0}
       />
       <DashboardSignalCard
-        label="Fixed — awaiting verification"
+        label="Fixed"
         value={fixedCount}
         sublabel={fixedSublabel}
       />
       <DashboardSignalCard
-        label="Verified resolved"
+        label="Verified"
         value={verifiedCount}
         sublabel={verifiedSublabel}
       />

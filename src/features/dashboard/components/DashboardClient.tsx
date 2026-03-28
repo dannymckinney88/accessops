@@ -77,7 +77,7 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
               className="mb-4 text-sm text-muted-foreground"
               id="property-health-description"
             >
-              Ranked by unfixed issues — full audit baseline
+              Ranked by open work · active scope only
             </p>
             <DashboardPropertyHealth summary={summary} />
           </section>
