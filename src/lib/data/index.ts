@@ -256,6 +256,28 @@ export type DashboardCurrentState = {
   acceptedRiskCount: number;
   severityDistribution: SeverityDistributionPoint[];
   propertyHealthSummaries: PropertyHealthSummary[];
+  // topCriticalRule: the most frequently occurring unfixed critical rule.
+  // null when no critical unfixed violations exist.
+  topCriticalRule: {
+    ruleId: string;
+    // help: short human-readable label from the rule definition.
+    help: string;
+    count: number;
+    propertyCount: number;
+    // topPropertyName: name of the property with the most instances of this rule.
+    topPropertyName: string;
+    // pageCount: distinct pages that have at least one instance of this rule unfixed.
+    pageCount: number;
+  } | null;
+  // topCriticalPages: pages with the highest critical unfixed violation counts.
+  // Useful for page-level concentration when criticals cluster on specific flows.
+  topCriticalPages: Array<{
+    pageId: string;
+    pageTitle: string;
+    pagePath: string;
+    propertyName: string;
+    criticalCount: number;
+  }>;
 };
 
 // ─── Dashboard: composition type ─────────────────────────────────────────────
@@ -348,6 +370,99 @@ export const getDashboardCurrentState =
       (s) => s.trend === "regressing",
     ).length;
 
+    // Shared scanPage → page mapping used by topCriticalRule and topCriticalPages.
+    const scanPageIdToPageId = new Map(
+      scanPages.map((sp) => [sp.id, sp.pageId]),
+    );
+
+    // topCriticalRule: most frequently occurring unfixed critical rule.
+    // Groups by ruleId, picks the highest count, resolves the rule's help text.
+    const criticalUnfixed = unfixedViolations.filter(
+      (v) => v.impact === "critical",
+    );
+    let topCriticalRule: DashboardCurrentState["topCriticalRule"] = null;
+    if (criticalUnfixed.length > 0) {
+      const ruleCounts = new Map<string, number>();
+      for (const v of criticalUnfixed) {
+        ruleCounts.set(v.ruleId, (ruleCounts.get(v.ruleId) ?? 0) + 1);
+      }
+      let topRuleId = "";
+      let topCount = 0;
+      for (const [ruleId, count] of ruleCounts) {
+        if (count > topCount) {
+          topCount = count;
+          topRuleId = ruleId;
+        }
+      }
+      const rule = rules.find((r) => r.ruleId === topRuleId);
+      const affectedProperties = new Set<string>();
+      const propertyRuleCounts = new Map<string, number>();
+      for (const v of criticalUnfixed) {
+        if (v.ruleId !== topRuleId) continue;
+        const propId = scanRunPropertyMap.get(v.scanRunId);
+        if (propId) {
+          affectedProperties.add(propId);
+          propertyRuleCounts.set(
+            propId,
+            (propertyRuleCounts.get(propId) ?? 0) + 1,
+          );
+        }
+      }
+      let topPropertyId = "";
+      let topPropertyRuleCount = 0;
+      for (const [propId, count] of propertyRuleCounts) {
+        if (count > topPropertyRuleCount) {
+          topPropertyRuleCount = count;
+          topPropertyId = propId;
+        }
+      }
+      const topProperty = properties.find((p) => p.id === topPropertyId);
+      const affectedPages = new Set<string>();
+      for (const v of criticalUnfixed) {
+        if (v.ruleId !== topRuleId) continue;
+        const pageId = scanPageIdToPageId.get(v.scanPageId);
+        if (pageId) affectedPages.add(pageId);
+      }
+      topCriticalRule = {
+        ruleId: topRuleId,
+        help: rule?.help ?? topRuleId,
+        count: topCount,
+        propertyCount: affectedProperties.size,
+        pageCount: affectedPages.size,
+        topPropertyName: topProperty?.name ?? "",
+      };
+    }
+
+    // topCriticalPages: pages with the highest critical unfixed concentration.
+    const pageMap = new Map(pages.map((p) => [p.id, p]));
+    const propertyNameMap = new Map(
+      properties.map((p) => [p.id, p.name]),
+    );
+
+    const pageCriticalCounts = new Map<string, number>();
+    for (const v of criticalUnfixed) {
+      const pageId = scanPageIdToPageId.get(v.scanPageId);
+      if (pageId) {
+        pageCriticalCounts.set(pageId, (pageCriticalCounts.get(pageId) ?? 0) + 1);
+      }
+    }
+    const topCriticalPages = [...pageCriticalCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([pageId, count]) => {
+        const page = pageMap.get(pageId);
+        const propertyName = page
+          ? (propertyNameMap.get(page.propertyId) ?? "")
+          : "";
+        return {
+          pageId,
+          pageTitle: page?.title ?? pageId,
+          pagePath: page?.path ?? "",
+          propertyName,
+          criticalCount: count,
+        };
+      });
+
     return {
       totalViolations,
       criticalCount,
@@ -362,6 +477,8 @@ export const getDashboardCurrentState =
       acceptedRiskCount,
       severityDistribution,
       propertyHealthSummaries: summaries,
+      topCriticalRule,
+      topCriticalPages,
     };
   };
 
