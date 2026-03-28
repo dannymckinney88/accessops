@@ -7,28 +7,24 @@ interface DashboardNeedsAttentionProps {
 const DashboardNeedsAttention = ({ summary }: DashboardNeedsAttentionProps) => {
   const { propertyHealthSummaries } = summary;
 
-  // Highest-risk property: regressing properties take priority,
-  // then ranked by critical unfixed, then total unfixed.
-  const top = [...propertyHealthSummaries].sort((a, b) => {
-    const aRegressing = a.trend === "regressing" ? 1 : 0;
-    const bRegressing = b.trend === "regressing" ? 1 : 0;
-    if (bRegressing !== aRegressing) return bRegressing - aRegressing;
-    if (b.criticalCount !== a.criticalCount) return b.criticalCount - a.criticalCount;
-    return b.unfixedCount - a.unfixedCount;
-  })[0];
+  // Top 2 highest-risk properties: regressing first, then critical count, then unfixed.
+  const top2 = [...propertyHealthSummaries]
+    .sort((a, b) => {
+      const aRegressing = a.trend === "regressing" ? 1 : 0;
+      const bRegressing = b.trend === "regressing" ? 1 : 0;
+      if (bRegressing !== aRegressing) return bRegressing - aRegressing;
+      if (b.criticalCount !== a.criticalCount)
+        return b.criticalCount - a.criticalCount;
+      return b.unfixedCount - a.unfixedCount;
+    })
+    .slice(0, 2)
+    .filter((item) => item.unfixedCount > 0);
 
-  if (!top || top.unfixedCount === 0) return null;
-
-  const reasons: string[] = [];
-  if (top.trend === "regressing") reasons.push("Regression in latest scan");
-  if (top.criticalCount > 0)
-    reasons.push(
-      `${top.criticalCount} critical ${top.criticalCount === 1 ? "issue" : "issues"} unfixed`,
-    );
+  if (top2.length === 0) return null;
 
   return (
     <section aria-labelledby="needs-attention-heading">
-      <div className="rounded-lg border p-4 flex flex-col gap-3">
+      <div className="rounded-lg border p-4 flex flex-col gap-4">
         <h2
           id="needs-attention-heading"
           className="text-sm font-semibold tracking-tight"
@@ -36,43 +32,54 @@ const DashboardNeedsAttention = ({ summary }: DashboardNeedsAttentionProps) => {
           Needs Attention
         </h2>
 
-        <div>
-          <p className="text-sm font-medium text-foreground">
-            {top.property.name}
-          </p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {top.property.baseUrl}
-          </p>
-        </div>
+        <ul className="flex flex-col gap-4">
+          {top2.map((item, index) => {
+            const {
+              property,
+              unfixedCount,
+              criticalCount,
+              totalViolations,
+              trend,
+            } = item;
 
-        <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-          <div>
-            <dt className="text-xs text-muted-foreground">Unfixed</dt>
-            <dd className="font-medium tabular-nums">{top.unfixedCount}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-muted-foreground">Critical</dt>
-            <dd
-              className={
-                top.criticalCount > 0
-                  ? "font-medium tabular-nums text-severity-critical"
-                  : "font-medium tabular-nums text-muted-foreground"
-              }
-            >
-              {top.criticalCount}
-            </dd>
-          </div>
-        </dl>
+            const unfixedPct =
+              totalViolations > 0
+                ? (unfixedCount / totalViolations) * 100
+                : 0;
 
-        {reasons.length > 0 && (
-          <ul className="flex flex-col gap-0.5" aria-label="Risk signals">
-            {reasons.map((reason) => (
-              <li key={reason} className="text-xs text-muted-foreground">
-                · {reason}
+            return (
+              <li key={property.id} className="flex flex-col gap-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {index + 1}. {property.name}
+                  </p>
+                  {trend === "regressing" && (
+                    <span className="shrink-0 text-xs font-medium text-destructive">
+                      Regressing
+                    </span>
+                  )}
+                </div>
+
+                {/* Mini progress bar — unfixed as proportion of baseline */}
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-foreground/25"
+                    style={{ width: `${unfixedPct}%` }}
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  <span>{unfixedCount} unfixed</span>
+                  {criticalCount > 0 && (
+                    <span className="font-medium text-severity-critical">
+                      {criticalCount} critical
+                    </span>
+                  )}
+                </div>
               </li>
-            ))}
-          </ul>
-        )}
+            );
+          })}
+        </ul>
       </div>
     </section>
   );

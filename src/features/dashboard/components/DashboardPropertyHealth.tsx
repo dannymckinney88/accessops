@@ -1,3 +1,4 @@
+import { TrendingDown, TrendingUp, Minus } from "lucide-react";
 import type { DashboardSummary } from "../types/dashboard";
 
 interface DashboardPropertyHealthProps {
@@ -5,15 +6,10 @@ interface DashboardPropertyHealthProps {
 }
 
 const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
-  const top3 = [...summary.propertyHealthSummaries]
-    .sort((a, b) => {
-      // Sort worst-first: unfixed desc, then critical desc as tiebreak
-      if (b.unfixedCount !== a.unfixedCount) {
-        return b.unfixedCount - a.unfixedCount;
-      }
-      return b.criticalCount - a.criticalCount;
-    })
-    .slice(0, 3);
+  const sorted = [...summary.propertyHealthSummaries].sort((a, b) => {
+    if (b.unfixedCount !== a.unfixedCount) return b.unfixedCount - a.unfixedCount;
+    return b.criticalCount - a.criticalCount;
+  });
 
   return (
     <ul
@@ -21,8 +17,19 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
       role="list"
       aria-describedby="property-health-description"
     >
-      {top3.map((item) => {
-        const { property, unfixedCount, criticalCount, trend } = item;
+      {sorted.map((item, index) => {
+        const { property, unfixedCount, criticalCount, totalViolations, trend } =
+          item;
+
+        const unfixedPct =
+          totalViolations > 0 ? (unfixedCount / totalViolations) * 100 : 0;
+
+        const TrendIcon =
+          trend === "regressing"
+            ? TrendingDown
+            : trend === "improving"
+              ? TrendingUp
+              : Minus;
 
         const trendLabel =
           trend === "regressing"
@@ -31,49 +38,69 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
               ? "Improving"
               : trend === "stable"
                 ? "Stable"
-                : null;
+                : "No data";
 
-        const trendClass =
+        const trendStyle =
           trend === "regressing"
-            ? "text-destructive"
-            : "text-muted-foreground";
+            ? { color: "var(--destructive)" }
+            : trend === "improving"
+              ? { color: "var(--status-verified)" }
+              : { color: "var(--muted-foreground)" };
 
         return (
-          <li
-            key={property.id}
-            className="flex items-center justify-between gap-4 px-4 py-3"
-          >
-            <div className="min-w-0 flex flex-col gap-0.5">
-              <p className="text-sm font-medium text-foreground truncate">
+          <li key={property.id} className="flex items-center gap-4 px-4 py-3.5">
+            {/* Rank */}
+            <span
+              className="w-4 shrink-0 text-xs tabular-nums text-muted-foreground"
+              aria-hidden="true"
+            >
+              {index + 1}
+            </span>
+
+            {/* Name + progress bar */}
+            <div className="min-w-0 flex-1 flex flex-col gap-1.5">
+              <p className="truncate text-sm font-medium text-foreground">
                 {property.name}
               </p>
-              {trendLabel && (
-                <p className={`text-xs ${trendClass}`} aria-label={`Trend: ${trendLabel}`}>
-                  {trendLabel}
-                </p>
-              )}
-            </div>
-            <dl className="flex items-center gap-4 shrink-0 text-sm">
-              <div className="flex flex-col items-end">
-                <dt className="sr-only">Unfixed issues</dt>
-                <dd className="font-medium tabular-nums text-foreground">
-                  {unfixedCount}
-                </dd>
-                <dd className="text-xs text-muted-foreground">unfixed</dd>
+              <div
+                className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+                role="presentation"
+              >
+                <div
+                  className="h-full rounded-full bg-foreground/25"
+                  style={{ width: `${unfixedPct}%` }}
+                />
               </div>
+              <p className="text-xs text-muted-foreground">
+                {unfixedCount} of {totalViolations} unfixed
+              </p>
+            </div>
 
+            {/* Stats */}
+            <dl className="flex shrink-0 items-center gap-5 text-sm">
               <div className="flex flex-col items-end">
                 <dt className="sr-only">Critical issues</dt>
                 <dd
                   className={
                     criticalCount > 0
-                      ? "font-medium tabular-nums text-severity-critical"
-                      : "font-medium tabular-nums text-muted-foreground"
+                      ? "tabular-nums font-medium text-severity-critical"
+                      : "tabular-nums font-medium text-muted-foreground"
                   }
                 >
                   {criticalCount}
                 </dd>
                 <dd className="text-xs text-muted-foreground">critical</dd>
+              </div>
+
+              <div className="flex flex-col items-center gap-0.5">
+                <TrendIcon
+                  className="h-4 w-4"
+                  style={trendStyle}
+                  aria-label={`Trend: ${trendLabel}`}
+                />
+                <span className="text-xs text-muted-foreground">
+                  {trendLabel}
+                </span>
               </div>
             </dl>
           </li>

@@ -20,8 +20,8 @@ const DashboardSignalCard = ({
       <p
         className={
           critical
-            ? "text-3xl font-semibold tabular-nums text-severity-critical"
-            : "text-3xl font-semibold tabular-nums text-foreground"
+            ? "text-2xl font-semibold tabular-nums text-severity-critical"
+            : "text-2xl font-semibold tabular-nums text-foreground"
         }
       >
         {value.toLocaleString()}

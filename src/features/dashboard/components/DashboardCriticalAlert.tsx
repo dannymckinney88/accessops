@@ -17,7 +17,7 @@ const DashboardCriticalAlert = ({ summary }: DashboardCriticalAlertProps) => {
 
   return (
     <section aria-labelledby="critical-alert-heading">
-      <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 flex flex-col gap-3">
+      <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 flex flex-col gap-4">
         <div className="flex items-start gap-2">
           <AlertTriangle
             className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
@@ -40,18 +40,30 @@ const DashboardCriticalAlert = ({ summary }: DashboardCriticalAlertProps) => {
           </div>
         </div>
 
-        <ul className="flex flex-col gap-1.5" aria-label="Properties with critical issues">
-          {affectedProperties.map(({ property, criticalCount: count }) => (
-            <li
-              key={property.id}
-              className="flex items-center justify-between text-sm"
-            >
-              <span className="text-foreground truncate">{property.name}</span>
-              <span className="ml-3 tabular-nums font-medium text-destructive shrink-0">
-                {count}
-              </span>
-            </li>
-          ))}
+        <ul
+          className="flex flex-col gap-3"
+          aria-label="Properties with critical issues"
+        >
+          {affectedProperties.map(
+            ({ property, criticalCount: count, unfixedCount, trend }) => (
+              <li key={property.id} className="flex flex-col gap-0.5">
+                <div className="flex items-center justify-between gap-2 text-sm">
+                  <span className="truncate text-foreground">
+                    {property.name}
+                  </span>
+                  <span className="ml-3 shrink-0 tabular-nums font-medium text-destructive">
+                    {count}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {unfixedCount} unfixed total
+                  {trend === "regressing" && (
+                    <span className="text-destructive"> · Regressing</span>
+                  )}
+                </p>
+              </li>
+            ),
+          )}
         </ul>
       </div>
     </section>

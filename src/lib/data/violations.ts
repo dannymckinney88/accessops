@@ -90,7 +90,7 @@ const marketingViolations: ViolationInstance[] = [
     scanPageId: "sp-mkt1-personal",
     ruleId: "color-contrast",
     impact: "serious",
-    status: "open",
+    status: "fixed",
     priority: "high",
     firstSeenAt: "2024-10-01T09:00:00.000Z",
     lastSeenAt: "2025-02-03T09:00:00.000Z",
@@ -120,7 +120,7 @@ const marketingViolations: ViolationInstance[] = [
     scanPageId: "sp-mkt1-loans",
     ruleId: "color-contrast",
     impact: "serious",
-    status: "open",
+    status: "fixed",
     priority: "high",
     firstSeenAt: "2024-10-01T09:00:00.000Z",
     lastSeenAt: "2025-03-03T09:00:00.000Z",
@@ -223,7 +223,8 @@ const marketingViolations: ViolationInstance[] = [
     target: [".hero-section .cta-button"],
     failureSummary:
       "Fix any of the following: Element has insufficient color contrast of 3.2:1 (foreground: #767676, background: #ffffff). Expected contrast ratio of 4.5:1.",
-    notes: "Token deployed to production Dec 2024. Awaiting audit verification.",
+    notes:
+      "Token deployed to production Dec 2024. Awaiting audit verification.",
   }),
   createViolation({
     scanRunId: "sr-mkt-3",
@@ -238,7 +239,8 @@ const marketingViolations: ViolationInstance[] = [
     target: [".loan-rates-table .rate-label"],
     failureSummary:
       "Fix any of the following: Element has insufficient color contrast of 2.9:1 (foreground: #999999, background: #ffffff). Expected contrast ratio of 4.5:1.",
-    notes: "Included in design token pass — deployed Dec 2024. Awaiting verification.",
+    notes:
+      "Included in design token pass — deployed Dec 2024. Awaiting verification.",
   }),
 
   // Scans 4-6 — nearing clean; fixes confirmed shipped, scans still catching up
@@ -363,7 +365,7 @@ const loanViolations: ViolationInstance[] = [
     scanPageId: "sp-loan1-employment",
     ruleId: "label",
     impact: "critical",
-    status: "open",
+    status: "fixed",
     priority: "high",
     firstSeenAt: "2024-10-01T09:05:00.000Z",
     lastSeenAt: "2025-03-03T09:05:00.000Z",
@@ -436,7 +438,7 @@ const loanViolations: ViolationInstance[] = [
     scanPageId: "sp-loan4-personal",
     ruleId: "label",
     impact: "critical",
-    status: "open",
+    status: "fixed",
     priority: "urgent",
     firstSeenAt: "2025-01-06T16:45:00.000Z",
     lastSeenAt: "2025-03-03T09:05:00.000Z",
@@ -1421,7 +1423,8 @@ const dashboardViolations: ViolationInstance[] = [
     target: ["#transaction-table tbody tr:nth-child(1) td:nth-child(3)"],
     failureSummary:
       "Fix any of the following: The headers attribute references the id 'col-amount' which does not exist in this table.",
-    notes: "Table markup overhaul in backlog. Requires coordinated front-end effort.",
+    notes:
+      "Table markup overhaul in backlog. Requires coordinated front-end effort.",
   }),
   createViolation({
     scanRunId: "sr-dash-1",
@@ -1499,7 +1502,8 @@ const dashboardViolations: ViolationInstance[] = [
     target: [".account-summary .balance-indicator"],
     failureSummary:
       "Fix any of the following: Role must be one of the valid ARIA roles: 'progress' is not a valid ARIA role. Did you mean 'progressbar'?",
-    notes: "role='progress' corrected to role='progressbar'. Awaiting audit verification.",
+    notes:
+      "role='progress' corrected to role='progressbar'. Awaiting audit verification.",
   }),
   createViolation({
     scanRunId: "sr-dash-1",
@@ -1515,7 +1519,8 @@ const dashboardViolations: ViolationInstance[] = [
     target: [".account-card .tooltip-trigger"],
     failureSummary:
       "Fix any of the following: Focusable element is inside an element with aria-hidden. Ensure that all focusable elements are not contained within aria-hidden elements.",
-    notes: "aria-hidden removed from tooltip container. Awaiting audit verification.",
+    notes:
+      "aria-hidden removed from tooltip container. Awaiting audit verification.",
   }),
   createViolation({
     scanRunId: "sr-dash-1",
@@ -1530,7 +1535,8 @@ const dashboardViolations: ViolationInstance[] = [
     target: ["#transfer-form .amount-input"],
     failureSummary:
       "Fix any of the following: Form element does not have an implicit (wrapped) <label>. Form element does not have an explicit <label>.",
-    notes: "Label PR open. Form component refactor required to avoid breaking existing tests.",
+    notes:
+      "Label PR open. Form component refactor required to avoid breaking existing tests.",
   }),
   createViolation({
     scanRunId: "sr-dash-1",
@@ -1546,7 +1552,8 @@ const dashboardViolations: ViolationInstance[] = [
     target: ["#bill-pay .payee-list"],
     failureSummary:
       "Fix any of the following: Required ARIA attribute not present: aria-labelledby.",
-    notes: "aria-labelledby added to payee listbox. Awaiting audit verification.",
+    notes:
+      "aria-labelledby added to payee listbox. Awaiting audit verification.",
   }),
 
   // Scans 2-6 — same issues, zero remediation
@@ -2249,7 +2256,8 @@ const supportViolations: ViolationInstance[] = [
     target: [".support-home .popular-articles h4"],
     failureSummary:
       "Fix any of the following: Heading order invalid — h4 follows h2 with no h3 in between.",
-    notes: "Accepted risk Q1 — CMS template change requires content team coordination. Revisit Q3.",
+    notes:
+      "Accepted risk Q1 — CMS template change requires content team coordination. Revisit Q3.",
   }),
   createViolation({
     scanRunId: "sr-sup-1",
@@ -2265,7 +2273,8 @@ const supportViolations: ViolationInstance[] = [
     target: [".article-card .article-meta"],
     failureSummary:
       "Fix any of the following: Element has insufficient color contrast of 3.4:1 (foreground: #888888, background: #ffffff). Expected contrast ratio of 4.5:1.",
-    notes: "Accepted risk Q1 — will be resolved when global muted text token update lands.",
+    notes:
+      "Accepted risk Q1 — will be resolved when global muted text token update lands.",
   }),
   createViolation({
     scanRunId: "sr-sup-1",

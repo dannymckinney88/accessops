@@ -20,11 +20,11 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
     (criticalCount > 0 ? ` · ${criticalCount} critical` : "");
 
   return (
-    <div className="mx-auto w-full max-w-7xl flex flex-col gap-8">
+    <div className="w-full flex flex-col gap-8">
       <DashboardHeader subtitle={subtitle} />
 
       <div className="flex flex-col gap-8">
-        {/* Signals: full-width summary strip */}
+        {/* Signals: full-width hero + supporting KPIs */}
         <section aria-labelledby="signals-heading">
           <h2
             id="signals-heading"
@@ -35,9 +35,9 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
           <DashboardSignals summary={summary} />
         </section>
 
-        {/* Main content: left column (audit + severity) + right column (action panels) */}
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[2fr_1fr]">
-          {/* Left column */}
+        {/* Main content grid: left analysis column + right action column */}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px]">
+          {/* Left: analysis sections */}
           <div className="flex flex-col gap-8">
             <section aria-labelledby="audit-progress-heading">
               <h2
@@ -46,7 +46,7 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
               >
                 Audit Progress
               </h2>
-              <div className="rounded-lg border p-4">
+              <div className="rounded-lg border p-5">
                 <DashboardAuditProgress summary={summary} />
               </div>
             </section>
@@ -64,31 +64,30 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
                 highSeverityCount={summary.highSeverityCount}
               />
             </section>
+
+            <section aria-labelledby="property-health-heading">
+              <h2
+                id="property-health-heading"
+                className="mb-1 text-base font-semibold tracking-tight"
+              >
+                Property Health
+              </h2>
+              <p
+                className="mb-4 text-sm text-muted-foreground"
+                id="property-health-description"
+              >
+                Ranked by unfixed issues · current audit scope
+              </p>
+              <DashboardPropertyHealth summary={summary} />
+            </section>
           </div>
 
-          {/* Right column: action/context panels */}
-          <div className="flex flex-col gap-4">
+          {/* Right: action/context panels */}
+          <div className="flex flex-col gap-6">
             <DashboardCriticalAlert summary={summary} />
             <DashboardNeedsAttention summary={summary} />
           </div>
         </div>
-
-        {/* Property Health: full-width ranking table */}
-        <section aria-labelledby="property-health-heading">
-          <h2
-            id="property-health-heading"
-            className="mb-1 text-base font-semibold tracking-tight"
-          >
-            Property Health
-          </h2>
-          <p
-            className="mb-4 text-sm text-muted-foreground"
-            id="property-health-description"
-          >
-            Ranked by unfixed issues · current audit scope
-          </p>
-          <DashboardPropertyHealth summary={summary} />
-        </section>
       </div>
     </div>
   );

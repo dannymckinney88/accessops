@@ -36,15 +36,20 @@ const DashboardAuditProgress = ({ summary }: DashboardAuditProgressProps) => {
   } = summary;
 
   // Proportional widths — clamp to avoid sub-pixel gaps on rounding.
-  const verifiedPct = totalViolations > 0 ? (verifiedCount / totalViolations) * 100 : 0;
-  const fixedPct = totalViolations > 0 ? (fixedCount / totalViolations) * 100 : 0;
-  const acceptedPct = totalViolations > 0 ? (acceptedRiskCount / totalViolations) * 100 : 0;
+  const verifiedPct =
+    totalViolations > 0 ? (verifiedCount / totalViolations) * 100 : 0;
+  const fixedPct =
+    totalViolations > 0 ? (fixedCount / totalViolations) * 100 : 0;
+  const acceptedPct =
+    totalViolations > 0 ? (acceptedRiskCount / totalViolations) * 100 : 0;
   // Unfixed takes the remainder to ensure the bar always fills 100%.
   const unfixedPct = Math.max(0, 100 - verifiedPct - fixedPct - acceptedPct);
 
   const resolvedCount = verifiedCount + fixedCount;
   const resolvedPct =
-    totalViolations > 0 ? Math.round((resolvedCount / totalViolations) * 100) : 0;
+    totalViolations > 0
+      ? Math.round((resolvedCount / totalViolations) * 100)
+      : 0;
 
   const ariaLabel = [
     `${totalViolations} total issues in the current audit baseline.`,
@@ -134,9 +139,12 @@ const DashboardAuditProgress = ({ summary }: DashboardAuditProgressProps) => {
           <>
             <p>
               {resolvedCount} addressed so far ({resolvedPct}%)
-              {verifiedCount > 0 && fixedCount > 0 &&
+              {verifiedCount > 0 &&
+                fixedCount > 0 &&
                 ` — ${verifiedCount} verified, ${fixedCount} awaiting re-audit.`}
-              {verifiedCount > 0 && fixedCount === 0 && ` — all confirmed by re-audit.`}
+              {verifiedCount > 0 &&
+                fixedCount === 0 &&
+                ` — all confirmed by re-audit.`}
               {verifiedCount === 0 && fixedCount > 0 && ` — awaiting re-audit.`}
               {verifiedCount === 0 && fixedCount === 0 && `.`}
             </p>

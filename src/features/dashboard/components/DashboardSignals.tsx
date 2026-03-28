@@ -12,41 +12,49 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
     highSeverityCount,
     propertyCount,
     propertiesWithCritical,
+    propertiesWithIssues,
     fixedCount,
     verifiedCount,
   } = summary;
 
-  // Card 1: primary work-remaining signal — open + in-progress violations.
-  const issueSublabel = `${highSeverityCount} critical or serious`;
-
-  // Card 2: critical unfixed — "across N properties" tells you whether critical
-  // issues are isolated to one team or spread across the portfolio.
   const criticalSublabel =
     criticalCount === 0
       ? "None currently"
       : `Across ${propertiesWithCritical} of ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`;
 
-  // Card 3: fixed — work completed internally, not yet confirmed by a re-audit.
   const fixedSublabel =
-    fixedCount === 0 ? "No fixes pending verification" : "Pending re-audit";
+    fixedCount === 0 ? "No fixes pending" : "Pending re-audit";
 
-  // Card 4: verified — confirmed resolved by a later audit.
   const verifiedSublabel =
     verifiedCount === 0 ? "None confirmed yet" : "Confirmed by re-audit";
 
   return (
     <div
-      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+      className="grid grid-cols-2 gap-4 lg:grid-cols-[2fr_1fr_1fr_1fr]"
       role="group"
-      aria-labelledby="summary-signals-heading"
+      aria-labelledby="signals-heading"
     >
+      {/* Primary: Unfixed Issues — hero card spanning 2 cols on mobile, 1 wide col on lg */}
+      <div className="col-span-2 lg:col-span-1 rounded-lg border bg-muted/40 p-5 flex flex-col justify-between gap-3">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          Unfixed Issues
+        </p>
+        <p className="text-5xl font-bold tabular-nums text-foreground leading-none">
+          {unfixedCount.toLocaleString()}
+        </p>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+          <span>{highSeverityCount} critical or serious</span>
+          <span aria-hidden="true">·</span>
+          <span>
+            {propertiesWithIssues}{" "}
+            {propertiesWithIssues === 1 ? "property" : "properties"} affected
+          </span>
+        </div>
+      </div>
+
+      {/* Supporting KPIs */}
       <DashboardSignalCard
-        label="Unfixed issues"
-        value={unfixedCount}
-        sublabel={issueSublabel}
-      />
-      <DashboardSignalCard
-        label="Critical unfixed"
+        label="Critical Unfixed"
         value={criticalCount}
         sublabel={criticalSublabel}
         critical={criticalCount > 0}
