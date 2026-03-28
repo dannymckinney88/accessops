@@ -29,15 +29,11 @@ const DashboardSeverityByProperty = ({
   const { severityByProperty, severityDistribution } = summary;
 
   if (severityByProperty.length === 0) {
-    return (
-      <div className="rounded-lg border p-5 flex items-center h-full">
-        <p className="text-sm text-muted-foreground">No unfixed issues</p>
-      </div>
-    );
+    return <p className="text-sm text-muted-foreground">No unfixed issues</p>;
   }
 
   return (
-    <div className="rounded-lg border p-5 flex flex-col gap-5 flex-1">
+    <div className="flex flex-col gap-5">
       {/* Legend: severity → color + total count */}
       <div
         className="flex flex-wrap gap-x-5 gap-y-1.5"
