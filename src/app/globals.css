@@ -108,15 +108,15 @@
   /* ── AccessOps domain tokens ───────────────────────────────────────────── */
 
   /* Severity — used only for severity meaning, never repurposed */
-  --severity-critical: oklch(0.55 0.22 27);
+  --severity-critical: oklch(0.55 0.22 28);
   --severity-critical-foreground: oklch(0.985 0 0);
   --severity-serious: oklch(
-    0.52 0.2 45
+    0.65 0.18 55
   ); /* darkened: was 0.58, ~4.4:1 failed AA; now ~5.5:1 */
   --severity-serious-foreground: oklch(0.985 0 0);
   --severity-moderate: oklch(0.8 0.15 78);
   --severity-moderate-foreground: oklch(0.145 0 0);
-  --severity-minor: oklch(0.92 0 0);
+  --severity-minor: oklch(0.55 0.08 250);
   --severity-minor-foreground: oklch(0.45 0 0);
 
   /* Remediation status */

@@ -7,7 +7,6 @@ import DashboardTopPages from "./DashboardTopPages";
 import DashboardAuditProgress from "./DashboardAuditProgress";
 import DashboardSeverityByProperty from "./DashboardSeverityByProperty";
 import DashboardPropertyHealth from "./DashboardPropertyHealth";
-import DashboardCriticalAlert from "./DashboardCriticalAlert";
 import DashboardNeedsAttention from "./DashboardNeedsAttention";
 
 interface DashboardClientProps {
@@ -62,7 +61,7 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
                 >
                   Audit Progress
                 </h2>
-                <div className="flex h-full rounded-lg border p-5">
+                <div className=" h-full rounded-lg border p-5">
                   <DashboardAuditProgress summary={summary} />
                 </div>
               </section>
@@ -102,7 +101,6 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
 
           {/* Right action column */}
           <div className="flex flex-col gap-4 lg:pt-10">
-            <DashboardCriticalAlert summary={summary} />
             <DashboardNeedsAttention summary={summary} />
           </div>
         </div>

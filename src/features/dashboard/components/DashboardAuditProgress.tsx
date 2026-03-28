@@ -12,7 +12,7 @@ interface SegmentProps {
 }
 
 const Segment = ({ color, label, count, description }: SegmentProps) => (
-  <div className="flex flex-col gap-2">
+  <div className="flex flex-col gap-2 ">
     <div className="flex items-center gap-2">
       <span
         className="inline-block h-3 w-3 shrink-0 rounded-sm"

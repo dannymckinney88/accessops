@@ -17,79 +17,83 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
     acceptedRiskCount,
   } = summary;
 
+  type KpiCard = {
+    label: string;
+    value: number;
+    subtext: (value: number) => string;
+    variant?: "primary" | "standard";
+    valueClassName?: (value: number) => string;
+    containerClassName?: string;
+  };
+
+  const kpiCards: KpiCard[] = [
+    {
+      label: "Unfixed Issues",
+      value: unfixedCount,
+      variant: "primary",
+      subtext: () =>
+        `${highSeverityCount} critical or serious · ${propertiesWithIssues} ${propertiesWithIssues === 1 ? "property" : "properties"} affected`,
+    },
+    {
+      label: "Critical Unfixed",
+      value: criticalCount,
+      variant: "standard",
+      containerClassName: "border-l border-destructive/40",
+      valueClassName: (v) =>
+        v > 0 ? "text-severity-critical" : "text-foreground",
+      subtext: (v) =>
+        v === 0
+          ? "None currently"
+          : `Across ${propertiesWithCritical} of ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`,
+    },
+    {
+      label: "Fixed",
+      value: fixedCount,
+      variant: "standard",
+      subtext: (v) => (v === 0 ? "No fixes pending" : "Pending re-audit"),
+    },
+    {
+      label: "Verified",
+      value: verifiedCount,
+      variant: "standard",
+      subtext: (v) => (v === 0 ? "None confirmed" : "Confirmed by re-audit"),
+    },
+    {
+      label: "Accepted Risk",
+      value: acceptedRiskCount,
+      variant: "standard",
+      subtext: (v) => (v === 0 ? "None deferred" : "Intentionally deferred"),
+    },
+  ];
+
   return (
     <div
       role="group"
       aria-label="Accessibility health metrics"
-      className="grid grid-cols-[3fr_2fr_1fr_1fr_1fr] divide-x bg-muted/30"
+      className="grid grid-cols-[3fr_2fr_1fr_1fr_1fr] divide-x bg-muted/30 gap-8"
     >
-      <div className="flex flex-col gap-1.5 px-4 py-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Unfixed Issues
-        </p>
-        <p className="text-4xl font-bold tabular-nums leading-none text-foreground">
-          {unfixedCount.toLocaleString()}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {highSeverityCount} critical or serious &middot;{" "}
-          {propertiesWithIssues}{" "}
-          {propertiesWithIssues === 1 ? "property" : "properties"} affected
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-1.5 px-4 py-4 border-l border-destructive/40">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Critical Unfixed
-        </p>
-        <p
-          className={`text-3xl font-semibold tabular-nums leading-none ${
-            criticalCount > 0 ? "text-severity-critical" : "text-foreground"
-          }`}
+      {kpiCards.map((card) => (
+        <div
+          key={card.label}
+          className={`flex flex-col gap-1.5 px-4 py-4 border rounded-lg ${card.containerClassName ?? ""}`}
         >
-          {criticalCount.toLocaleString()}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {criticalCount === 0
-            ? "None currently"
-            : `Across ${propertiesWithCritical} of ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`}
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-1.5 px-4 py-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Fixed
-        </p>
-        <p className="text-2xl font-semibold tabular-nums leading-none text-foreground">
-          {fixedCount.toLocaleString()}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {fixedCount === 0 ? "No fixes pending" : "Pending re-audit"}
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-1.5 px-4 py-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Verified
-        </p>
-        <p className="text-2xl font-semibold tabular-nums leading-none text-foreground">
-          {verifiedCount.toLocaleString()}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {verifiedCount === 0 ? "None confirmed" : "Confirmed by re-audit"}
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-1.5 px-4 py-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Accepted Risk
-        </p>
-        <p className="text-2xl font-semibold tabular-nums leading-none text-foreground">
-          {acceptedRiskCount.toLocaleString()}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {acceptedRiskCount === 0 ? "None deferred" : "Intentionally deferred"}
-        </p>
-      </div>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {card.label}
+          </p>
+          <p
+            className={`tabular-nums leading-none ${
+              card.variant === "primary"
+                ? "text-4xl font-bold text-foreground"
+                : "text-2xl font-semibold"
+            } ${card.valueClassName?.(card.value) ?? "text-foreground"}`}
+          >
+            {card.value.toLocaleString()}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {card.subtext(card.value)}
+          </p>
+        </div>
+      ))}
     </div>
   );
 };

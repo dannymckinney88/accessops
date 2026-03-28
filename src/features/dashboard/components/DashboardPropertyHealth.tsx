@@ -7,7 +7,8 @@ interface DashboardPropertyHealthProps {
 
 const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
   const sorted = [...summary.propertyHealthSummaries].sort((a, b) => {
-    if (b.unfixedCount !== a.unfixedCount) return b.unfixedCount - a.unfixedCount;
+    if (b.unfixedCount !== a.unfixedCount)
+      return b.unfixedCount - a.unfixedCount;
     return b.criticalCount - a.criticalCount;
   });
 
@@ -18,8 +19,13 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
       aria-describedby="property-health-description"
     >
       {sorted.map((item, index) => {
-        const { property, unfixedCount, criticalCount, totalViolations, trend } =
-          item;
+        const {
+          property,
+          unfixedCount,
+          criticalCount,
+          totalViolations,
+          trend,
+        } = item;
 
         const unfixedPct =
           totalViolations > 0 ? (unfixedCount / totalViolations) * 100 : 0;
@@ -77,8 +83,10 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
             </div>
 
             {/* Stats */}
-            <dl className="flex shrink-0 items-center gap-5 text-sm">
-              <div className="flex flex-col items-end">
+
+            {/* Stats */}
+            <div className="flex shrink-0 items-center gap-5 text-sm">
+              <dl className="flex flex-col items-end">
                 <dt className="sr-only">Critical issues</dt>
                 <dd
                   className={
@@ -90,7 +98,7 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
                   {criticalCount}
                 </dd>
                 <dd className="text-xs text-muted-foreground">critical</dd>
-              </div>
+              </dl>
 
               <div className="flex flex-col items-center gap-0.5">
                 <TrendIcon
@@ -102,7 +110,7 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
                   {trendLabel}
                 </span>
               </div>
-            </dl>
+            </div>
           </li>
         );
       })}
