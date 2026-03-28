@@ -87,11 +87,13 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
       ? (violations.find((v) => v.id === activeViolationId) ?? null)
       : null;
 
-  const openViolations = violations.filter((v) => v.status !== "resolved");
+  const unfixedViolations = violations.filter(
+    (v) => v.status === "open" || v.status === "in-progress",
+  );
   const propertyCount = new Set(
-    openViolations.map((v) => v.property?.id).filter(Boolean),
+    unfixedViolations.map((v) => v.property?.id).filter(Boolean),
   ).size;
-  const subtitle = `${openViolations.length} open issues · ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`;
+  const subtitle = `${unfixedViolations.length} unfixed issues · ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`;
 
   return (
     <div className="flex flex-col gap-6">

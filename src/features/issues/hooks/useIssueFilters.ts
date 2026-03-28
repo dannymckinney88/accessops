@@ -10,7 +10,7 @@ const CURRENT_ASSIGNEE = "Alex Rivera";
 
 export type QuickFilterChip =
   | "my-issues"
-  | "unresolved"
+  | "unfixed"
   | "needs-attention";
 
 export type IssueFilters = {
@@ -94,8 +94,8 @@ export const useIssueFilters = (violations: HydratedViolation[]) => {
       if (filters.quickFilter === "my-issues") {
         if (v.assignedTo !== CURRENT_ASSIGNEE) return false;
       }
-      if (filters.quickFilter === "unresolved") {
-        if (v.status === "resolved") return false;
+      if (filters.quickFilter === "unfixed") {
+        if (v.status !== "open" && v.status !== "in-progress") return false;
       }
       if (filters.quickFilter === "needs-attention") {
         const highSeverity = v.impact === "critical" || v.impact === "serious";

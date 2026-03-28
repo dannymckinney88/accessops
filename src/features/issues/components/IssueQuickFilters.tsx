@@ -32,7 +32,7 @@ const IssueQuickFilters = ({
   const allActive = !hasActiveFilters;
   const criticalActive = filters.severity.includes("critical");
   const myIssuesActive = filters.quickFilter === "my-issues";
-  const unresolvedActive = filters.quickFilter === "unresolved";
+  const unfixedActive = filters.quickFilter === "unfixed";
   const needsAttentionActive = filters.quickFilter === "needs-attention";
 
   return (
@@ -70,11 +70,11 @@ const IssueQuickFilters = ({
 
       <button
         type="button"
-        onClick={() => onSetQuickFilter("unresolved")}
-        aria-pressed={unresolvedActive}
-        className={`${baseClass} ${unresolvedActive ? activeClass : inactiveClass}`}
+        onClick={() => onSetQuickFilter("unfixed")}
+        aria-pressed={unfixedActive}
+        className={`${baseClass} ${unfixedActive ? activeClass : inactiveClass}`}
       >
-        Unresolved
+        Unfixed
       </button>
 
       <button

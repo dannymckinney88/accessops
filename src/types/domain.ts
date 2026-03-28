@@ -5,7 +5,8 @@ export type ScanStatus = "queued" | "running" | "completed" | "failed";
 export type RemediationStatus =
   | "open"
   | "in-progress"
-  | "resolved"
+  | "fixed"
+  | "verified"
   | "accepted-risk";
 
 export type Priority = "low" | "medium" | "high" | "urgent";
@@ -88,5 +89,6 @@ export interface ViolationInstance {
   priority: Priority;
   notes?: string;
   assignedTo?: string;
-  resolvedAt?: string;
+  // verifiedAt: set when a later audit confirms the issue is no longer present.
+  verifiedAt?: string;
 }

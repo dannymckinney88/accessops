@@ -244,6 +244,10 @@ export type DashboardCurrentState = {
   // unfixedCount: violations still requiring work — status "open" or "in-progress".
   // This is the primary work-remaining signal.
   unfixedCount: number;
+  // fixedCount: work completed internally, awaiting re-audit verification.
+  fixedCount: number;
+  // verifiedCount: confirmed resolved by a later audit — fully complete.
+  verifiedCount: number;
   severityDistribution: SeverityDistributionPoint[];
   propertyHealthSummaries: PropertyHealthSummary[];
 };
@@ -300,6 +304,10 @@ export const getDashboardCurrentState =
       (v) => v.status === "open" || v.status === "in-progress",
     );
     const unfixedCount = unfixedViolations.length;
+    const fixedCount = allViolations.filter((v) => v.status === "fixed").length;
+    const verifiedCount = allViolations.filter(
+      (v) => v.status === "verified",
+    ).length;
 
     // criticalCount: critical violations that still need work.
     const criticalCount = unfixedViolations.filter(
@@ -364,6 +372,8 @@ export const getDashboardCurrentState =
       propertiesWithCritical,
       regressingCount,
       unfixedCount,
+      fixedCount,
+      verifiedCount,
       severityDistribution,
       propertyHealthSummaries: summaries,
     };
@@ -504,18 +514,21 @@ export const getDashboardSummary = async (): Promise<DashboardSummary> => {
 // Compares violations between scan A and scan B.
 // Match key: ruleId + first item in target array (selector).
 
-export type CompareState = "new" | "resolved" | "unchanged";
+// CompareState describes the audit-vs-audit diff category for a violation.
+// "no-longer-present" means the violation appeared in scan A but not scan B —
+// it may be fixed (internal work done) or verified (confirmed gone in scan B).
+export type CompareState = "new" | "no-longer-present" | "persisting";
 
 export type CompareResult = {
   scanRunA: ScanRun | undefined;
   scanRunB: ScanRun | undefined;
   newViolations: HydratedViolation[];
-  resolvedViolations: HydratedViolation[];
-  unchangedViolations: HydratedViolation[];
+  noLongerPresentViolations: HydratedViolation[];
+  persistingViolations: HydratedViolation[];
   summary: {
     newCount: number;
-    resolvedCount: number;
-    unchangedCount: number;
+    noLongerPresentCount: number;
+    persistingCount: number;
     netChange: number; // positive = more issues, negative = fewer
   };
 };
@@ -546,10 +559,12 @@ export const getCompareResults = async (
   const newViolations = violationsB.filter(
     (violation) => !keysA.has(matchKey(violation)),
   );
-  const resolvedViolations = violationsA.filter(
+  // noLongerPresent: appeared in scan A but absent from scan B.
+  // Could be fixed (internal work done) or verified (confirmed clean by scan B).
+  const noLongerPresentViolations = violationsA.filter(
     (violation) => !keysB.has(matchKey(violation)),
   );
-  const unchangedViolations = violationsB.filter((violation) =>
+  const persistingViolations = violationsB.filter((violation) =>
     keysA.has(matchKey(violation)),
   );
 
@@ -557,13 +572,13 @@ export const getCompareResults = async (
     scanRunA,
     scanRunB,
     newViolations,
-    resolvedViolations,
-    unchangedViolations,
+    noLongerPresentViolations,
+    persistingViolations,
     summary: {
       newCount: newViolations.length,
-      resolvedCount: resolvedViolations.length,
-      unchangedCount: unchangedViolations.length,
-      netChange: newViolations.length - resolvedViolations.length,
+      noLongerPresentCount: noLongerPresentViolations.length,
+      persistingCount: persistingViolations.length,
+      netChange: newViolations.length - noLongerPresentViolations.length,
     },
   };
 };

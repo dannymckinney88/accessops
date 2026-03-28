@@ -35,7 +35,7 @@ const createViolation = (partial: NewViolation): ViolationInstance => {
 
 // ─── Marketing Site violations ───────────────────────────────────────────────
 // Story: Improving. color-contrast and image-alt dominate early scans.
-// Each successive scan sees fewer recurrences and more resolved statuses.
+// Each successive scan sees fewer recurrences and more issues reaching fixed/verified.
 
 const marketingViolations: ViolationInstance[] = [
   // Scan 1 — baseline, all open
@@ -58,7 +58,8 @@ const marketingViolations: ViolationInstance[] = [
     scanPageId: "sp-mkt1-home",
     ruleId: "image-alt",
     impact: "critical",
-    status: "open",
+    // Verified: alt text confirmed present in subsequent scans — no longer present.
+    status: "verified",
     priority: "high",
     firstSeenAt: "2024-10-01T09:00:00.000Z",
     lastSeenAt: "2024-12-01T09:00:00.000Z",
@@ -66,13 +67,15 @@ const marketingViolations: ViolationInstance[] = [
     target: [".hero-section .hero-image"],
     failureSummary:
       "Fix any of the following: Element does not have an alt attribute. Element has no title attribute.",
+    verifiedAt: "2025-01-01T09:00:00.000Z",
   }),
   createViolation({
     scanRunId: "sr-mkt-1",
     scanPageId: "sp-mkt1-home",
     ruleId: "heading-order",
     impact: "moderate",
-    status: "open",
+    // Verified: heading structure corrected, not seen after scan 1.
+    status: "verified",
     priority: "medium",
     firstSeenAt: "2024-10-01T09:00:00.000Z",
     lastSeenAt: "2024-11-01T09:00:00.000Z",
@@ -80,6 +83,7 @@ const marketingViolations: ViolationInstance[] = [
     target: [".products-section h3"],
     failureSummary:
       "Fix any of the following: Heading order invalid — h3 follows h1 with no h2 in between.",
+    verifiedAt: "2024-12-01T09:00:00.000Z",
   }),
   createViolation({
     scanRunId: "sr-mkt-1",
@@ -100,7 +104,8 @@ const marketingViolations: ViolationInstance[] = [
     scanPageId: "sp-mkt1-personal",
     ruleId: "link-name",
     impact: "serious",
-    status: "open",
+    // Verified: icon link updated with aria-label — not seen after Dec 2024.
+    status: "verified",
     priority: "high",
     firstSeenAt: "2024-10-01T09:00:00.000Z",
     lastSeenAt: "2024-12-01T09:00:00.000Z",
@@ -108,6 +113,7 @@ const marketingViolations: ViolationInstance[] = [
     target: [".product-card a"],
     failureSummary:
       "Fix any of the following: Element does not have text that is visible to screen readers. aria-label attribute does not exist or is empty.",
+    verifiedAt: "2025-01-01T09:00:00.000Z",
   }),
   createViolation({
     scanRunId: "sr-mkt-1",
@@ -128,7 +134,9 @@ const marketingViolations: ViolationInstance[] = [
     scanPageId: "sp-mkt1-loans",
     ruleId: "image-alt",
     impact: "critical",
-    status: "in-progress",
+    // Fixed: alt text shipped in the following sprint — not seen after Nov 2024.
+    // Pending verification until a future audit confirms.
+    status: "fixed",
     priority: "high",
     firstSeenAt: "2024-10-01T09:00:00.000Z",
     lastSeenAt: "2024-11-01T09:00:00.000Z",
@@ -136,14 +144,15 @@ const marketingViolations: ViolationInstance[] = [
     target: [".loan-types .diagram-image"],
     failureSummary:
       "Fix any of the following: Element does not have an alt attribute.",
-    notes: "Adding alt text in next sprint. Designer providing copy.",
+    notes: "Alt text shipped Nov 2024. Awaiting audit verification.",
   }),
   createViolation({
     scanRunId: "sr-mkt-1",
     scanPageId: "sp-mkt1-contact",
     ruleId: "label",
     impact: "critical",
-    status: "open",
+    // Verified: form label added — not seen after Dec 2024.
+    status: "verified",
     priority: "high",
     firstSeenAt: "2024-10-01T09:00:00.000Z",
     lastSeenAt: "2024-12-01T09:00:00.000Z",
@@ -151,9 +160,10 @@ const marketingViolations: ViolationInstance[] = [
     target: ["#contact-form input[name='contactName']"],
     failureSummary:
       "Fix any of the following: Form element does not have an implicit (wrapped) <label>. Form element does not have an explicit <label>. aria-label attribute does not exist or is empty.",
+    verifiedAt: "2025-01-01T09:00:00.000Z",
   }),
 
-  // Scan 2 — some resolved, color-contrast persists
+  // Scan 2 — several issues now verified clean; color-contrast persists, in-progress
   createViolation({
     scanRunId: "sr-mkt-2",
     scanPageId: "sp-mkt2-home",
@@ -199,7 +209,7 @@ const marketingViolations: ViolationInstance[] = [
       "Fix any of the following: Element has insufficient color contrast of 2.9:1 (foreground: #999999, background: #ffffff). Expected contrast ratio of 4.5:1.",
   }),
 
-  // Scan 3 — further reduction, heading-order resolved
+  // Scan 3 — further reduction; heading-order and image-alt now verified clean
   createViolation({
     scanRunId: "sr-mkt-3",
     scanPageId: "sp-mkt3-home",
@@ -313,7 +323,8 @@ const marketingViolations: ViolationInstance[] = [
     scanPageId: "sp-mkt8-home",
     ruleId: "color-contrast",
     impact: "serious",
-    status: "in-progress",
+    // Fixed: token update shipped Jan 9. Awaiting next audit to verify.
+    status: "fixed",
     priority: "medium",
     firstSeenAt: "2024-10-01T09:00:00.000Z",
     lastSeenAt: "2025-03-03T09:00:00.000Z",
@@ -321,7 +332,7 @@ const marketingViolations: ViolationInstance[] = [
     target: [".hero-section .cta-button"],
     failureSummary:
       "Fix any of the following: Element has insufficient color contrast of 3.2:1 (foreground: #767676, background: #ffffff). Expected contrast ratio of 4.5:1.",
-    notes: "Fix shipped Jan 9 — expecting clean scan next cycle.",
+    notes: "Token update shipped Jan 9. Awaiting next audit verification.",
   }),
   // Scans 9–15 produce zero violations. No entries needed.
 ];

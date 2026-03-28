@@ -9,9 +9,13 @@ const config: Record<RemediationStatus, { label: string; className: string }> = 
     label: "In progress",
     className: "bg-status-in-progress text-status-in-progress-foreground",
   },
-  resolved: {
-    label: "Resolved",
-    className: "bg-status-resolved text-status-resolved-foreground",
+  fixed: {
+    label: "Fixed",
+    className: "bg-status-fixed text-status-fixed-foreground",
+  },
+  verified: {
+    label: "Verified",
+    className: "bg-status-verified text-status-verified-foreground",
   },
   "accepted-risk": {
     label: "Accepted risk",

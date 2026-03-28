@@ -29,13 +29,14 @@ const severityLabel: Record<Severity, string> = {
 const statusLabel: Record<RemediationStatus, string> = {
   open: "Open",
   "in-progress": "In Progress",
-  resolved: "Resolved",
+  fixed: "Fixed",
+  verified: "Verified",
   "accepted-risk": "Accepted Risk",
 };
 
 const quickFilterLabel: Record<QuickFilterChip, string> = {
   "my-issues": "My Issues",
-  unresolved: "Unresolved",
+  unfixed: "Unfixed",
   "needs-attention": "Needs Attention",
 };
 

@@ -24,8 +24,10 @@
   --color-status-open-foreground: var(--status-open-foreground);
   --color-status-in-progress: var(--status-in-progress);
   --color-status-in-progress-foreground: var(--status-in-progress-foreground);
-  --color-status-resolved: var(--status-resolved);
-  --color-status-resolved-foreground: var(--status-resolved-foreground);
+  --color-status-fixed: var(--status-fixed);
+  --color-status-fixed-foreground: var(--status-fixed-foreground);
+  --color-status-verified: var(--status-verified);
+  --color-status-verified-foreground: var(--status-verified-foreground);
   --color-status-accepted-risk: var(--status-accepted-risk);
   --color-status-accepted-risk-foreground: var(
     --status-accepted-risk-foreground
@@ -126,8 +128,12 @@
     0.7 0.15 75
   ); /* slightly darker: more visual weight, easier to scan */
   --status-in-progress-foreground: oklch(0.145 0 0);
-  --status-resolved: oklch(0.62 0.15 145);
-  --status-resolved-foreground: oklch(0.985 0 0);
+  /* fixed: work completed internally, awaiting re-audit — teal */
+  --status-fixed: oklch(0.58 0.12 195);
+  --status-fixed-foreground: oklch(0.985 0 0);
+  /* verified: confirmed resolved by a later audit — green */
+  --status-verified: oklch(0.62 0.15 145);
+  --status-verified-foreground: oklch(0.985 0 0);
   --status-accepted-risk: oklch(0.55 0.16 310);
   --status-accepted-risk-foreground: oklch(0.985 0 0);
 
