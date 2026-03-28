@@ -2,6 +2,7 @@
 
 import type { DashboardSummary } from "../types/dashboard";
 import DashboardHeader from "./DashboardHeader";
+import DashboardSignals from "./DashboardSignals";
 
 interface DashboardClientProps {
   summary: DashboardSummary;
@@ -23,9 +24,9 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
           id="signals-heading"
           className="mb-4 text-base font-semibold tracking-tight"
         >
-          Summary
+          Accessibility Overview
         </h2>
-        {/* Signal cards — Phase 2 */}
+        <DashboardSignals summary={summary} />
       </section>
 
       <section aria-labelledby="property-health-heading">
