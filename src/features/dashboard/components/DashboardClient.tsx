@@ -1,13 +1,11 @@
-"use client";
-
-import { useState } from "react";
 import type { DashboardSummary } from "../types/dashboard";
 import DashboardHeader from "./DashboardHeader";
 import DashboardSignals from "./DashboardSignals";
-import DashboardTrendChart from "./DashboardTrendChart";
-import TrendRangeControl, { type TrendRange } from "./TrendRangeControl";
+import DashboardAuditProgress from "./DashboardAuditProgress";
 import DashboardSeverityChart from "./DashboardSeverityChart";
 import DashboardPropertyHealth from "./DashboardPropertyHealth";
+import DashboardCriticalAlert from "./DashboardCriticalAlert";
+import DashboardNeedsAttention from "./DashboardNeedsAttention";
 
 interface DashboardClientProps {
   summary: DashboardSummary;
@@ -15,7 +13,6 @@ interface DashboardClientProps {
 
 const DashboardClient = ({ summary }: DashboardClientProps) => {
   const { unfixedCount, criticalCount, propertiesWithIssues } = summary;
-  const [trendRange, setTrendRange] = useState<TrendRange>("all");
 
   // Subtitle reflects work still remaining — unfixed issues, not baseline total.
   const subtitle =
@@ -26,65 +23,72 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
     <div className="mx-auto w-full max-w-7xl flex flex-col gap-8">
       <DashboardHeader subtitle={subtitle} />
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-        {/* Left column — primary content */}
-        <div className="flex flex-col gap-8">
-          <section aria-labelledby="signals-heading">
-            <h2
-              id="signals-heading"
-              className="mb-4 text-base font-semibold tracking-tight"
-            >
-              Current Accessibility Health
-            </h2>
-            <DashboardSignals summary={summary} />
-          </section>
+      <div className="flex flex-col gap-8">
+        {/* Signals: full-width summary strip */}
+        <section aria-labelledby="signals-heading">
+          <h2
+            id="signals-heading"
+            className="mb-4 text-base font-semibold tracking-tight"
+          >
+            Current Accessibility Health
+          </h2>
+          <DashboardSignals summary={summary} />
+        </section>
 
-          <section aria-labelledby="issue-trend-heading">
-            <div className="flex items-center justify-between mb-4">
+        {/* Main content: left column (audit + severity) + right column (action panels) */}
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[2fr_1fr]">
+          {/* Left column */}
+          <div className="flex flex-col gap-8">
+            <section aria-labelledby="audit-progress-heading">
               <h2
-                id="issue-trend-heading"
-                className="text-base font-semibold tracking-tight"
+                id="audit-progress-heading"
+                className="mb-4 text-base font-semibold tracking-tight"
               >
-                Issue Trend
+                Audit Progress
               </h2>
-              <TrendRangeControl range={trendRange} onChange={setTrendRange} />
-            </div>
-            <DashboardTrendChart trend={summary.trend} range={trendRange} />
-          </section>
+              <div className="rounded-lg border p-4">
+                <DashboardAuditProgress summary={summary} />
+              </div>
+            </section>
 
-          <section aria-labelledby="severity-distribution-heading">
-            <h2
-              id="severity-distribution-heading"
-              className="mb-4 text-base font-semibold tracking-tight"
-            >
-              Severity Distribution
-            </h2>
-            <DashboardSeverityChart
-              distribution={summary.severityDistribution}
-              totalViolations={summary.unfixedCount}
-              highSeverityCount={summary.highSeverityCount}
-            />
-          </section>
+            <section aria-labelledby="severity-distribution-heading">
+              <h2
+                id="severity-distribution-heading"
+                className="mb-4 text-base font-semibold tracking-tight"
+              >
+                Severity Distribution
+              </h2>
+              <DashboardSeverityChart
+                distribution={summary.severityDistribution}
+                totalViolations={summary.unfixedCount}
+                highSeverityCount={summary.highSeverityCount}
+              />
+            </section>
+          </div>
 
-          <section aria-labelledby="property-health-heading">
-            <h2
-              id="property-health-heading"
-              className="mb-1 text-base font-semibold tracking-tight"
-            >
-              Property Health
-            </h2>
-            <p
-              className="mb-4 text-sm text-muted-foreground"
-              id="property-health-description"
-            >
-              Ranked by open work · active scope only
-            </p>
-            <DashboardPropertyHealth summary={summary} />
-          </section>
+          {/* Right column: action/context panels */}
+          <div className="flex flex-col gap-4">
+            <DashboardCriticalAlert summary={summary} />
+            <DashboardNeedsAttention summary={summary} />
+          </div>
         </div>
 
-        {/* Right column — contextual panels (future phases) */}
-        <div className="flex flex-col gap-8" />
+        {/* Property Health: full-width ranking table */}
+        <section aria-labelledby="property-health-heading">
+          <h2
+            id="property-health-heading"
+            className="mb-1 text-base font-semibold tracking-tight"
+          >
+            Property Health
+          </h2>
+          <p
+            className="mb-4 text-sm text-muted-foreground"
+            id="property-health-description"
+          >
+            Ranked by unfixed issues · current audit scope
+          </p>
+          <DashboardPropertyHealth summary={summary} />
+        </section>
       </div>
     </div>
   );
