@@ -1,5 +1,13 @@
 import type { DashboardSummary } from "../types/dashboard";
 
+const CHART_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+];
+
 interface DashboardTopPagesProps {
   summary: DashboardSummary;
 }
@@ -26,8 +34,9 @@ const DashboardTopPages = ({ summary }: DashboardTopPagesProps) => {
       </p>
 
       <ul className="flex flex-col gap-3" aria-label="Critical issues by page">
-        {topCriticalPages.map((p) => {
+        {topCriticalPages.map((p, index) => {
           const pct = Math.round((p.criticalCount / maxCount) * 100);
+          const color = CHART_COLORS[index % CHART_COLORS.length];
           return (
             <li key={p.pageId} className="flex flex-col gap-1.5">
               <div className="flex items-start justify-between gap-2">
@@ -54,8 +63,8 @@ const DashboardTopPages = ({ summary }: DashboardTopPagesProps) => {
                 aria-hidden="true"
               >
                 <div
-                  className="h-full rounded-full bg-severity-critical/50"
-                  style={{ width: `${pct}%` }}
+                  className="h-full rounded-full"
+                  style={{ width: `${pct}%`, background: color }}
                 />
               </div>
             </li>

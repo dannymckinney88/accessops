@@ -17,7 +17,8 @@ const DashboardTopSummary = ({ summary }: DashboardTopSummaryProps) => {
   } = summary;
 
   const sorted = [...propertyHealthSummaries].sort((a, b) => {
-    if (b.unfixedCount !== a.unfixedCount) return b.unfixedCount - a.unfixedCount;
+    if (b.unfixedCount !== a.unfixedCount)
+      return b.unfixedCount - a.unfixedCount;
     return b.criticalCount - a.criticalCount;
   });
 
@@ -67,44 +68,53 @@ const DashboardTopSummary = ({ summary }: DashboardTopSummaryProps) => {
         className="flex flex-col divide-y"
         aria-label="Per-property issue breakdown"
       >
-        {sorted.map(({ property, unfixedCount: pUnfixed, criticalCount: pCritical, trend }) => {
-          const trendText =
-            trend === "regressing"
-              ? "Regressing"
-              : trend === "improving"
-                ? "Improving"
-                : null;
+        {sorted.map(
+          ({
+            property,
+            unfixedCount: pUnfixed,
+            criticalCount: pCritical,
+            trend,
+          }) => {
+            const trendText =
+              trend === "regressing"
+                ? "Regressing"
+                : trend === "improving"
+                  ? "Improving"
+                  : null;
 
-          return (
-            <li
-              key={property.id}
-              className="flex items-center justify-between gap-3 py-2"
-            >
-              <p className="truncate text-sm text-foreground">{property.name}</p>
-              <div className="flex shrink-0 items-center gap-3 text-xs">
-                <span className="tabular-nums text-muted-foreground">
-                  {pUnfixed} unfixed
-                </span>
-                {pCritical > 0 && (
-                  <span className="tabular-nums font-semibold text-foreground">
-                    {pCritical} crit
+            return (
+              <li
+                key={property.id}
+                className="flex items-center justify-between gap-3 py-2"
+              >
+                <p className="truncate text-sm text-foreground">
+                  {property.name}
+                </p>
+                <div className="flex shrink-0 items-center gap-3 text-xs">
+                  <span className="tabular-nums text-muted-foreground">
+                    {pUnfixed} unfixed
                   </span>
-                )}
-                {trendText && (
-                  <span
-                    className={
-                      trend === "regressing"
-                        ? "font-medium text-foreground"
-                        : "text-muted-foreground"
-                    }
-                  >
-                    {trendText}
-                  </span>
-                )}
-              </div>
-            </li>
-          );
-        })}
+                  {pCritical > 0 && (
+                    <span className="tabular-nums font-semibold text-foreground">
+                      {pCritical} crit
+                    </span>
+                  )}
+                  {trendText && (
+                    <span
+                      className={
+                        trend === "regressing"
+                          ? "font-medium text-foreground" // ← this line
+                          : "text-muted-foreground"
+                      }
+                    >
+                      {trendText}
+                    </span>
+                  )}
+                </div>
+              </li>
+            );
+          },
+        )}
       </ul>
     </div>
   );

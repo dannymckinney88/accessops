@@ -12,7 +12,9 @@ const DashboardCriticalDistribution = ({
   if (criticalCount === 0) {
     return (
       <div className="rounded-lg border p-4 flex items-center h-full">
-        <p className="text-sm text-muted-foreground">No critical issues unfixed</p>
+        <p className="text-sm text-muted-foreground">
+          No critical issues unfixed
+        </p>
       </div>
     );
   }
@@ -21,7 +23,10 @@ const DashboardCriticalDistribution = ({
     .filter((s) => s.criticalCount > 0)
     .sort((a, b) => b.criticalCount - a.criticalCount);
 
-  const maxPropertyCount = Math.max(...byProperty.map((s) => s.criticalCount), 1);
+  const maxPropertyCount = Math.max(
+    ...byProperty.map((s) => s.criticalCount),
+    1,
+  );
   const maxPageCount = Math.max(
     ...topCriticalPages.map((p) => p.criticalCount),
     1,
@@ -61,7 +66,7 @@ const DashboardCriticalDistribution = ({
                   aria-hidden="true"
                 >
                   <div
-                    className="h-full rounded-full bg-foreground/30"
+                    className="h-full rounded-full bg-severity-critical/50"
                     style={{ width: `${pct}%` }}
                   />
                 </div>
@@ -105,7 +110,7 @@ const DashboardCriticalDistribution = ({
                       aria-hidden="true"
                     >
                       <div
-                        className="h-full rounded-full bg-foreground/30"
+                        className="h-full rounded-full bg-severity-critical/50"
                         style={{ width: `${pct}%` }}
                       />
                     </div>

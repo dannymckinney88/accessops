@@ -4,6 +4,14 @@ interface DashboardCriticalByPropertyProps {
   summary: DashboardSummary;
 }
 
+const CHART_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+];
+
 const DashboardCriticalByProperty = ({
   summary,
 }: DashboardCriticalByPropertyProps) => {
@@ -29,9 +37,13 @@ const DashboardCriticalByProperty = ({
         Critical by Property
       </p>
 
-      <ul className="flex flex-col gap-3" aria-label="Critical issues by property">
-        {byProperty.map((s) => {
+      <ul
+        className="flex flex-col gap-3"
+        aria-label="Critical issues by property"
+      >
+        {byProperty.map((s, index) => {
           const pct = Math.round((s.criticalCount / maxCount) * 100);
+          const color = CHART_COLORS[index % CHART_COLORS.length];
           return (
             <li key={s.property.id} className="flex flex-col gap-1.5">
               <div className="flex items-baseline justify-between gap-2">
@@ -51,8 +63,8 @@ const DashboardCriticalByProperty = ({
                 aria-hidden="true"
               >
                 <div
-                  className="h-full rounded-full bg-severity-critical/50"
-                  style={{ width: `${pct}%` }}
+                  className="h-full rounded-full"
+                  style={{ width: `${pct}%`, background: color }}
                 />
               </div>
             </li>

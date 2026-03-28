@@ -53,6 +53,15 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
               ? "text-trend-improving"
               : "text-muted-foreground";
 
+        const progressBarColor =
+          trend === "regressing"
+            ? "bg-severity-critical"
+            : trend === "improving"
+              ? "bg-status-verified"
+              : trend === "stable"
+                ? "bg-primary"
+                : "bg-muted-foreground";
+
         return (
           <li key={property.id} className="flex items-center gap-4 px-4 py-3">
             {/* Rank */}
@@ -73,7 +82,7 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
                 role="presentation"
               >
                 <div
-                  className="h-full rounded-full bg-primary"
+                  className={`h-full rounded-full ${progressBarColor}`}
                   style={{ width: `${unfixedPct}%` }}
                 />
               </div>

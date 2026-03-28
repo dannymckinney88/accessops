@@ -14,6 +14,7 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
     propertiesWithIssues,
     fixedCount,
     verifiedCount,
+    acceptedRiskCount,
   } = summary;
 
   type KpiCard = {
@@ -55,13 +56,19 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
       variant: "standard",
       subtext: (v) => (v === 0 ? "None confirmed" : "Confirmed by re-audit"),
     },
+    {
+      label: "Accepted Risk",
+      value: acceptedRiskCount, // add to destructuring at top
+      variant: "standard",
+      subtext: (v) => (v === 0 ? "None deferred" : "Intentionally deferred"),
+    },
   ];
 
   return (
     <div
       role="group"
       aria-label="Accessibility health metrics"
-      className="grid grid-cols-[2fr_1.5fr_1fr_1fr] gap-4"
+      className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr] gap-4"
     >
       {kpiCards.map((card) => (
         <div
