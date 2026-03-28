@@ -402,9 +402,38 @@ export const getDashboardTrend = async (): Promise<DashboardTrend> => {
         ? `critical up ${criticalDelta}`
         : "critical stable";
 
+  // Per-property attribution: identify if a regressing property is now
+  // the primary driver of open risk, even when the overall trend looks positive.
+  // Only append when overall is improving — the aggregate can hide a regression.
+  let attributionClause = "";
+  if (totalDelta < 0) {
+    let worstPropertyName: string | null = null;
+    let worstDelta = 0;
+    for (let pi = 0; pi < properties.length; pi++) {
+      const runs = propertyRuns[pi];
+      if (!runs || runs.length < 2) continue;
+      const firstRun = runs[0]!;
+      const lastRun = runs[runs.length - 1]!;
+      const firstCount = violations.filter(
+        (v) => v.scanRunId === firstRun.id,
+      ).length;
+      const lastCount = violations.filter(
+        (v) => v.scanRunId === lastRun.id,
+      ).length;
+      const delta = lastCount - firstCount;
+      if (delta > worstDelta) {
+        worstDelta = delta;
+        worstPropertyName = properties[pi]!.name;
+      }
+    }
+    if (worstPropertyName) {
+      attributionClause = ` ${worstPropertyName} regression is now the primary driver of open risk.`;
+    }
+  }
+
   return {
     dataPoints,
-    summaryText: `${totalTrend}; ${criticalTrend}.`,
+    summaryText: `${totalTrend}; ${criticalTrend}.${attributionClause}`,
   };
 };
 

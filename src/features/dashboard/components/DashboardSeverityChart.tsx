@@ -36,8 +36,8 @@ const DashboardSeverityChart = ({
 
   const summaryText =
     highSeverityCount > 0
-      ? `${highSeverityCount} of ${totalViolations} issues are critical or serious.`
-      : `No critical or serious issues across all properties.`;
+      ? `${highSeverityCount} of ${totalViolations} issues are critical or serious — these need priority attention.`
+      : `No critical or serious issues across tracked properties.`;
 
   return (
     <div className="flex flex-col gap-3">

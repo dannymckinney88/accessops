@@ -17,8 +17,9 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
   const { totalViolations, criticalCount, propertyCount } = summary;
   const [trendRange, setTrendRange] = useState<TrendRange>("all");
 
+  const affectedCount = summary.propertiesWithIssues;
   const subtitle =
-    `${totalViolations} issues across ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}` +
+    `${totalViolations} issues across ${affectedCount} ${affectedCount === 1 ? "property" : "properties"}` +
     (criticalCount > 0 ? ` · ${criticalCount} critical` : "");
 
   return (
@@ -33,7 +34,7 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
               id="signals-heading"
               className="mb-4 text-base font-semibold tracking-tight"
             >
-              Current state
+              Current Accessibility Health
             </h2>
             <DashboardSignals summary={summary} />
           </section>
