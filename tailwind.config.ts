@@ -2,7 +2,12 @@ import type { Config } from "tailwindcss";
 
 export default {
   darkMode: ["class"],
-  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
+  content: [
+    "./pages/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+    "./app/**/*.{ts,tsx}",
+    "./src/**/*.{ts,tsx}",
+  ],
   prefix: "",
   theme: {
     container: {
@@ -14,8 +19,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
+        display: ["Inter", "system-ui", "-apple-system", "sans-serif"],
       },
       colors: {
         border: "var(--border)",
@@ -73,6 +78,12 @@ export default {
           fixed: "var(--status-fixed)",
           verified: "var(--status-verified)",
           "accepted-risk": "var(--status-accepted-risk)",
+        },
+        trend: {
+          improving: "var(--trend-improving)",
+          regressing: "var(--trend-regressing)",
+          stable: "var(--trend-stable)",
+          insufficient: "var(--trend-insufficient)",
         },
         chart: {
           1: "var(--chart-1)",
