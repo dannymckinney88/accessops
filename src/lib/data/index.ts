@@ -220,10 +220,23 @@ export const getHydratedViolations = async (): Promise<HydratedViolation[]> => {
   });
 };
 
+// ─── Dashboard: trend time series ────────────────────────────────────────────
+
+export type TrendDataPoint = {
+  label: string;
+  [propertyId: string]: string | number;
+};
+
+export type DashboardTrend = {
+  dataPoints: TrendDataPoint[];
+  properties: Array<{ id: string; name: string }>;
+  summaryText: string;
+};
+
 // ─── Dashboard: aggregated summary ───────────────────────────────────────────
 //
-// Returns totals and per-property health rolled up from the latest completed
-// scan run per property. Single entry point for the Dashboard route.
+// Returns totals, per-property health, and trend time series rolled up from
+// scan run data. Single entry point for the Dashboard route.
 
 export type DashboardSummary = {
   totalViolations: number;
@@ -231,6 +244,7 @@ export type DashboardSummary = {
   propertyCount: number;
   propertiesWithCritical: number;
   propertyHealthSummaries: PropertyHealthSummary[];
+  trend: DashboardTrend;
 };
 
 export const getDashboardSummary = async (): Promise<DashboardSummary> => {
@@ -246,12 +260,96 @@ export const getDashboardSummary = async (): Promise<DashboardSummary> => {
     (s) => s.criticalCount > 0,
   ).length;
 
+  // Build per-property scan totals (from scanPages, not violations) for the
+  // trend chart. scanPage.violationCount is the authoritative per-page total.
+  const propertyTrends = properties.map((property) => {
+    const runs = scanRuns
+      .filter(
+        (r) => r.propertyId === property.id && r.status === "completed",
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.initiatedAt).getTime() - new Date(b.initiatedAt).getTime(),
+      );
+
+    const runTotals = runs.map((run) => {
+      const pages = scanPages.filter((sp) => sp.scanRunId === run.id);
+      const total = pages.reduce((sum, sp) => sum + sp.violationCount, 0);
+      return { date: run.initiatedAt, total };
+    });
+
+    return { property, runTotals };
+  });
+
+  // Use Marketing Site scan dates as the x-axis labels (most regular schedule).
+  // All four properties scan on approximately the same dates, so aligning by
+  // index gives accurate enough time labels for a summary trend view.
+  const referenceRunTotals =
+    propertyTrends.find((pt) => pt.property.id === "prop-marketing")
+      ?.runTotals ?? propertyTrends[0]?.runTotals ?? [];
+
+  const dataPoints: TrendDataPoint[] = referenceRunTotals.map((ref, i) => {
+    const label = new Date(ref.date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+    const point: TrendDataPoint = { label };
+    for (const { property, runTotals } of propertyTrends) {
+      point[property.id] = runTotals[i]?.total ?? 0;
+    }
+    return point;
+  });
+
+  // Plain-language summary: compare first vs last slot total, identify driver.
+  const firstTotal = propertyTrends.reduce(
+    (sum, { runTotals }) => sum + (runTotals[0]?.total ?? 0),
+    0,
+  );
+  const lastTotal = propertyTrends.reduce(
+    (sum, { runTotals }) =>
+      sum + (runTotals[runTotals.length - 1]?.total ?? 0),
+    0,
+  );
+  const delta = lastTotal - firstTotal;
+
+  let driverName = "";
+  let maxAbsDelta = 0;
+  for (const { property, runTotals } of propertyTrends) {
+    const d = Math.abs(
+      (runTotals[runTotals.length - 1]?.total ?? 0) -
+        (runTotals[0]?.total ?? 0),
+    );
+    if (d > maxAbsDelta) {
+      maxAbsDelta = d;
+      driverName = property.name;
+    }
+  }
+
+  let summaryText: string;
+  if (delta < 0) {
+    summaryText = `Issues decreased by ${Math.abs(delta)} since October, driven by improvements in ${driverName}.`;
+  } else if (delta > 0) {
+    summaryText = `Issues increased by ${delta} since October, driven by regressions in ${driverName}.`;
+  } else {
+    summaryText = "Total issue count is unchanged since October.";
+  }
+
+  const trend: DashboardTrend = {
+    dataPoints,
+    properties: propertyTrends.map(({ property }) => ({
+      id: property.id,
+      name: property.name,
+    })),
+    summaryText,
+  };
+
   return {
     totalViolations,
     criticalCount,
     propertyCount,
     propertiesWithCritical,
     propertyHealthSummaries: summaries,
+    trend,
   };
 };
 

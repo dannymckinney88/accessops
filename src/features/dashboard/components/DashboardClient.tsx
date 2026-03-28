@@ -3,6 +3,7 @@
 import type { DashboardSummary } from "../types/dashboard";
 import DashboardHeader from "./DashboardHeader";
 import DashboardSignals from "./DashboardSignals";
+import DashboardTrendChart from "./DashboardTrendChart";
 import DashboardPropertyHealth from "./DashboardPropertyHealth";
 
 interface DashboardClientProps {
@@ -31,6 +32,16 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
               Accessibility Overview
             </h2>
             <DashboardSignals summary={summary} />
+          </section>
+
+          <section aria-labelledby="trend-heading">
+            <h2
+              id="trend-heading"
+              className="mb-4 text-base font-semibold tracking-tight"
+            >
+              Issue Trend
+            </h2>
+            <DashboardTrendChart trend={summary.trend} />
           </section>
 
           <section aria-labelledby="property-health-heading">

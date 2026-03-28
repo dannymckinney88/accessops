@@ -1,1 +1,1 @@
-export type { DashboardSummary } from "@/lib/data/index";
+export type { DashboardSummary, DashboardTrend } from "@/lib/data/index";
