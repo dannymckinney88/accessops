@@ -27,7 +27,7 @@ const StatusBadge = ({ status }: StatusBadgeProps) => {
   const { label, className } = config[status];
   return (
     <span
-      className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${className}`}
+      className={`inline-flex items-center rounded-md border border-foreground/10 px-2 py-0.5 text-xs font-medium ${className}`}
     >
       {label}
     </span>

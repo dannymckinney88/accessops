@@ -13,6 +13,10 @@ interface IssueQuickFiltersProps {
 
 const activeClass =
   "bg-primary text-primary-foreground border-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring";
+// Critical chip gets severity-matched styling when active so the filter
+// visually echoes what it represents. Kept restrained — only fires when active.
+const criticalActiveClass =
+  "bg-severity-critical text-severity-critical-foreground border-severity-critical focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring";
 const inactiveClass =
   "bg-background text-muted-foreground border-border hover:border-foreground/40 hover:text-foreground focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring";
 const baseClass =
@@ -59,7 +63,7 @@ const IssueQuickFilters = ({
         type="button"
         onClick={() => onToggleSeverity("critical")}
         aria-pressed={criticalActive}
-        className={`${baseClass} ${criticalActive ? activeClass : inactiveClass}`}
+        className={`${baseClass} ${criticalActive ? criticalActiveClass : inactiveClass}`}
       >
         Critical
       </button>
