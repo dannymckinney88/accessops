@@ -1,7 +1,12 @@
-export default function DashboardPage() {
+import { getDashboardSummary } from "@/lib/data/index";
+import DashboardClient from "@/features/dashboard/components/DashboardClient";
+
+export default async function DashboardPage() {
+  const summary = await getDashboardSummary();
+
   return (
     <div className="page-shell">
-      <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+      <DashboardClient summary={summary} />
     </div>
   );
 }

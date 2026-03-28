@@ -220,6 +220,41 @@ export const getHydratedViolations = async (): Promise<HydratedViolation[]> => {
   });
 };
 
+// ─── Dashboard: aggregated summary ───────────────────────────────────────────
+//
+// Returns totals and per-property health rolled up from the latest completed
+// scan run per property. Single entry point for the Dashboard route.
+
+export type DashboardSummary = {
+  totalViolations: number;
+  criticalCount: number;
+  propertyCount: number;
+  propertiesWithCritical: number;
+  propertyHealthSummaries: PropertyHealthSummary[];
+};
+
+export const getDashboardSummary = async (): Promise<DashboardSummary> => {
+  const summaries = await getPropertyHealthSummaries();
+
+  const totalViolations = summaries.reduce(
+    (sum, s) => sum + s.totalViolations,
+    0,
+  );
+  const criticalCount = summaries.reduce((sum, s) => sum + s.criticalCount, 0);
+  const propertyCount = summaries.length;
+  const propertiesWithCritical = summaries.filter(
+    (s) => s.criticalCount > 0,
+  ).length;
+
+  return {
+    totalViolations,
+    criticalCount,
+    propertyCount,
+    propertiesWithCritical,
+    propertyHealthSummaries: summaries,
+  };
+};
+
 // ─── Compare: two scan runs for the same property ────────────────────────────
 //
 // Compares violations between scan A and scan B.
