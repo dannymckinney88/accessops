@@ -16,6 +16,7 @@ import PriorityBadge from "@/components/common/PriorityBadge";
 interface IssueDrawerProps {
   violation: HydratedViolation | null;
   onClose: () => void;
+  onFocusTrigger: () => void;
 }
 
 const formatDate = (iso: string) =>
@@ -25,7 +26,7 @@ const formatDate = (iso: string) =>
     year: "numeric",
   });
 
-const IssueDrawer = ({ violation, onClose }: IssueDrawerProps) => {
+const IssueDrawer = ({ violation, onClose, onFocusTrigger }: IssueDrawerProps) => {
   return (
     <Sheet
       open={violation !== null}
@@ -33,7 +34,16 @@ const IssueDrawer = ({ violation, onClose }: IssueDrawerProps) => {
         if (!open) onClose();
       }}
     >
-      <SheetContent side="right" className="flex flex-col gap-0 p-0 overflow-hidden">
+      <SheetContent
+        side="right"
+        className="flex flex-col gap-0 p-0 overflow-hidden"
+        onCloseAutoFocus={(e) => {
+          // Prevent Radix returning focus to the document body.
+          // We restore focus manually to the row that triggered the drawer.
+          e.preventDefault();
+          onFocusTrigger();
+        }}
+      >
         {violation && (
           <>
             <SheetHeader className="px-6 py-5 border-b">

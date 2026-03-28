@@ -60,7 +60,7 @@ const IssuesTable = ({
   const end = Math.min((pageIndex + 1) * pageSize, total);
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3" data-issues-table>
       <div className="rounded-lg border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -130,6 +130,7 @@ const IssuesTable = ({
                   <tr
                     key={row.id}
                     tabIndex={0}
+                    data-violation-id={row.original.id}
                     onClick={() => onRowClick(row.original.id)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
@@ -139,7 +140,7 @@ const IssuesTable = ({
                     }}
                     className={[
                       "border-b last:border-0 cursor-pointer outline-none transition-colors",
-                      "hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+                      "hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring focus-visible:bg-muted/40",
                       isActive ? "bg-accent" : "",
                     ]
                       .filter(Boolean)
@@ -165,7 +166,7 @@ const IssuesTable = ({
       </div>
 
       {total > PAGE_SIZE_OPTIONS[0] && (
-        <div className="flex items-center justify-between px-1">
+        <nav aria-label="Pagination" className="flex items-center justify-between px-1">
           <div className="flex items-center gap-2">
             <label
               htmlFor="issues-page-size"
@@ -211,7 +212,7 @@ const IssuesTable = ({
               <ChevronRight size={14} aria-hidden="true" />
             </button>
           </div>
-        </div>
+        </nav>
       )}
     </div>
   );

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import type { HydratedViolation, Property } from "@/lib/data/index";
 import { useIssueFilters } from "../hooks/useIssueFilters";
@@ -17,20 +18,56 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const activeViolationId = searchParams.get("id") ?? null;
+  const activeViolationId = searchParams.get("issueId") ?? null;
+
+  // Tracks the violation ID whose row triggered the drawer open.
+  // Used to restore focus to that row when the drawer closes.
+  const triggerRowIdRef = useRef<string | null>(null);
 
   const openDrawer = (id: string) => {
+    triggerRowIdRef.current = id;
     const params = new URLSearchParams(searchParams.toString());
-    params.set("id", id);
+    params.set("issueId", id);
     router.push(`${pathname}?${params.toString()}`);
   };
 
   // Replace instead of push: closing the drawer shouldn't pollute browser history.
   const closeDrawer = () => {
     const params = new URLSearchParams(searchParams.toString());
-    params.delete("id");
+    params.delete("issueId");
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname);
+  };
+
+  // Called by IssueDrawer's onCloseAutoFocus to restore focus to the trigger row.
+  // Falls back to the first visible row if the original row is no longer in the DOM
+  // (e.g. filters changed while the drawer was open).
+  // requestAnimationFrame defers focus until after the Sheet close animation settles.
+  const focusTriggerRow = () => {
+    const id = triggerRowIdRef.current;
+
+    if (id) {
+      const row = document.querySelector<HTMLElement>(
+        `[data-violation-id="${id}"]`,
+      );
+      if (row) {
+        requestAnimationFrame(() => {
+          row.focus();
+          triggerRowIdRef.current = null;
+        });
+        return;
+      }
+    }
+
+    // Fallback: scoped to the issues table region to avoid collisions with
+    // any future tables elsewhere in the layout.
+    const firstRow = document.querySelector<HTMLElement>(
+      "[data-issues-table] [data-violation-id]",
+    );
+    requestAnimationFrame(() => {
+      firstRow?.focus();
+      triggerRowIdRef.current = null;
+    });
   };
 
   const {
@@ -102,7 +139,11 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
         />
       )}
 
-      <IssueDrawer violation={activeViolation} onClose={closeDrawer} />
+      <IssueDrawer
+        violation={activeViolation}
+        onClose={closeDrawer}
+        onFocusTrigger={focusTriggerRow}
+      />
     </div>
   );
 };
