@@ -7,7 +7,6 @@ import DashboardTopPages from "./DashboardTopPages";
 import DashboardAuditProgress from "./DashboardAuditProgress";
 import DashboardSeverityByProperty from "./DashboardSeverityByProperty";
 import DashboardPropertyHealth from "./DashboardPropertyHealth";
-
 interface DashboardClientProps {
   summary: DashboardSummary;
 }

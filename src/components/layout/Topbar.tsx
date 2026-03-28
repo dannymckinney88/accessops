@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Menu } from "lucide-react";
 import MobileSidebar from "./MobileSidebar";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Topbar() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -23,9 +24,12 @@ export default function Topbar() {
         </span>
       </div>
 
-      <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs text-muted-foreground">
-        Last scan: 2 hours ago · Completed
-      </span>
+      <div className="flex items-center gap-3">
+        <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs text-muted-foreground">
+          Last scan: 2 hours ago · Completed
+        </span>
+        <ThemeToggle />
+      </div>
 
       <MobileSidebar
         open={mobileNavOpen}

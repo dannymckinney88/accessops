@@ -62,7 +62,7 @@ const DashboardAuditProgress = ({ summary }: DashboardAuditProgressProps) => {
     .join(" ");
 
   return (
-    <div className="flex h-full flex-col gap-8">
+    <div className="flex h-full flex-col gap-5">
       <div
         role="img"
         aria-label={ariaLabel}
@@ -128,33 +128,12 @@ const DashboardAuditProgress = ({ summary }: DashboardAuditProgressProps) => {
         />
       </div>
 
-      <div className="mt-auto flex flex-col gap-2 text-sm leading-7 text-muted-foreground">
-        <p>{totalViolations} issues in the current audit baseline.</p>
-
-        {unfixedCount === totalViolations ? (
-          <p>Remediation has not yet started.</p>
-        ) : (
-          <>
-            <p>
-              {resolvedCount} addressed ({resolvedPct}% of baseline).
-            </p>
-            {(verifiedCount > 0 || fixedCount > 0) && (
-              <p>
-                {verifiedCount > 0 && `${verifiedCount} verified`}
-                {verifiedCount > 0 && fixedCount > 0 && " · "}
-                {fixedCount > 0 && `${fixedCount} awaiting re-audit`}.
-              </p>
-            )}
-            <p>
-              {unfixedCount} {unfixedCount === 1 ? "issue" : "issues"} still{" "}
-              {unfixedCount === 1 ? "requires" : "require"} remediation.
-            </p>
-          </>
-        )}
-
-        {acceptedRiskCount > 0 && (
-          <p>{acceptedRiskCount} accepted as known risk.</p>
-        )}
+      <div className="mt-auto flex flex-col gap-1 text-xs text-muted-foreground">
+        <p>
+          {totalViolations} baseline · {unfixedCount} still unfixed
+          {resolvedCount > 0 && ` · ${resolvedCount} addressed (${resolvedPct}%)`}
+          {acceptedRiskCount > 0 && ` · ${acceptedRiskCount} accepted risk`}
+        </p>
       </div>
     </div>
   );
