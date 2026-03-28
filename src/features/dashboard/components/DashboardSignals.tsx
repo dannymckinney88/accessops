@@ -68,12 +68,12 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
     <div
       role="group"
       aria-label="Accessibility health metrics"
-      className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr] gap-4"
+      className="grid grid-cols-2 md:grid-cols-[2fr_1.5fr_1fr_1fr_1fr] gap-4"
     >
-      {kpiCards.map((card) => (
+      {kpiCards.map((card, index) => (
         <div
           key={card.label}
-          className="bg-card border border-border rounded-lg flex flex-col gap-1.5 px-5 py-4"
+          className={`bg-card border border-border rounded-lg flex flex-col gap-1.5 px-5 py-4${index === 0 ? " col-span-2 md:col-span-1" : ""}`}
         >
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {card.label}
