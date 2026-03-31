@@ -255,6 +255,9 @@ export type DashboardCurrentState = {
   // unfixedCount: violations still requiring work — status "open" or "in-progress".
   // This is the primary work-remaining signal.
   unfixedCount: number;
+  // openCount / inProgressCount: unfixed split by lifecycle sub-state.
+  openCount: number;
+  inProgressCount: number;
   // fixedCount: work completed internally, awaiting re-audit verification.
   fixedCount: number;
   // verifiedCount: confirmed resolved by a later audit — fully complete.
@@ -326,6 +329,10 @@ export const getDashboardCurrentState =
       (v) => v.status === "open" || v.status === "in-progress",
     );
     const unfixedCount = unfixedViolations.length;
+    const openCount = allViolations.filter((v) => v.status === "open").length;
+    const inProgressCount = allViolations.filter(
+      (v) => v.status === "in-progress",
+    ).length;
     const fixedCount = allViolations.filter((v) => v.status === "fixed").length;
     const verifiedCount = allViolations.filter(
       (v) => v.status === "verified",
@@ -522,6 +529,8 @@ export const getDashboardCurrentState =
       propertiesWithCritical,
       regressingCount,
       unfixedCount,
+      openCount,
+      inProgressCount,
       fixedCount,
       verifiedCount,
       acceptedRiskCount,

@@ -4,137 +4,121 @@ interface DashboardAuditProgressProps {
   summary: DashboardSummary;
 }
 
-interface SegmentProps {
-  color: string;
-  label: string;
-  count: number;
-  description: string;
-}
-
-const Segment = ({ color, label, count, description }: SegmentProps) => (
-  <div className="flex flex-col gap-1.5">
-    <div className="flex items-center gap-2">
-      <span
-        className="inline-block h-3 w-3 shrink-0 rounded-sm"
-        style={{ background: color }}
-        aria-hidden="true"
-      />
-      <span className="text-sm font-semibold tabular-nums text-foreground">{count}</span>
-      <span className="text-sm text-muted-foreground">{label}</span>
-    </div>
-    <p className="pl-5 text-xs text-muted-foreground">
-      {description}
-    </p>
-  </div>
-);
-
 const DashboardAuditProgress = ({ summary }: DashboardAuditProgressProps) => {
   const {
-    totalViolations,
-    unfixedCount,
+    openCount,
+    inProgressCount,
     fixedCount,
     verifiedCount,
     acceptedRiskCount,
+    totalViolations,
   } = summary;
 
-  const verifiedPct =
-    totalViolations > 0 ? (verifiedCount / totalViolations) * 100 : 0;
-  const fixedPct =
-    totalViolations > 0 ? (fixedCount / totalViolations) * 100 : 0;
-  const acceptedPct =
-    totalViolations > 0 ? (acceptedRiskCount / totalViolations) * 100 : 0;
-  const unfixedPct = Math.max(0, 100 - verifiedPct - fixedPct - acceptedPct);
+  const rows: Array<{
+    label: string;
+    count: number;
+    color: string;
+    ariaDesc: string;
+  }> = [
+    {
+      label: "Open",
+      count: openCount,
+      color: "var(--status-open)",
+      ariaDesc: "unstarted violations",
+    },
+    {
+      label: "In Progress",
+      count: inProgressCount,
+      color: "var(--status-in-progress)",
+      ariaDesc: "violations actively being remediated",
+    },
+    {
+      label: "Fixed",
+      count: fixedCount,
+      color: "var(--status-fixed)",
+      ariaDesc: "violations fixed internally, awaiting re-audit",
+    },
+    {
+      label: "Verified",
+      count: verifiedCount,
+      color: "var(--status-verified)",
+      ariaDesc: "violations confirmed resolved by re-audit",
+    },
+    {
+      label: "Accepted Risk",
+      count: acceptedRiskCount,
+      color: "var(--status-accepted-risk)",
+      ariaDesc: "violations intentionally accepted as known risk",
+    },
+  ].filter((r) => r.count > 0 || r.label === "Open");
 
-  const resolvedCount = verifiedCount + fixedCount;
-  const resolvedPct =
+  const maxCount = Math.max(...rows.map((r) => r.count), 1);
+
+  // Derive insight from the open/fixed ratio
+  const addressedCount = fixedCount + verifiedCount;
+  const addressedPct =
     totalViolations > 0
-      ? Math.round((resolvedCount / totalViolations) * 100)
+      ? Math.round((addressedCount / totalViolations) * 100)
       : 0;
 
-  const ariaLabel = [
-    `${totalViolations} total issues in the current audit baseline.`,
-    `${verifiedCount} verified resolved.`,
-    `${fixedCount} fixed and awaiting verification.`,
-    `${unfixedCount} still require remediation.`,
-    acceptedRiskCount > 0 ? `${acceptedRiskCount} accepted as known risk.` : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
+  const insightText =
+    addressedPct === 0
+      ? "No remediation progress yet — all issues remain open"
+      : addressedPct < 20
+        ? "Most issues are still open — limited remediation progress so far"
+        : addressedPct < 50
+          ? `${addressedPct}% addressed — remediation is underway`
+          : `${addressedPct}% addressed — strong remediation progress`;
 
   return (
-    <div className="flex h-full flex-col gap-5">
-      <div
-        role="img"
-        aria-label={ariaLabel}
-        className="flex h-7 w-full overflow-hidden rounded-full"
+    <div className="flex flex-col gap-4">
+      {/* Bar rows */}
+      <dl
+        className="flex flex-col gap-2.5"
+        aria-label="Violation counts by lifecycle state"
       >
-        {verifiedPct > 0 && (
-          <div
-            className="h-full"
-            style={{
-              width: `${verifiedPct}%`,
-              background: "var(--status-verified)",
-            }}
-          />
-        )}
-        {fixedPct > 0 && (
-          <div
-            className="h-full"
-            style={{
-              width: `${fixedPct}%`,
-              background: "var(--status-fixed)",
-            }}
-          />
-        )}
-        {acceptedPct > 0 && (
-          <div
-            className="h-full"
-            style={{
-              width: `${acceptedPct}%`,
-              background: "var(--status-accepted-risk)",
-            }}
-          />
-        )}
-        <div
-          className="h-full flex-1 bg-muted"
-          style={unfixedPct === 100 ? { width: "100%" } : undefined}
-        />
+        {rows.map(({ label, count, color, ariaDesc }) => {
+          const barPct = (count / maxCount) * 100;
+          return (
+            <div key={label} className="grid grid-cols-[80px_1fr_32px] items-center gap-3">
+              <dt className="text-xs text-muted-foreground">{label}</dt>
+              <dd className="flex items-center gap-2" aria-label={`${count} ${ariaDesc}`}>
+                <div className="h-4 flex-1 overflow-hidden rounded-sm bg-muted">
+                  {count > 0 && (
+                    <div
+                      className="h-full rounded-sm transition-all duration-300"
+                      style={{
+                        width: `${barPct}%`,
+                        background: color,
+                      }}
+                    />
+                  )}
+                </div>
+              </dd>
+              <dd
+                className="text-right text-xs tabular-nums font-medium text-foreground"
+                aria-hidden="true"
+              >
+                {count}
+              </dd>
+            </div>
+          );
+        })}
+      </dl>
+
+      {/* x-axis tick labels */}
+      <div className="grid grid-cols-[80px_1fr_32px] gap-3" aria-hidden="true">
+        <div />
+        <div className="flex justify-between px-0.5 text-[10px] text-muted-foreground/60">
+          <span>0</span>
+          <span>{Math.round(maxCount / 2)}</span>
+          <span>{maxCount}</span>
+        </div>
+        <div />
       </div>
 
-      <div className="grid grid-cols-2 gap-x-6 gap-y-4 xl:grid-cols-4">
-        <Segment
-          color="var(--status-verified)"
-          label="Verified"
-          count={verifiedCount}
-          description="Confirmed by re-audit"
-        />
-        <Segment
-          color="var(--status-fixed)"
-          label="Fixed"
-          count={fixedCount}
-          description="Awaiting re-audit"
-        />
-        <Segment
-          color="var(--status-accepted-risk)"
-          label="Accepted Risk"
-          count={acceptedRiskCount}
-          description="Intentionally excluded"
-        />
-        <Segment
-          color="var(--muted-foreground)"
-          label="Unfixed"
-          count={unfixedCount}
-          description="Still requires remediation"
-        />
-      </div>
-
-      <div className="mt-auto flex flex-col gap-1 text-xs text-muted-foreground">
-        <p>
-          {totalViolations} baseline · {unfixedCount} still unfixed
-          {resolvedCount > 0 && ` · ${resolvedCount} addressed (${resolvedPct}%)`}
-          {acceptedRiskCount > 0 && ` · ${acceptedRiskCount} accepted risk`}
-        </p>
-      </div>
+      {/* Insight */}
+      <p className="text-xs text-muted-foreground">{insightText}</p>
     </div>
   );
 };
