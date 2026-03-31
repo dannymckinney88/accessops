@@ -1,7 +1,12 @@
-export default function ScansPage() {
+import { getScansScreenData } from "@/lib/data/index";
+import ScansClient from "@/features/scans/components/ScansClient";
+
+export default async function ScansPage() {
+  const data = await getScansScreenData();
+
   return (
     <div className="page-shell">
-      <h1 className="text-2xl font-semibold tracking-tight">Scans</h1>
+      <ScansClient data={data} />
     </div>
   );
 }
