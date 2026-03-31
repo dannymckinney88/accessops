@@ -1,9 +1,6 @@
 import type { DashboardSummary } from "../types/dashboard";
 import DashboardHeader from "./DashboardHeader";
 import DashboardSignals from "./DashboardSignals";
-import DashboardTopCriticalPattern from "./DashboardTopCriticalPattern";
-import DashboardCriticalByProperty from "./DashboardCriticalByProperty";
-import DashboardTopPages from "./DashboardTopPages";
 import DashboardAuditProgress from "./DashboardAuditProgress";
 import DashboardSeverityByProperty from "./DashboardSeverityByProperty";
 import DashboardPropertyHealth from "./DashboardPropertyHealth";
@@ -24,7 +21,10 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
       <DashboardHeader subtitle={subtitle} />
 
       {/* Row 1: KPI strip + supporting signal cards */}
-      <section aria-labelledby="signals-heading" className="flex flex-col gap-4">
+      <section
+        aria-labelledby="signals-heading"
+        className="flex flex-col gap-4"
+      >
         <h2
           id="signals-heading"
           className="text-base font-semibold tracking-tight"
@@ -32,11 +32,6 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
           Current Accessibility Health
         </h2>
         <DashboardSignals summary={summary} />
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <DashboardTopCriticalPattern summary={summary} />
-          <DashboardCriticalByProperty summary={summary} />
-          <DashboardTopPages summary={summary} />
-        </div>
       </section>
 
       {/* Row 2: Two chart panels */}
