@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { ScansScreenData } from "@/lib/data";
+import PropertyHealthStrip from "./PropertyHealthStrip";
 
 interface ScansClientProps {
   data: ScansScreenData;
@@ -71,6 +72,9 @@ const ScansClient = ({ data }: ScansClientProps) => {
           </p>
         </div>
       )}
+
+      {/* ── Section 3: Property health strip ───────────────────────────── */}
+      <PropertyHealthStrip items={propertyHealthItems} />
     </div>
   );
 };
