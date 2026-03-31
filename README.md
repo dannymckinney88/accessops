@@ -35,7 +35,12 @@ Most accessibility tools stop at reporting issues. AccessOps focuses on what hap
 ### 📊 Dashboard
 
 The decision surface for current accessibility risk.
+
+<br>
+
 ![Dashboard View](/public/assets/screenshots/dashboard.png)
+
+<br>
 
 - Surfaces highest-risk properties and unresolved critical issues
 - Directs teams on where to focus next based on regression trends
@@ -45,19 +50,34 @@ The decision surface for current accessibility risk.
 Primary remediation workspace — where accessibility work actually happens.
 
 **Triage Table (Macro View)**
+
+<br>
+
 ![Issues Table](/public/assets/screenshots/issues-table.png)
+
+<br>
 
 High-density UI for managing hundreds of violations across properties using TanStack Table. Triage and prioritize by severity, status, and ownership — scan and act on high-impact violations without losing context.
 
 **Remediation Drawer (Micro View)**
+
+<br>
+
 ![Issue Detail Drawer](/public/assets/screenshots/issues-drawer.png)
+
+<br>
 
 An explainability layer providing "Why it Matters," affected users, WCAG criteria, and specific code fixes for developers.
 
 ### 🔍 Scans
 
 Audit history and progress tracking.
+
+<br>
+
 ![Scans View](/public/assets/screenshots/scans.png)
+
+<br>
 
 - Breakdown of findings for every individual audit
 - Tracks remediation velocity and confirms fixes are verified in later scans
@@ -70,10 +90,13 @@ Audit history and progress tracking.
 - **Logic Separation:** Data is transformed into view-models (like `PropertyHealthSummary`) before rendering
 - **Theme Engine:** Custom dark mode implementation with a blocking script to prevent FOUC
 
+  <br>
+
 |                  Dark Mode (Desktop)                  |                      Mobile Dashboard                      |
 | :---------------------------------------------------: | :--------------------------------------------------------: |
 | ![Dark Mode](/public/assets/screenshots/darkmode.png) | ![Mobile View](/public/assets/screenshots/mobile-dash.png) |
 
+<br>
 ---
 
 ## ♿ Accessibility & Design
