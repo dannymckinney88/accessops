@@ -48,13 +48,17 @@ export interface ScanRun {
   triggeredBy: string;
 }
 
+// src/lib/data/types/domain.ts
+// src/lib/data/types/domain.ts
+
 export interface ScanPage {
   id: string;
-  scanRunId: string;
-  pageId: string;
-  violationCount: number;
-  passCount: number;
-  incompleteCount: number;
+  scanRunId: string; // Link to the ScanRun
+  pageId: string; // Link to the Page metadata
+  totalIssues: number; // Count of all issues found on this page
+  resolvedIssues: number; // Count of fixed/verified issues
+  remainingIssues: number; // Count of open/in-progress issues
+  criticalRemaining: number; // Count of high-priority issues
 }
 
 export interface Rule {

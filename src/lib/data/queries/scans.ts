@@ -3,18 +3,18 @@ import type {
   ScansScreenData,
   ScanRowData,
   PropertyHealthItem,
+  ScanPageRowData,
 } from "../types/domain";
 
 /**
  * Main query for the Scans / Audit History screen.
- * Groups scan data, determines baselines vs rescans, and calculates health trends.
+ * Groups scan data, determines baselines vs rescans, and maps nested page data.
  */
 export const getScansScreenData = async (): Promise<ScansScreenData> => {
   const propertyMap = new Map(
     properties.map((property) => [property.id, property]),
   );
 
-  // Group completed scans by property to determine which is the 'Baseline'
   const scansByProperty = new Map<string, typeof scanRuns>();
   for (const scanRun of scanRuns) {
     if (scanRun.status !== "completed") continue;
@@ -24,7 +24,6 @@ export const getScansScreenData = async (): Promise<ScansScreenData> => {
     scansByProperty.set(scanRun.propertyId, existingScans);
   }
 
-  // A Baseline is the oldest completed scan for a property
   const baselineScanIds = new Set<string>();
   for (const propertyScans of scansByProperty.values()) {
     propertyScans.sort(
@@ -57,6 +56,19 @@ export const getScansScreenData = async (): Promise<ScansScreenData> => {
         violation.status === "open" || violation.status === "in-progress",
     );
 
+    const pagesForScan: ScanPageRowData[] = scanPages
+      .filter((sp) => sp.scanRunId === scanRun.id)
+      .map((sp) => {
+        const pageMetadata = pages.find((p) => p.id === sp.pageId)!;
+        return {
+          page: pageMetadata,
+          totalIssues: sp.totalIssues,
+          remainingIssues: sp.remainingIssues,
+          resolvedIssues: sp.resolvedIssues,
+          criticalRemaining: sp.criticalRemaining,
+        };
+      });
+
     return {
       scanRun,
       property,
@@ -79,11 +91,10 @@ export const getScansScreenData = async (): Promise<ScansScreenData> => {
       isHighRisk: remainingViolations.some(
         (violation) => violation.impact === "critical",
       ),
-      pages: [], // This can be populated with ScanPageRowData if needed
+      pages: pagesForScan,
     };
   });
 
-  // Generate Property Health Items for the top horizontal scroll bar
   const propertyHealthItems: PropertyHealthItem[] = Array.from(
     scansByProperty.entries(),
   ).map(([propertyId, propertyScans]) => {
