@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/select";
 import type { ScansScreenData } from "@/lib/data";
 import PropertyHealthStrip from "./PropertyHealthStrip";
+import ScanList from "./ScanList";
 
 interface ScansClientProps {
   data: ScansScreenData;
@@ -19,10 +20,17 @@ interface ScansClientProps {
 const ScansClient = ({ data }: ScansClientProps) => {
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>("all");
 
-  const { alertSummary, propertyHealthItems } = data;
+  const { alertSummary, propertyHealthItems, scanRows } = data;
 
   // All four properties, derived from health strip items.
   const properties = propertyHealthItems.map((item) => item.property);
+
+  const filteredRows =
+    selectedPropertyId === "all"
+      ? scanRows
+      : scanRows.filter((row) => row.property.id === selectedPropertyId);
+
+  const isFiltered = selectedPropertyId !== "all";
 
   return (
     <div className="flex flex-col gap-5">
@@ -75,6 +83,13 @@ const ScansClient = ({ data }: ScansClientProps) => {
 
       {/* ── Section 3: Property health strip ───────────────────────────── */}
       <PropertyHealthStrip items={propertyHealthItems} />
+
+      {/* ── Section 4: Scan list ────────────────────────────────────────── */}
+      <ScanList
+        rows={filteredRows}
+        totalCount={scanRows.length}
+        isFiltered={isFiltered}
+      />
     </div>
   );
 };
