@@ -16,10 +16,17 @@ import type {
   Rule,
   ViolationInstance,
 } from "@/types/domain";
+import type {
+  ScansScreenData,
+  ScanRowData,
+  ScanPageRowData,
+  PropertyHealthItem,
+} from "@/features/scans/types/scans";
 
 // ─── Re-exports for convenience ───────────────────────────────────────────────
 
 export type { Property, Page, ScanRun, ScanPage, Rule, ViolationInstance };
+export type { ScansScreenData, ScanRowData, ScanPageRowData, PropertyHealthItem };
 
 // ─── Private helpers ──────────────────────────────────────────────────────────
 // Merges authored explainability content into a raw rule object.
@@ -248,6 +255,9 @@ export type DashboardCurrentState = {
   // unfixedCount: violations still requiring work — status "open" or "in-progress".
   // This is the primary work-remaining signal.
   unfixedCount: number;
+  // openCount / inProgressCount: unfixed split by lifecycle sub-state.
+  openCount: number;
+  inProgressCount: number;
   // fixedCount: work completed internally, awaiting re-audit verification.
   fixedCount: number;
   // verifiedCount: confirmed resolved by a later audit — fully complete.
@@ -319,6 +329,10 @@ export const getDashboardCurrentState =
       (v) => v.status === "open" || v.status === "in-progress",
     );
     const unfixedCount = unfixedViolations.length;
+    const openCount = allViolations.filter((v) => v.status === "open").length;
+    const inProgressCount = allViolations.filter(
+      (v) => v.status === "in-progress",
+    ).length;
     const fixedCount = allViolations.filter((v) => v.status === "fixed").length;
     const verifiedCount = allViolations.filter(
       (v) => v.status === "verified",
@@ -515,6 +529,8 @@ export const getDashboardCurrentState =
       propertiesWithCritical,
       regressingCount,
       unfixedCount,
+      openCount,
+      inProgressCount,
       fixedCount,
       verifiedCount,
       acceptedRiskCount,
@@ -557,6 +573,186 @@ export type CompareResult = {
     persistingCount: number;
     netChange: number; // positive = more issues, negative = fewer
   };
+};
+
+// ─── Scans screen: audit history + remediation progress ──────────────────────
+//
+// Produces one ScanRowData per completed ScanRun, sorted newest first.
+// Each row includes per-page breakdowns and lifecycle counts.
+// Scan type (Baseline / Rescan) is derived: earliest scan per property = Baseline.
+// Property health strip is scoped to the latest scan per property only.
+
+export const getScansScreenData = async (): Promise<ScansScreenData> => {
+  const propertyMap = new Map(properties.map((p) => [p.id, p]));
+  const pageMap = new Map(pages.map((p) => [p.id, p]));
+
+  // Group completed scan runs by property, sorted oldest→newest for baseline derivation.
+  const scansByProperty = new Map<string, ScanRun[]>();
+  for (const sr of scanRuns) {
+    if (sr.status !== "completed") continue;
+    const bucket = scansByProperty.get(sr.propertyId) ?? [];
+    bucket.push(sr);
+    scansByProperty.set(sr.propertyId, bucket);
+  }
+  for (const bucket of scansByProperty.values()) {
+    bucket.sort(
+      (a, b) =>
+        new Date(a.initiatedAt).getTime() - new Date(b.initiatedAt).getTime(),
+    );
+  }
+
+  // The oldest scan per property is the Baseline; all others are Rescans.
+  const baselineScanIds = new Set<string>();
+  for (const bucket of scansByProperty.values()) {
+    if (bucket[0]) baselineScanIds.add(bucket[0].id);
+  }
+
+  // Index scan-pages and violations for O(1) lookup.
+  const scanPagesByScanRunId = new Map<string, ScanPage[]>();
+  for (const sp of scanPages) {
+    const bucket = scanPagesByScanRunId.get(sp.scanRunId) ?? [];
+    bucket.push(sp);
+    scanPagesByScanRunId.set(sp.scanRunId, bucket);
+  }
+
+  const violationsByScanRunId = new Map<string, ViolationInstance[]>();
+  const violationsByScanPageId = new Map<string, ViolationInstance[]>();
+  for (const v of violations) {
+    const byScan = violationsByScanRunId.get(v.scanRunId) ?? [];
+    byScan.push(v);
+    violationsByScanRunId.set(v.scanRunId, byScan);
+
+    const byPage = violationsByScanPageId.get(v.scanPageId) ?? [];
+    byPage.push(v);
+    violationsByScanPageId.set(v.scanPageId, byPage);
+  }
+
+  // Build one ScanRowData per completed scan run.
+  const completedRuns = scanRuns.filter((sr) => sr.status === "completed");
+  const sortedRuns = [...completedRuns].sort(
+    (a, b) =>
+      new Date(b.initiatedAt).getTime() - new Date(a.initiatedAt).getTime(),
+  );
+
+  const scanRows: ScanRowData[] = sortedRuns.map((scanRun) => {
+    const property = propertyMap.get(scanRun.propertyId)!;
+    const scanType = baselineScanIds.has(scanRun.id) ? "Baseline" : "Rescan";
+    const scanViolations = violationsByScanRunId.get(scanRun.id) ?? [];
+
+    const totalIssues = scanViolations.length;
+    const remainingViolations = scanViolations.filter(
+      (v) => v.status === "open" || v.status === "in-progress",
+    );
+    const remainingIssues = remainingViolations.length;
+    const resolvedIssues = scanViolations.filter(
+      (v) => v.status === "fixed" || v.status === "verified",
+    ).length;
+
+    const severitySummary = {
+      critical: remainingViolations.filter((v) => v.impact === "critical")
+        .length,
+      serious: remainingViolations.filter((v) => v.impact === "serious").length,
+      moderate: remainingViolations.filter((v) => v.impact === "moderate")
+        .length,
+      minor: remainingViolations.filter((v) => v.impact === "minor").length,
+    };
+
+    // Per-page breakdown for the expanded row.
+    const pageScanPages = scanPagesByScanRunId.get(scanRun.id) ?? [];
+    const pageRows: ScanPageRowData[] = pageScanPages
+      .map((sp): ScanPageRowData | null => {
+        const page = pageMap.get(sp.pageId);
+        if (!page) return null;
+        const pageViolations = violationsByScanPageId.get(sp.id) ?? [];
+        const pageRemaining = pageViolations.filter(
+          (v) => v.status === "open" || v.status === "in-progress",
+        );
+        return {
+          page,
+          totalIssues: pageViolations.length,
+          remainingIssues: pageRemaining.length,
+          resolvedIssues: pageViolations.filter(
+            (v) => v.status === "fixed" || v.status === "verified",
+          ).length,
+          criticalRemaining: pageRemaining.filter((v) => v.impact === "critical")
+            .length,
+        };
+      })
+      .filter((r): r is ScanPageRowData => r !== null);
+
+    const isHighRisk = remainingIssues > 0 && severitySummary.critical > 0;
+
+    return {
+      scanRun,
+      property,
+      scanType,
+      pages: pageRows,
+      totalIssues,
+      remainingIssues,
+      resolvedIssues,
+      severitySummary,
+      isHighRisk,
+    };
+  });
+
+  // Property health strip — scoped to the latest scan per property.
+  const propertyHealthItems: PropertyHealthItem[] = [];
+  for (const [propertyId, bucket] of scansByProperty) {
+    const property = propertyMap.get(propertyId);
+    if (!property) continue;
+
+    const latestScan = bucket[bucket.length - 1]!;
+    const latestViolations = violationsByScanRunId.get(latestScan.id) ?? [];
+    const latestRemaining = latestViolations.filter(
+      (v) => v.status === "open" || v.status === "in-progress",
+    );
+
+    // Trend: compare violation counts between the two most recent scans.
+    let trend: PropertyHealthItem["trend"] = "insufficient-data";
+    if (bucket.length >= 2) {
+      const latestCount = (
+        violationsByScanRunId.get(bucket[bucket.length - 1]!.id) ?? []
+      ).length;
+      const prevCount = (
+        violationsByScanRunId.get(bucket[bucket.length - 2]!.id) ?? []
+      ).length;
+      if (latestCount < prevCount) trend = "improving";
+      else if (latestCount > prevCount) trend = "regressing";
+      else trend = "stable";
+    }
+
+    propertyHealthItems.push({
+      property,
+      trend,
+      remainingIssues: latestRemaining.length,
+      criticalRemaining: latestRemaining.filter((v) => v.impact === "critical")
+        .length,
+    });
+  }
+
+  // Sort: regressing first, then by remaining issues descending.
+  propertyHealthItems.sort((a, b) => {
+    if (a.trend === "regressing" && b.trend !== "regressing") return -1;
+    if (b.trend === "regressing" && a.trend !== "regressing") return 1;
+    return b.remainingIssues - a.remainingIssues;
+  });
+
+  // Alert summary: surface the highest-risk story.
+  let alertSummary: string | null = null;
+  const worst = propertyHealthItems[0];
+  if (worst && worst.remainingIssues > 0) {
+    if (worst.trend === "regressing") {
+      const detail =
+        worst.criticalRemaining > 0
+          ? `${worst.criticalRemaining} critical ${worst.criticalRemaining === 1 ? "issue" : "issues"}`
+          : `${worst.remainingIssues} ${worst.remainingIssues === 1 ? "issue" : "issues"}`;
+      alertSummary = `${worst.property.name} is regressing · ${detail} still unresolved`;
+    } else if (worst.criticalRemaining > 0) {
+      alertSummary = `${worst.property.name} has ${worst.criticalRemaining} critical ${worst.criticalRemaining === 1 ? "issue" : "issues"} still unresolved`;
+    }
+  }
+
+  return { scanRows, propertyHealthItems, alertSummary };
 };
 
 export const getCompareResults = async (
