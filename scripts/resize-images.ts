@@ -7,7 +7,7 @@ const sizes = [
   { name: "preview.png", width: 1200, height: 630 },
 ];
 
-const input = "public/preview-source.png";
+const input = "public/favicon-source.png";
 
 async function run() {
   for (const s of sizes) {

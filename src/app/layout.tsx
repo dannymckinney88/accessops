@@ -14,13 +14,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://your-domain.com"),
   title: {
     default: "AccessOps",
     template: "%s | AccessOps",
   },
   description:
-    "Workflow-driven accessibility operations platform for triage, remediation, and audit verification across multiple properties",
-
+    "Workflow-driven accessibility operations platform for triage, remediation, and audit verification across multiple properties.",
   icons: {
     icon: [
       { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
@@ -28,11 +28,10 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-touch-icon.png",
   },
-
   openGraph: {
     title: "AccessOps",
     description:
-      "Workflow-driven accessibility operations platform for triage, remediation, and audit verification across multiple properties",
+      "Workflow-driven accessibility operations platform for triage, remediation, and audit verification across multiple properties.",
     siteName: "AccessOps",
     images: [
       {
@@ -44,12 +43,11 @@ export const metadata: Metadata = {
     ],
     type: "website",
   },
-
   twitter: {
     card: "summary_large_image",
     title: "AccessOps",
     description:
-      "Workflow-driven accessibility operations platform for triage and remediation",
+      "Workflow-driven accessibility operations platform for triage, remediation, and audit verification across multiple properties.",
     images: ["/preview.png"],
   },
 };
