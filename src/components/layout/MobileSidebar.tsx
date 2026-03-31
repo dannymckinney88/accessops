@@ -10,10 +10,15 @@ interface MobileSidebarProps {
 
 export default function MobileSidebar({ open, onClose }: MobileSidebarProps) {
   return (
-    <Sheet open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
+    <Sheet
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
+      }}
+    >
       <SheetContent side="left" className="w-60 p-0">
         <SheetTitle className="sr-only">Navigation</SheetTitle>
-        <Sidebar />
+        <Sidebar onClose={onClose} />
       </SheetContent>
     </Sheet>
   );

@@ -16,11 +16,15 @@ const navItems = [
   { label: "Compare", href: "/compare", icon: GitCompare, disabled: true },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  onClose?: () => void;
+}
+
+export default function Sidebar({ onClose }: SidebarProps) {
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-5 border-b border-sidebar-border">
-        <Link href="/dashboard" className="block">
+        <Link href="/dashboard" className="block" onClick={onClose}>
           <span className="text-sm font-semibold text-sidebar-accent-foreground">
             AccessOps
           </span>
@@ -37,7 +41,7 @@ export default function Sidebar() {
         <ul className="flex flex-col gap-1">
           {navItems.map((item) => (
             <li key={item.href}>
-              <SidebarNavItem {...item} />
+              <SidebarNavItem {...item} onClose={onClose} />
             </li>
           ))}
         </ul>
