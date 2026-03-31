@@ -24,95 +24,43 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
     `${propertiesWithIssues} ${propertiesWithIssues === 1 ? "property" : "properties"}` +
     (criticalCount > 0 ? ` · ${criticalCount} critical` : "");
 
-  // Surface the regressing property in the top alert if one exists.
   const regressingProperty = propertyHealthSummaries.find(
     (s) => s.trend === "regressing",
   );
-
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-6 max-w-7xl mx-auto">
       <DashboardHeader subtitle={subtitle} />
 
-      {/* ── Alert strip ─────────────────────────────────────────────────── */}
+      {/* Alert strip - Tightened padding */}
       {regressingProperty && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="flex items-center justify-between gap-4 rounded-lg border border-severity-critical/30 bg-severity-critical/[0.06] px-4 py-2.5"
-        >
-          <div className="flex items-center gap-3">
-            <AlertTriangle
-              className="size-4 shrink-0 text-severity-critical"
-              aria-hidden="true"
-            />
+        <div className="flex items-center justify-between border border-severity-critical/20 bg-severity-critical/[0.02] px-4 py-2 rounded-lg">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="size-4 text-severity-critical" />
             <p className="text-sm font-medium text-severity-critical">
-              <span className="font-semibold">
+              <span className="font-bold">
                 {regressingProperty.property.name}
-              </span>
-              {regressingProperty.criticalCount > 0
-                ? ` is regressing · ${regressingProperty.criticalCount} critical ${regressingProperty.criticalCount === 1 ? "issue" : "issues"} still unresolved`
-                : " is regressing — violation count increased since last audit"}
+              </span>{" "}
+              is regressing
             </p>
           </div>
           <a
             href="/issues"
-            className="shrink-0 text-xs font-medium text-severity-critical underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 rounded-sm"
+            className="text-xs font-bold text-severity-critical hover:underline"
           >
             View issues →
           </a>
         </div>
       )}
 
-      {/* ── KPI row ─────────────────────────────────────────────────────── */}
       <DashboardSignals summary={summary} />
 
-      {/* ── Two-column body ─────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_380px]">
-        {/* Left column: charts */}
-        <div className="flex flex-col gap-5">
-          {/* Unfixed by Severity */}
-          <section
-            aria-labelledby="severity-bar-heading"
-            className="rounded-lg border bg-card p-5"
-          >
-            <h2
-              id="severity-bar-heading"
-              className="text-sm font-semibold text-foreground"
-            >
-              Unfixed by Severity
-            </h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Active issues requiring remediation
-            </p>
-            <div className="mt-4">
-              <DashboardSeverityBar summary={summary} />
-            </div>
-          </section>
-
-          {/* Remediation Progress */}
-          <section
-            aria-labelledby="remediation-progress-heading"
-            className="rounded-lg border bg-card p-5"
-          >
-            <h2
-              id="remediation-progress-heading"
-              className="text-sm font-semibold text-foreground"
-            >
-              Remediation Progress
-            </h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Issues by lifecycle state
-            </p>
-            <div className="mt-4">
-              <DashboardAuditProgress summary={summary} />
-            </div>
-          </section>
-        </div>
-
-        {/* Right column: property health + highest risk */}
-        <div className="rounded-lg border bg-card p-5 flex flex-col gap-5">
-          {/* Property Health */}
-          <section aria-labelledby="property-health-heading">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_400px] items-stretch">
+        {/* Left Column: Property Health  */}
+        <section
+          aria-labelledby="property-health-heading"
+          className="flex flex-col h-full rounded-lg border bg-card p-6 shadow-sm"
+        >
+          <div className="flex-1">
             <h2
               id="property-health-heading"
               className="text-sm font-semibold text-foreground"
@@ -120,31 +68,48 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
               Property Health
             </h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Top 3 by risk · sorted by critical + remaining
+              Sorted by critical count and remaining remediation work
             </p>
-            <div className="mt-4">
+            <div className="mt-6">
               <DashboardPropertyHealth summary={summary} />
             </div>
-          </section>
+          </div>
+        </section>
 
-          <div className="border-t border-border/60" />
-
-          {/* Highest Risk Right Now */}
-          <section aria-labelledby="highest-risk-heading">
+        {/* Right Column: Immediate Fixes  */}
+        <section
+          aria-labelledby="highest-risk-heading"
+          className="flex flex-col h-full rounded-lg border bg-card p-6 shadow-sm"
+        >
+          <div className="flex-1">
             <h2
               id="highest-risk-heading"
-              className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+              className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
             >
-              Highest Risk Right Now
+              Top Risk Pages
             </h2>
-            <div className="mt-3">
-              <DashboardHighestRisk summary={summary} />
-            </div>
-          </section>
-        </div>
+
+            <DashboardHighestRisk summary={summary} />
+          </div>
+        </section>
+      </div>
+      {/* SECONDARY ANALYTICS - Visually Quieter */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 opacity-80 hover:opacity-100 transition-opacity">
+        <section className="rounded-xl border bg-card/30 p-4">
+          <h2 className="text-xs font-semibold text-muted-foreground mb-4">
+            Unfixed by Severity
+          </h2>
+          <DashboardSeverityBar summary={summary} />
+        </section>
+
+        <section className="rounded-xl border bg-card/30 p-4">
+          <h2 className="text-xs font-semibold text-muted-foreground mb-4">
+            Remediation Progress
+          </h2>
+          <DashboardAuditProgress summary={summary} />
+        </section>
       </div>
     </div>
   );
 };
-
 export default DashboardClient;

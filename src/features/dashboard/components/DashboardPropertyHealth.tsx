@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Minus, AlertTriangle } from "lucide-react";
+import { AlertTriangle, TrendingDown, TrendingUp, Minus } from "lucide-react";
 import type { DashboardSummary } from "../types/dashboard";
 
 interface DashboardPropertyHealthProps {
@@ -6,29 +6,24 @@ interface DashboardPropertyHealthProps {
 }
 
 const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
-  // Top 3 by risk: regressing first, then by critical count descending
   const sorted = [...summary.propertyHealthSummaries]
     .sort((a, b) => {
       if (a.trend === "regressing" && b.trend !== "regressing") return -1;
       if (b.trend === "regressing" && a.trend !== "regressing") return 1;
-      if (b.criticalCount !== a.criticalCount)
-        return b.criticalCount - a.criticalCount;
-      return b.unfixedCount - a.unfixedCount;
+      return b.criticalCount - a.criticalCount;
     })
     .slice(0, 3);
 
-  if (sorted.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">No properties with active issues.</p>
-    );
-  }
-
   return (
-    <ul className="flex flex-col gap-3" role="list" aria-label="Top 3 properties by risk">
-      {sorted.map((item) => {
-        const { property, trend, criticalCount, unfixedCount, totalViolations } =
-          item;
-
+    <ul className="flex flex-col gap-10" role="list">
+      {sorted.map((item, idx) => {
+        const {
+          property,
+          trend,
+          criticalCount,
+          unfixedCount,
+          totalViolations,
+        } = item;
         const resolvedPct =
           totalViolations > 0
             ? Math.round(
@@ -36,89 +31,51 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
               )
             : 0;
 
-        const trendConfig = {
-          regressing: {
-            label: "Regressing",
-            className: "text-trend-regressing",
-            Icon: TrendingDown,
-          },
-          improving: {
-            label: "Improving",
-            className: "text-trend-improving",
-            Icon: TrendingUp,
-          },
-          stable: {
-            label: "Stagnant",
-            className: "text-muted-foreground",
-            Icon: Minus,
-          },
-          "insufficient-data": {
-            label: "Stagnant",
-            className: "text-muted-foreground",
-            Icon: Minus,
-          },
-        }[trend];
-
-        const isHighRisk =
-          trend !== "regressing" && criticalCount > 0 && unfixedCount > 0;
+        const isHighRisk = trend !== "regressing" && criticalCount > 0;
 
         return (
-          <li key={property.id} role="listitem">
-            {/* Property name row */}
-            <div className="flex items-start justify-between gap-2">
-              <p className="text-sm font-semibold text-foreground leading-tight">
-                {property.name}
-              </p>
-              <span
-                className="shrink-0 tabular-nums text-xs font-semibold text-severity-critical"
-                aria-label={`${criticalCount} critical`}
-              >
-                {criticalCount > 0
-                  ? `${criticalCount} critical`
-                  : null}
-              </span>
-            </div>
+          <li key={property.id} className="relative">
+            {/* Visual separator for row units */}
+            {idx !== 0 && (
+              <div className="absolute -top-5 left-0 right-0 border-t border-border/30" />
+            )}
 
-            {/* Trend label + progress */}
-            <div className="mt-1 flex items-center justify-between gap-2">
-              <div className="flex items-center gap-1">
-                {isHighRisk ? (
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <p className="text-sm font-bold text-foreground leading-tight truncate">
+                  {property.name}
+                </p>
+                <div className="flex items-center gap-1.5">
                   <AlertTriangle
-                    className="size-3 shrink-0 text-severity-critical"
-                    aria-hidden="true"
+                    className={`size-3 ${trend === "regressing" || isHighRisk ? "text-severity-critical" : "text-muted-foreground/30"}`}
                   />
-                ) : (
-                  <trendConfig.Icon
-                    className={`size-3 shrink-0 ${trendConfig.className}`}
-                    aria-hidden="true"
-                  />
-                )}
-                <span
-                  className={`text-xs font-medium ${
-                    isHighRisk ? "text-severity-critical" : trendConfig.className
-                  }`}
-                >
-                  {isHighRisk ? "High Risk" : trendConfig.label}
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-tight ${trend === "regressing" || isHighRisk ? "text-severity-critical" : "text-muted-foreground/60"}`}
+                  >
+                    {trend === "regressing"
+                      ? "Regressing"
+                      : isHighRisk
+                        ? "High Risk"
+                        : "Stable"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Right-aligned Data Stack */}
+              <div className="flex flex-col items-end shrink-0">
+                <span className="text-xs font-bold text-severity-critical tabular-nums">
+                  {criticalCount} critical
+                </span>
+                <span className="text-[10px] font-medium text-muted-foreground/60 tabular-nums">
+                  {resolvedPct}% resolved
                 </span>
               </div>
-              <span className="text-xs tabular-nums text-muted-foreground">
-                {resolvedPct}%
-              </span>
             </div>
 
-            {/* Mini progress bar */}
-            <div
-              className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted"
-              role="presentation"
-            >
+            {/* Tightened Progress Bar */}
+            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted/40">
               <div
-                className={`h-full rounded-full ${
-                  trend === "regressing"
-                    ? "bg-severity-critical"
-                    : resolvedPct === 100
-                      ? "bg-status-verified"
-                      : "bg-primary"
-                }`}
+                className={`h-full transition-all duration-500 ${trend === "regressing" ? "bg-severity-critical" : "bg-primary/80"}`}
                 style={{ width: `${resolvedPct}%` }}
               />
             </div>
