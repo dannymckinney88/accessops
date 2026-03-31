@@ -18,7 +18,6 @@ export const getScansScreenData = async (): Promise<ScansScreenData> => {
   const scansByProperty = new Map<string, typeof scanRuns>();
   for (const scanRun of scanRuns) {
     if (scanRun.status !== "completed") continue;
-
     const existingScans = scansByProperty.get(scanRun.propertyId) ?? [];
     existingScans.push(scanRun);
     scansByProperty.set(scanRun.propertyId, existingScans);
@@ -59,7 +58,8 @@ export const getScansScreenData = async (): Promise<ScansScreenData> => {
     const pagesForScan: ScanPageRowData[] = scanPages
       .filter((sp) => sp.scanRunId === scanRun.id)
       .map((sp) => {
-        const pageMetadata = pages.find((p) => p.id === sp.pageId)!;
+        const pageMetadata = pages.find((p) => p.id === sp.pageId);
+        if (!pageMetadata) return null;
         return {
           page: pageMetadata,
           totalIssues: sp.totalIssues,
@@ -67,7 +67,8 @@ export const getScansScreenData = async (): Promise<ScansScreenData> => {
           resolvedIssues: sp.resolvedIssues,
           criticalRemaining: sp.criticalRemaining,
         };
-      });
+      })
+      .filter((row): row is ScanPageRowData => row !== null);
 
     return {
       scanRun,

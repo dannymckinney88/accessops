@@ -1,40 +1,36 @@
-// src/lib/data/scan-pages.ts
-//
-// One ScanPage per page covered in each vendor audit or rescan.
-// Properties match the updated ScanPage interface in domain.ts.
-// All pageIds reference real entries in pages.ts.
-
 import type { ScanPage } from "../types/domain";
 
 export const scanPages: ScanPage[] = [
   // ─── Marketing Site — Baseline (Sep 15, 2024) ────────────────────────────
+  // Story: Team was proactive early — most issues already verified or fixed
   {
     id: "sp-mkt-b-home",
     scanRunId: "sr-mkt-baseline",
     pageId: "page-mkt-home",
     totalIssues: 4,
-    resolvedIssues: 38,
-    remainingIssues: 2,
-    criticalRemaining: 1,
+    resolvedIssues: 3,
+    remainingIssues: 1,
+    criticalRemaining: 0,
   },
   {
     id: "sp-mkt-b-personal",
     scanRunId: "sr-mkt-baseline",
     pageId: "page-mkt-personal",
     totalIssues: 3,
-    resolvedIssues: 32,
-    remainingIssues: 1,
+    resolvedIssues: 3,
+    remainingIssues: 0,
     criticalRemaining: 0,
   },
 
   // ─── Marketing Site — Rescan (Feb 12, 2025) ──────────────────────────────
+  // Story: Nearly clean — 2 minor remaining, 1 already fixed
   {
     id: "sp-mkt-r-home",
     scanRunId: "sr-mkt-rescan",
     pageId: "page-mkt-home",
     totalIssues: 2,
-    resolvedIssues: 40,
-    remainingIssues: 1,
+    resolvedIssues: 0,
+    remainingIssues: 2,
     criticalRemaining: 0,
   },
   {
@@ -42,58 +38,79 @@ export const scanPages: ScanPage[] = [
     scanRunId: "sr-mkt-rescan",
     pageId: "page-mkt-personal",
     totalIssues: 1,
-    resolvedIssues: 34,
+    resolvedIssues: 1,
     remainingIssues: 0,
     criticalRemaining: 0,
   },
 
-  // ─── Loan Application — Baseline (Oct 20, 2024) ──────────────────────────
+  // ─── Loan Application — Baseline (Sep 18, 2024) ──────────────────────────
+  // Story: Pre-regression, manageable issues with some remediation
   {
-    id: "sp-loan-b-home",
+    id: "sp-loan-b-personal",
     scanRunId: "sr-loan-baseline",
-    pageId: "page-loan-home",
+    pageId: "page-loan-personal",
     totalIssues: 2,
-    resolvedIssues: 25,
+    resolvedIssues: 1,
     remainingIssues: 1,
     criticalRemaining: 0,
   },
   {
-    id: "sp-loan-b-app",
+    id: "sp-loan-b-employment",
     scanRunId: "sr-loan-baseline",
-    pageId: "page-loan-app",
-    totalIssues: 2,
-    resolvedIssues: 22,
+    pageId: "page-loan-employment",
+    totalIssues: 1,
+    resolvedIssues: 0,
     remainingIssues: 1,
-    criticalRemaining: 1,
+    criticalRemaining: 0,
+  },
+  {
+    id: "sp-loan-b-review",
+    scanRunId: "sr-loan-baseline",
+    pageId: "page-loan-review",
+    totalIssues: 1,
+    resolvedIssues: 0,
+    remainingIssues: 1,
+    criticalRemaining: 0,
   },
 
-  // ─── Loan Application — Rescan (Jan 15, 2025) ────────────────────────────
+  // ─── Loan Application — Rescan (Jan 30, 2025) ────────────────────────────
+  // Story: Regression — deploy broke label associations across entire flow
   {
-    id: "sp-loan-r-home",
+    id: "sp-loan-r-personal",
     scanRunId: "sr-loan-rescan",
-    pageId: "page-loan-home",
-    totalIssues: 6,
-    resolvedIssues: 21,
+    pageId: "page-loan-personal",
+    totalIssues: 5,
+    resolvedIssues: 0,
+    remainingIssues: 5,
+    criticalRemaining: 3,
+  },
+  {
+    id: "sp-loan-r-employment",
+    scanRunId: "sr-loan-rescan",
+    pageId: "page-loan-employment",
+    totalIssues: 5,
+    resolvedIssues: 0,
+    remainingIssues: 5,
+    criticalRemaining: 4,
+  },
+  {
+    id: "sp-loan-r-review",
+    scanRunId: "sr-loan-rescan",
+    pageId: "page-loan-review",
+    totalIssues: 4,
+    resolvedIssues: 0,
     remainingIssues: 4,
-    criticalRemaining: 1,
-  },
-  {
-    id: "sp-loan-r-app",
-    scanRunId: "sr-loan-rescan",
-    pageId: "page-loan-app",
-    totalIssues: 8,
-    resolvedIssues: 16,
-    remainingIssues: 6,
-    criticalRemaining: 2,
+    criticalRemaining: 3,
   },
 
-  // ─── Customer Dashboard — Baseline (Nov 10, 2024) ────────────────────────
+  // ─── Customer Dashboard — Baseline (Sep 20, 2024) ────────────────────────
+  // Story: High-risk debt, some fixes attempted but criticals persist
   {
     id: "sp-dash-b-overview",
     scanRunId: "sr-dash-baseline",
     pageId: "page-app-overview",
     totalIssues: 2,
-    resolvedIssues: 35,
+    resolvedIssues: 0,
     remainingIssues: 2,
     criticalRemaining: 1,
   },
@@ -102,7 +119,7 @@ export const scanPages: ScanPage[] = [
     scanRunId: "sr-dash-baseline",
     pageId: "page-app-accounts",
     totalIssues: 2,
-    resolvedIssues: 32,
+    resolvedIssues: 1,
     remainingIssues: 1,
     criticalRemaining: 1,
   },
@@ -111,18 +128,19 @@ export const scanPages: ScanPage[] = [
     scanRunId: "sr-dash-baseline",
     pageId: "page-app-txn",
     totalIssues: 3,
-    resolvedIssues: 29,
+    resolvedIssues: 1,
     remainingIssues: 2,
-    criticalRemaining: 1,
+    criticalRemaining: 2,
   },
 
   // ─── Customer Dashboard — Rescan (Mar 5, 2025) ───────────────────────────
+  // Story: Stagnant — same violations, team made no meaningful progress
   {
     id: "sp-dash-r-overview",
     scanRunId: "sr-dash-rescan",
     pageId: "page-app-overview",
     totalIssues: 2,
-    resolvedIssues: 35,
+    resolvedIssues: 0,
     remainingIssues: 2,
     criticalRemaining: 1,
   },
@@ -131,8 +149,8 @@ export const scanPages: ScanPage[] = [
     scanRunId: "sr-dash-rescan",
     pageId: "page-app-accounts",
     totalIssues: 2,
-    resolvedIssues: 32,
-    remainingIssues: 1,
+    resolvedIssues: 0,
+    remainingIssues: 2,
     criticalRemaining: 1,
   },
   {
@@ -140,18 +158,19 @@ export const scanPages: ScanPage[] = [
     scanRunId: "sr-dash-rescan",
     pageId: "page-app-txn",
     totalIssues: 3,
-    resolvedIssues: 29,
-    remainingIssues: 2,
+    resolvedIssues: 0,
+    remainingIssues: 3,
     criticalRemaining: 1,
   },
 
   // ─── Support Center — Baseline (Sep 22, 2024) ────────────────────────────
+  // Story: Neglected — no rescan, one minor fix, everything else untouched
   {
     id: "sp-sup-b-home",
     scanRunId: "sr-sup-baseline",
     pageId: "page-sup-home",
     totalIssues: 2,
-    resolvedIssues: 18,
+    resolvedIssues: 0,
     remainingIssues: 2,
     criticalRemaining: 1,
   },
@@ -160,16 +179,16 @@ export const scanPages: ScanPage[] = [
     scanRunId: "sr-sup-baseline",
     pageId: "page-sup-accounts",
     totalIssues: 2,
-    resolvedIssues: 15,
+    resolvedIssues: 0,
     remainingIssues: 2,
     criticalRemaining: 1,
   },
   {
-    id: "sp-sup-b-article",
+    id: "sp-sup-b-contact",
     scanRunId: "sr-sup-baseline",
-    pageId: "page-sup-article",
+    pageId: "page-sup-contact",
     totalIssues: 2,
-    resolvedIssues: 22,
+    resolvedIssues: 1,
     remainingIssues: 1,
     criticalRemaining: 0,
   },
