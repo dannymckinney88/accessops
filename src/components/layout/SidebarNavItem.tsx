@@ -8,12 +8,30 @@ interface SidebarNavItemProps {
   label: string;
   href: string;
   icon: LucideIcon;
+  disabled?: boolean;
 }
 
-export default function SidebarNavItem({ label, href, icon: Icon }: SidebarNavItemProps) {
+export default function SidebarNavItem({
+  label,
+  href,
+  icon: Icon,
+  disabled,
+}: SidebarNavItemProps) {
   const pathname = usePathname();
   const isActive =
     href === "/dashboard" ? pathname === href : pathname.startsWith(href);
+
+  if (disabled) {
+    return (
+      <span
+        aria-disabled="true"
+        className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-muted-foreground/40 cursor-not-allowed w-full"
+      >
+        <Icon size={16} aria-hidden="true" className="shrink-0" />
+        <span className="flex-1">{label}</span>
+      </span>
+    );
+  }
 
   return (
     <Link

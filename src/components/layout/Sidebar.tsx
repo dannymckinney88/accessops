@@ -13,7 +13,7 @@ const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Issues", href: "/issues", icon: AlertTriangle },
   { label: "Scans", href: "/scans", icon: ScanLine },
-  { label: "Compare", href: "/compare", icon: GitCompare },
+  { label: "Compare", href: "/compare", icon: GitCompare, disabled: true },
 ];
 
 export default function Sidebar() {
