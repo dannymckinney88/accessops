@@ -14,8 +14,44 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AccessOps",
-  description: "Accessibility operations dashboard for Veridian Financial",
+  title: {
+    default: "AccessOps",
+    template: "%s | AccessOps",
+  },
+  description:
+    "Workflow-driven accessibility operations platform for triage, remediation, and audit verification across multiple properties",
+
+  icons: {
+    icon: [
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+
+  openGraph: {
+    title: "AccessOps",
+    description:
+      "Workflow-driven accessibility operations platform for triage, remediation, and audit verification across multiple properties",
+    siteName: "AccessOps",
+    images: [
+      {
+        url: "/preview.png",
+        width: 1200,
+        height: 630,
+        alt: "AccessOps dashboard showing accessibility risk and remediation progress",
+      },
+    ],
+    type: "website",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "AccessOps",
+    description:
+      "Workflow-driven accessibility operations platform for triage and remediation",
+    images: ["/preview.png"],
+  },
 };
 
 export default function RootLayout({
