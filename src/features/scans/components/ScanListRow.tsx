@@ -2,7 +2,7 @@
 
 import { useState, useRef, useId } from "react";
 import { ChevronRight, ChevronDown, AlertTriangle } from "lucide-react";
-import type { ScanRowData } from "../types/scans";
+import type { ScanPageRowData, ScanRowData } from "@/lib/data";
 import ScanPageRow from "./ScanPageRow";
 
 interface ScanListRowProps {
@@ -252,7 +252,7 @@ const ScanListRow = ({ row }: ScanListRowProps) => {
           className="border-t border-border/40 bg-surface-raised"
         >
           {row.pages.length > 0 ? (
-            row.pages.map((pageRow) => (
+            row.pages.map((pageRow: ScanPageRowData) => (
               <ScanPageRow key={pageRow.page.id} data={pageRow} />
             ))
           ) : (

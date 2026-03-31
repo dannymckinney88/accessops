@@ -4,7 +4,7 @@
 // violationCount matches the number of ViolationInstances for that page in violations.ts.
 // All pageIds reference real entries in pages.ts.
 
-import type { ScanPage } from "@/types/domain";
+import type { ScanPage } from "@/lib/data/types/domain";
 
 export const scanPages: ScanPage[] = [
   // ─── Marketing Site — Baseline (Sep 15, 2024) ────────────────────────────

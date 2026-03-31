@@ -1,5 +1,5 @@
 // src/lib/data/rules.ts
-import type { Rule } from "@/types/domain";
+import type { Rule } from "@/lib/data/types/domain";
 
 export const rules: Rule[] = [
   // ─── COLOR ──────────────────────────────────────────────────────────────────

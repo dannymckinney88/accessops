@@ -1,4 +1,4 @@
-import type { Property } from "@/types/domain";
+import type { Property } from "@/lib/data/types/domain";
 
 export const properties: Property[] = [
   {

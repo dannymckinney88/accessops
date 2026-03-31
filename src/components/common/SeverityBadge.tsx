@@ -1,4 +1,4 @@
-import type { Severity } from "@/types/domain";
+import type { Severity } from "@/lib/data/types/domain";
 
 const config: Record<Severity, { label: string; className: string }> = {
   critical: {

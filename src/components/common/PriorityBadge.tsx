@@ -1,4 +1,4 @@
-import type { Priority } from "@/types/domain";
+import type { Priority } from "@/lib/data/types/domain";
 
 // Priority maps to severity colors — urgent=critical, high=serious, medium=moderate, low=neutral.
 const config: Record<Priority, { label: string; className: string }> = {

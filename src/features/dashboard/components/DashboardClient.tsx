@@ -33,7 +33,7 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
 
       {/* Alert strip - Tightened padding */}
       {regressingProperty && (
-        <div className="flex items-center justify-between border border-severity-critical/20 bg-severity-critical/[0.02] px-4 py-2 rounded-lg">
+        <div className="flex items-center justify-between border border-severity-critical/20 bg-severity-critical/2 px-4 py-2 rounded-lg">
           <div className="flex items-center gap-2">
             <AlertTriangle className="size-4 text-severity-critical" />
             <p className="text-sm font-medium text-severity-critical">

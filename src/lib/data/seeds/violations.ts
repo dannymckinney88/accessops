@@ -15,7 +15,7 @@
 //   Customer Dashboard — Stable      (rescan 7 == baseline 7, persistent high-risk debt)
 //   Support Center     — Insufficient data (no rescan; issues unaddressed)
 
-import type { ViolationInstance } from "@/types/domain";
+import type { ViolationInstance } from "@/lib/data/types/domain";
 
 // ─── Seed types ──────────────────────────────────────────────────────────────
 

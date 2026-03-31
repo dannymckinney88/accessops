@@ -1,4 +1,4 @@
-import { AlertTriangle, TrendingDown, TrendingUp, Minus } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
 import type { DashboardSummary } from "../types/dashboard";
 
 interface DashboardPropertyHealthProps {

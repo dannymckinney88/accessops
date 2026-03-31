@@ -1,4 +1,4 @@
-import type { ScanRowData } from "../types/scans";
+import type { ScanRowData } from "@/lib/data";
 import ScanListRow from "./ScanListRow";
 
 interface ScanListProps {

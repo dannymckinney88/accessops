@@ -1,16 +1,20 @@
+"use client";
+
+import dynamic from "next/dynamic"; // Import dynamic
 import { useState } from "react";
 import { Sun, Moon } from "lucide-react";
 
-export default function ThemeToggle() {
+function ThemeToggleBase() {
+  // This state is now safe because this component will ONLY render on the client.
   const [isDark, setIsDark] = useState(() => {
-    if (typeof window === "undefined") return false;
     return document.documentElement.classList.contains("dark");
   });
 
-  const toggle = () => {
-    const next = !isDark;
-    setIsDark(next);
-    if (next) {
+  const toggleTheme = () => {
+    const nextThemeIsDark = !isDark;
+    setIsDark(nextThemeIsDark);
+
+    if (nextThemeIsDark) {
       document.documentElement.classList.add("dark");
       localStorage.setItem("theme", "dark");
     } else {
@@ -22,7 +26,7 @@ export default function ThemeToggle() {
   return (
     <button
       type="button"
-      onClick={toggle}
+      onClick={toggleTheme}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       aria-pressed={isDark}
       className="inline-flex items-center justify-center h-9 w-9 rounded-md
@@ -38,3 +42,10 @@ export default function ThemeToggle() {
     </button>
   );
 }
+
+// Export a dynamic version with SSR disabled.
+// This prevents the "Hydration failed" error and the "Cascading render" warning.
+export default dynamic(() => Promise.resolve(ThemeToggleBase), {
+  ssr: false,
+  loading: () => <div className="h-9 w-9" />, // Placeholder while loading
+});

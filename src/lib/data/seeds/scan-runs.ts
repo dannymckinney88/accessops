@@ -9,7 +9,7 @@
 // Customer Dashboard: Baseline Sep 2024 → Rescan Mar 2025 (barely moved — stagnant)
 // Support Center:   Baseline Sep 2024 only (team has not commissioned a rescan)
 
-import type { ScanRun } from "@/types/domain";
+import type { ScanRun } from "@/lib/data/types/domain";
 
 export const scanRuns: ScanRun[] = [
   // ─── Marketing Site ───────────────────────────────────────────────────────

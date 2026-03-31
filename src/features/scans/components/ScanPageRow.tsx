@@ -1,5 +1,5 @@
 import { FileText, AlertTriangle } from "lucide-react";
-import type { ScanPageRowData } from "../types/scans";
+import type { ScanPageRowData } from "@/lib/data";
 
 interface ScanPageRowProps {
   data: ScanPageRowData;
@@ -13,8 +13,13 @@ const progressColor = (pct: number): string => {
 };
 
 const ScanPageRow = ({ data }: ScanPageRowProps) => {
-  const { page, totalIssues, remainingIssues, resolvedIssues, criticalRemaining } =
-    data;
+  const {
+    page,
+    totalIssues,
+    remainingIssues,
+    resolvedIssues,
+    criticalRemaining,
+  } = data;
 
   const pct =
     totalIssues > 0 ? Math.round((resolvedIssues / totalIssues) * 100) : 0;

@@ -2,16 +2,13 @@
 
 import { useState, useMemo, useEffect } from "react";
 import type { HydratedViolation } from "@/lib/data/index";
-import type { Severity, RemediationStatus } from "@/types/domain";
+import type { Severity, RemediationStatus } from "@/lib/data/types/domain";
 
 // MVP: current user lives here until auth replaces it with a real session.
 // Move to src/lib/data/index.ts when auth is added.
 const CURRENT_ASSIGNEE = "Alex Rivera";
 
-export type QuickFilterChip =
-  | "my-issues"
-  | "unfixed"
-  | "needs-attention";
+export type QuickFilterChip = "my-issues" | "unfixed" | "needs-attention";
 
 export type IssueFilters = {
   severity: Severity[];
@@ -32,7 +29,7 @@ const defaultFilters: IssueFilters = {
   quickFilter: "unfixed",
 };
 
-const toggle = <T,>(arr: T[], item: T): T[] =>
+const toggle = <T>(arr: T[], item: T): T[] =>
   arr.includes(item) ? arr.filter((i) => i !== item) : [...arr, item];
 
 export const useIssueFilters = (violations: HydratedViolation[]) => {
@@ -54,8 +51,7 @@ export const useIssueFilters = (violations: HydratedViolation[]) => {
   const setPropertyId = (id: string | null) =>
     setFilters((f) => ({ ...f, propertyId: id }));
 
-  const setSearch = (q: string) =>
-    setFilters((f) => ({ ...f, search: q }));
+  const setSearch = (q: string) => setFilters((f) => ({ ...f, search: q }));
 
   const setQuickFilter = (chip: QuickFilterChip | null) =>
     setFilters((f) => ({
@@ -94,14 +90,18 @@ export const useIssueFilters = (violations: HydratedViolation[]) => {
       if (filters.status.length > 0 && !filters.status.includes(v.status)) {
         return false;
       }
-      if (filters.propertyId !== null && v.property?.id !== filters.propertyId) {
+      if (
+        filters.propertyId !== null &&
+        v.property?.id !== filters.propertyId
+      ) {
         return false;
       }
       if (activeSearch !== "") {
         const q = activeSearch.toLowerCase();
         const matchesRule = v.rule?.help.toLowerCase().includes(q) ?? false;
         const matchesPage = v.page?.title.toLowerCase().includes(q) ?? false;
-        const matchesProperty = v.property?.name.toLowerCase().includes(q) ?? false;
+        const matchesProperty =
+          v.property?.name.toLowerCase().includes(q) ?? false;
         if (!matchesRule && !matchesPage && !matchesProperty) return false;
       }
       if (filters.quickFilter === "my-issues") {

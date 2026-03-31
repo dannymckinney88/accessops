@@ -1,7 +1,7 @@
 "use client";
 
 import type { IssueFilters, QuickFilterChip } from "../hooks/useIssueFilters";
-import type { Severity, RemediationStatus } from "@/types/domain";
+import type { Severity, RemediationStatus } from "@/lib/data/types/domain";
 import type { Property } from "@/lib/data/index";
 import IssueQuickFilters from "./IssueQuickFilters";
 
@@ -60,7 +60,8 @@ const IssueFilterBar = ({
 }: IssueFilterBarProps) => {
   // Build human-readable labels for the active filter summary.
   const activeFilterLabels: string[] = [];
-  if (filters.quickFilter) activeFilterLabels.push(quickFilterLabel[filters.quickFilter]);
+  if (filters.quickFilter)
+    activeFilterLabels.push(quickFilterLabel[filters.quickFilter]);
   filters.severity.forEach((s) => activeFilterLabels.push(severityLabel[s]));
   filters.status.forEach((s) => activeFilterLabels.push(statusLabel[s]));
   if (filters.propertyId) {
@@ -119,10 +120,7 @@ const IssueFilterBar = ({
       </div>
 
       {hasActiveFilters && (
-        <p
-          role="status"
-          className="text-xs text-muted-foreground"
-        >
+        <p role="status" className="text-xs text-muted-foreground">
           Showing {filteredCount} of {totalCount} issues
           {activeFilterLabels.length > 0 && (
             <> &middot; Filtered by: {activeFilterLabels.join(", ")}</>

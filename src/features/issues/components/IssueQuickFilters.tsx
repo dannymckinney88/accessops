@@ -1,7 +1,7 @@
 "use client";
 
 import type { IssueFilters, QuickFilterChip } from "../hooks/useIssueFilters";
-import type { Severity } from "@/types/domain";
+import type { Severity } from "@/lib/data/types/domain";
 
 interface IssueQuickFiltersProps {
   filters: IssueFilters;
@@ -25,11 +25,9 @@ const baseClass =
 
 const IssueQuickFilters = ({
   filters,
-  hasActiveFilters,
   onToggleSeverity,
   onSetQuickFilter,
   onSetAll,
-  onReset,
 }: IssueQuickFiltersProps) => {
   // "All" is active when no quick filter chip is set and no other filters narrow the view.
   // It cannot use !hasActiveFilters because the default state is "unfixed", not "all".

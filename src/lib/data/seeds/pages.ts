@@ -1,4 +1,4 @@
-import type { Page } from "@/types/domain";
+import type { Page } from "@/lib/data/types/domain";
 
 export const pages: Page[] = [
   // ─── Marketing Site ────────────────────────────────────────────────────────
