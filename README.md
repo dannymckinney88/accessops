@@ -1,40 +1,48 @@
 # AccessOps
 
-AccessOps is an accessibility operations platform designed to manage what happens after an audit — **prioritizing issues, driving remediation, and verifying fixes over time.**
+AccessOps is an accessibility operations platform focused on what happens **after an audit**.
 
-It focuses on real workflow, not just reporting.
-**Audit → Triage → Fix → Re-audit → Verify.**
+It is built around a simple idea:
+
+> Accessibility doesn’t fail at detection — it fails in remediation.
+
+AccessOps turns an audit into a **working backlog**, helping teams prioritize, fix, and verify accessibility issues in real-world applications.
 
 ---
 
 ## 🎯 Purpose
 
-Most accessibility tools stop at reporting issues. AccessOps focuses on what happens after:
+Most tools stop at reporting issues.
 
-- **Prioritizing Real Risk:** Moving beyond raw issue counts to business impact
-- **Managing Remediation:** A dedicated workspace for tracking in-progress work
-- **Audit Persistence:** Tracking the same issue across multiple scan cycles
-- **Verification:** Closing the loop by confirming fixes in subsequent audits
-- **Who Is This For:** Internal engineering and accessibility teams working on complex, data-heavy applications
+AccessOps focuses on the actual workflow:
+
+- **What needs to be fixed right now**
+- **Where risk is concentrated**
+- **How teams work through large accessibility backlogs**
+
+This is not a scanner UI.
+
+It is a **remediation system**.
 
 ---
 
-## 🔁 Example Workflow
+## 🧠 Core Model
 
-1. A new scan detects a regression in the Loan Application
-2. Dashboard highlights the increase in critical issues
-3. Engineer navigates to Issues and filters by critical + open
-4. Selects a violation and reviews details in the drawer
-5. Marks issue as fixed
-6. Issue remains open until verified in the next scan
+AccessOps operates on a **single active audit**.
+
+- An audit establishes a backlog of issues
+- Teams work that backlog over time
+- Issues move through a lifecycle:
+  - Open → In Progress → Fixed → Verified
+- A future audit confirms what is actually resolved
+
+Previous audits are closed and treated as **historical summaries**, not active workflows.
 
 ---
 
 ## 🖥️ Screens
 
-### 📊 Dashboard
-
-The decision surface for current accessibility risk.
+### 📊 Dashboard — Decision Surface
 
 <br>
 
@@ -42,16 +50,17 @@ The decision surface for current accessibility risk.
 
 <br>
 
-- Surfaces highest-risk properties and unresolved critical issues
-- Directs teams on where to focus next based on regression trends
+The Dashboard answers:
+
+- What still needs to be fixed?
+- Where is the highest risk?
+- Where should we focus first?
+
+It reflects **current audit state only** — no trends, no history, no noise.
 
 ---
 
-### 🔧 Issues
-
-Primary remediation workspace — where accessibility work actually happens.
-
-#### Triage Table (Macro View)
+### 🔧 Issues — Remediation Workspace (Core Product)
 
 <br>
 
@@ -59,9 +68,14 @@ Primary remediation workspace — where accessibility work actually happens.
 
 <br>
 
-High-density UI for managing hundreds of violations across properties using TanStack Table. Triage and prioritize by severity, status, and ownership — scan and act on high-impact violations without losing context.
+The Issues screen is where accessibility work actually happens.
 
-#### Remediation Drawer (Micro View)
+- Handles large datasets (hundreds to 1000+ issues)
+- Strong filtering across severity, status, page, and rule
+- Highlights repeated issues to expose high-leverage fixes
+- Built for real developer workflows
+
+#### Issue Detail Drawer
 
 <br>
 
@@ -69,13 +83,18 @@ High-density UI for managing hundreds of violations across properties using TanS
 
 <br>
 
-An explainability layer providing "Why it Matters," affected users, WCAG criteria, and specific code fixes for developers.
+Provides:
+
+- why it matters (plain language)
+- who is impacted
+- what failed (code-level context)
+- how to fix it
+
+This bridges the gap between audit findings and actual implementation.
 
 ---
 
-### 🔍 Scans
-
-Audit history and remediation progress tracking.
+### 🔍 Scans — Audit History
 
 <br>
 
@@ -83,8 +102,11 @@ Audit history and remediation progress tracking.
 
 <br>
 
-- Breakdown of findings for every individual audit
-- Tracks remediation velocity and confirms fixes are verified in later scans
+Scans provides a lightweight history of audits.
+
+- Current audit is the active backlog
+- Previous audits are summary-only
+- Used for reference, not day-to-day work
 
 ---
 
@@ -96,33 +118,60 @@ Audit history and remediation progress tracking.
 
 <br>
 
----
-
-## ⚙️ Tech Stack & Architecture
-
-- **Framework:** Next.js 15 (App Router & Turbopack)
-- **Logic Separation:** Data is transformed into view-models (like `PropertyHealthSummary`) before rendering
-- **Theme Engine:** Custom dark mode implementation with a blocking script to prevent FOUC
+Desktop-first design with responsive support for smaller screens.
 
 ---
 
-## ♿ Accessibility & Design
+## 🔁 Example Workflow
 
-Accessibility is a first-class concern in AccessOps:
-
-- **Semantic HTML:** Foundation of the component library
-- **Responsive Design:** Summary stats transition from grid to single-column stack on mobile
-- **Keyboard-first:** Full navigation and triage support via keyboard
+1. A team receives a new accessibility audit
+2. The audit becomes the **active backlog**
+3. Dashboard surfaces where risk is concentrated
+4. Engineers work through issues in the Issues screen
+5. Issues are marked Fixed
+6. A future audit verifies what is resolved
 
 ---
 
 ## 📊 Data Strategy
 
-This project uses seeded audit data to simulate diverse real-world scenarios:
+Seeded data simulates a realistic enterprise accessibility program:
 
-- **Improvement:** A marketing site showing a downward trend in issues
-- **Regression:** A loan application where new features introduced new violations
-- **Neglected Backlog:** A support center with high-volume, low-priority debt
+- **Marketing Site** → healthy, well-remediated
+- **Loan Application** → highest risk, regression-heavy
+- **Customer Dashboard** → active remediation in progress
+- **Support Center** → smaller, stagnant backlog
+
+The goal is to demonstrate:
+
+- prioritization
+- remediation workflows
+- repeated issue patterns
+- real-world scale
+
+---
+
+## ⚙️ Tech Stack
+
+- Next.js (App Router)
+- React + TypeScript
+- Tailwind CSS
+- shadcn/ui + Radix
+- TanStack Table
+- Recharts
+- React Hook Form + Zod
+
+---
+
+## ♿ Accessibility
+
+Accessibility is built into the product itself:
+
+- semantic HTML first
+- keyboard-first interactions
+- proper focus management
+- no color-only meaning
+- screen reader clarity across states
 
 ---
 
@@ -133,12 +182,3 @@ npm install
 npm run dev
 npm run build
 ```
-
----
-
-## 💭 Why I Built This
-
-Accessibility issues don't fail because they aren't detected —
-they fail because they aren't **prioritized, owned, and verified.**
-
-This project explores what accessibility tooling looks like when it's built around **real workflows** instead of reports.
