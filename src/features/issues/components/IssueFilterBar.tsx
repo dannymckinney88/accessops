@@ -16,6 +16,7 @@ interface IssueFilterBarProps {
   filters: IssueFilters;
   properties: Property[];
   availablePages: AvailablePage[];
+  ruleLabel: string | null;
   totalCount: number;
   filteredCount: number;
   hasActiveFilters: boolean;
@@ -57,6 +58,7 @@ const IssueFilterBar = ({
   filters,
   properties,
   availablePages,
+  ruleLabel,
   totalCount,
   filteredCount,
   hasActiveFilters,
@@ -83,6 +85,7 @@ const IssueFilterBar = ({
     const page = availablePages.find((p) => p.id === filters.pageId);
     if (page) activeFilterLabels.push(page.title);
   }
+  if (filters.ruleId && ruleLabel) activeFilterLabels.push(ruleLabel);
   if (activeSearch) activeFilterLabels.push(`"${activeSearch}"`);
 
   // Pages to show in the page dropdown.

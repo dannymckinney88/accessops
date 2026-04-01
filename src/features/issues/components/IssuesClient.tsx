@@ -78,6 +78,7 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
     toggleSeverity,
     setPropertyId,
     setPageId,
+    setRuleId,
     setSearch,
     setQuickFilter,
     setAll,
@@ -121,6 +122,12 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
     return result;
   }, [violations]);
 
+  // Resolve the human-readable rule label for the active ruleId filter.
+  // Used in the filter summary ("Filtered by: Images must have alt text").
+  const ruleLabel = filters.ruleId
+    ? (violations.find((v) => v.ruleId === filters.ruleId)?.rule?.help ?? filters.ruleId)
+    : null;
+
   // Count distinct pages per rule across all violations (not just filtered).
   // Used to surface "appears on N pages" hints in the table and drawer.
   const rulePageCounts = useMemo<Map<string, number>>(() => {
@@ -150,6 +157,7 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
         filters={filters}
         properties={properties}
         availablePages={availablePages}
+        ruleLabel={ruleLabel}
         totalCount={violations.length}
         filteredCount={filteredViolations.length}
         hasActiveFilters={hasActiveFilters}
@@ -196,6 +204,10 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
         }
         onClose={closeDrawer}
         onFocusTrigger={focusTriggerRow}
+        onViewAllInstances={(ruleId) => {
+          setRuleId(ruleId);
+          closeDrawer();
+        }}
       />
     </div>
   );

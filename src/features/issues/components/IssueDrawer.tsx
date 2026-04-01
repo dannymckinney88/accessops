@@ -18,6 +18,7 @@ interface IssueDrawerProps {
   rulePageCount?: number;
   onClose: () => void;
   onFocusTrigger: () => void;
+  onViewAllInstances: (ruleId: string) => void;
 }
 
 const formatDate = (iso: string) =>
@@ -27,7 +28,7 @@ const formatDate = (iso: string) =>
     year: "numeric",
   });
 
-const IssueDrawer = ({ violation, rulePageCount, onClose, onFocusTrigger }: IssueDrawerProps) => {
+const IssueDrawer = ({ violation, rulePageCount, onClose, onFocusTrigger, onViewAllInstances }: IssueDrawerProps) => {
   return (
     <Sheet
       open={violation !== null}
@@ -160,6 +161,13 @@ const IssueDrawer = ({ violation, rulePageCount, onClose, onFocusTrigger }: Issu
                       <dt className="mt-4 text-xs text-muted-foreground">Scope</dt>
                       <dd className="mt-1 text-sm text-foreground">
                         This rule has violations on {rulePageCount} pages
+                        <button
+                          type="button"
+                          onClick={() => onViewAllInstances(violation.ruleId)}
+                          className="ml-3 text-xs text-primary underline underline-offset-4 outline-none hover:text-primary/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-sm transition-colors"
+                        >
+                          View all instances
+                        </button>
                       </dd>
                     </>
                   )}
