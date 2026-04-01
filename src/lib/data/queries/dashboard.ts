@@ -55,20 +55,42 @@ export const getPropertyHealthSummaries = async (): Promise<
         violation.status === "open" || violation.status === "in-progress",
     );
 
-    // Calculate the health trend by comparing the two most recent scans
+    // Classify property health from current audit state only — no cross-scan comparison.
     let trend: PropertyHealthSummary["trend"] = "insufficient-data";
-    if (propertyScans.length >= 2) {
-      const latestViolationCount = violations.filter(
-        (violation) => violation.scanRunId === propertyScans[0]!.id,
+    if (latestScanRun) {
+      const total = propertyViolations.length;
+      const resolvedCount = propertyViolations.filter(
+        (v) =>
+          v.status === "fixed" ||
+          v.status === "verified" ||
+          v.status === "accepted-risk",
       ).length;
-      const previousViolationCount = violations.filter(
-        (violation) => violation.scanRunId === propertyScans[1]!.id,
+      const inProgressCount = propertyViolations.filter(
+        (v) => v.status === "in-progress",
       ).length;
 
-      if (latestViolationCount < previousViolationCount) trend = "improving";
-      else if (latestViolationCount > previousViolationCount)
-        trend = "regressing";
-      else trend = "stable";
+      const resolvedPct = total > 0 ? resolvedCount / total : 0;
+      const inProgressRatio =
+        unfixedViolations.length > 0
+          ? inProgressCount / unfixedViolations.length
+          : 0;
+      const criticalUnfixed = unfixedViolations.filter(
+        (v) => v.impact === "critical",
+      ).length;
+
+      if (criticalUnfixed >= 15 && resolvedPct < 0.2) {
+        // High critical concentration with little resolved progress
+        trend = "high-risk";
+      } else if (criticalUnfixed <= 3 && resolvedPct >= 0.4) {
+        // Low critical exposure, strong resolved percentage
+        trend = "healthy";
+      } else if (resolvedPct >= 0.3 || inProgressRatio >= 0.2) {
+        // Meaningful resolved progress or active in-progress work
+        trend = "active-remediation";
+      } else {
+        // Low progress, low activity
+        trend = "stagnant";
+      }
     }
 
     return {
@@ -195,7 +217,7 @@ export const getDashboardCurrentState =
         ),
       ).size,
       regressingCount: healthSummaries.filter(
-        (summary) => summary.trend === "regressing",
+        (summary) => summary.trend === "high-risk",
       ).length,
       unfixedCount: unfixedViolations.length,
       openCount: currentViolations.filter(

@@ -106,7 +106,7 @@ export type PropertyHealthSummary = {
   criticalCount: number;
   seriousCount: number;
   unfixedCount: number;
-  trend: "improving" | "regressing" | "stable" | "insufficient-data";
+  trend: "high-risk" | "active-remediation" | "healthy" | "stagnant" | "insufficient-data";
 };
 
 export type SeverityDistributionPoint = {
