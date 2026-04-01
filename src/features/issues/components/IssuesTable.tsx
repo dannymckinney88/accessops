@@ -57,6 +57,19 @@ const IssuesTable = ({
     pageIndex: 0,
     pageSize: 25,
   });
+  // Tracks which page groups are collapsed. Default: all expanded (empty set).
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    new Set(),
+  );
+
+  const toggleGroup = (pageId: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(pageId)) next.delete(pageId);
+      else next.add(pageId);
+      return next;
+    });
+  };
 
   // In grouped mode, hide page and property columns (redundant with group headers).
   const columnVisibility: Record<string, boolean> =
@@ -89,6 +102,7 @@ const IssuesTable = ({
         pageTitle: string;
         pagePath: string;
         propertyName: string;
+        criticalCount: number;
         violations: HydratedViolation[];
       }
     >();
@@ -100,6 +114,7 @@ const IssuesTable = ({
           pageTitle: v.page?.title ?? "No page",
           pagePath: v.page?.path ?? "",
           propertyName: v.property?.name ?? "",
+          criticalCount: 0,
           violations: [],
         });
       }
@@ -109,11 +124,13 @@ const IssuesTable = ({
       g.violations.sort(
         (a, b) => severityOrder[a.impact] - severityOrder[b.impact],
       );
+      g.criticalCount = g.violations.filter(
+        (v) => v.impact === "critical",
+      ).length;
     }
     return Array.from(map.values()).sort((a, b) => {
-      const aCrit = a.violations.filter((r) => r.impact === "critical").length;
-      const bCrit = b.violations.filter((r) => r.impact === "critical").length;
-      if (bCrit !== aCrit) return bCrit - aCrit;
+      if (b.criticalCount !== a.criticalCount)
+        return b.criticalCount - a.criticalCount;
       return b.violations.length - a.violations.length;
     });
   }, [violations, viewMode]);
@@ -191,90 +208,129 @@ const IssuesTable = ({
             </thead>
 
             {viewMode === "grouped" && pageGroups ? (
-              // Grouped mode: one <tbody> per page, group header row + issue rows.
-              pageGroups.map((group) => (
-                <tbody key={group.pageId}>
-                  <tr className="border-b bg-muted/20">
-                    <td
-                      colSpan={visibleColCount}
-                      className="px-3 py-2 text-xs font-semibold text-foreground"
-                    >
-                      <span className="mr-1">{group.pageTitle}</span>
-                      {group.pagePath && (
-                        <span className="font-normal text-muted-foreground">
-                          {group.pagePath}
-                        </span>
-                      )}
-                      <span className="ml-2 font-normal text-muted-foreground">
-                        &middot; {group.violations.length}{" "}
-                        {group.violations.length === 1 ? "issue" : "issues"}
-                      </span>
-                      {group.propertyName && (
-                        <span className="ml-1 font-normal text-muted-foreground/60">
-                          &middot; {group.propertyName}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                  {group.violations.map((v) => {
-                    const isActive = v.id === activeViolationId;
-                    const pageCount = rulePageCounts.get(v.ruleId) ?? 1;
-                    return (
-                      <tr
-                        key={v.id}
-                        tabIndex={0}
-                        data-violation-id={v.id}
-                        aria-selected={isActive}
-                        onClick={() => onRowClick(v.id)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            onRowClick(v.id);
-                          }
-                        }}
-                        className={[
-                          rowBaseClass,
-                          isActive ? "bg-accent border-l-2 border-l-primary" : "",
-                        ]
-                          .filter(Boolean)
-                          .join(" ")}
-                      >
-                        <td className="px-3 py-2.5 align-top text-sm text-foreground">
-                          <SeverityBadge severity={v.impact} />
-                        </td>
-                        <td className="px-3 py-2.5 align-top text-sm text-foreground">
-                          <div>
-                            <p className="font-medium leading-snug">
-                              {v.rule?.help ?? v.ruleId}
-                            </p>
-                            <p className="mt-0.5 text-xs text-muted-foreground">
-                              {v.ruleId}
-                              {pageCount > 1 && (
-                                <span className="ml-2 text-primary/60">
-                                  · {pageCount} pages
-                                </span>
-                              )}
-                            </p>
+              // Grouped mode: one <tbody> per page, collapsible group header + issue rows.
+              pageGroups.map((group) => {
+                const collapsed = collapsedGroups.has(group.pageId);
+                return (
+                  <tbody key={group.pageId} className="border-t-2 border-border/40">
+                    {/* Group header row */}
+                    <tr className="bg-muted/30 hover:bg-muted/50 transition-colors">
+                      <td colSpan={visibleColCount} className="px-3 py-0">
+                        <button
+                          type="button"
+                          aria-expanded={!collapsed}
+                          onClick={() => toggleGroup(group.pageId)}
+                          className="flex w-full items-center gap-2.5 py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset rounded-sm"
+                        >
+                          <ChevronDown
+                            size={14}
+                            aria-hidden="true"
+                            className={`shrink-0 text-muted-foreground transition-transform duration-150 ${
+                              collapsed ? "-rotate-90" : ""
+                            }`}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-semibold text-foreground">
+                              {group.pageTitle}
+                            </span>
+                            {group.pagePath && (
+                              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                                {group.pagePath}
+                              </span>
+                            )}
                           </div>
-                        </td>
-                        <td className="px-3 py-2.5 align-top text-sm text-foreground">
-                          <StatusBadge status={v.status} />
-                        </td>
-                        <td className="px-3 py-2.5 align-top text-sm text-foreground">
-                          <PriorityBadge priority={v.priority} />
-                        </td>
-                        <td className="px-3 py-2.5 align-top text-sm text-foreground whitespace-nowrap">
-                          {new Date(v.firstSeenAt).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              ))
+                          <div className="flex items-center gap-3 shrink-0 text-xs">
+                            {group.criticalCount > 0 && (
+                              <span className="font-semibold text-severity-critical">
+                                {group.criticalCount}{" "}
+                                {group.criticalCount === 1
+                                  ? "critical"
+                                  : "critical"}
+                              </span>
+                            )}
+                            <span className="text-muted-foreground">
+                              {group.violations.length}{" "}
+                              {group.violations.length === 1
+                                ? "issue"
+                                : "issues"}
+                            </span>
+                            {group.propertyName && (
+                              <span className="text-muted-foreground/50">
+                                {group.propertyName}
+                              </span>
+                            )}
+                          </div>
+                        </button>
+                      </td>
+                    </tr>
+
+                    {/* Issue rows — hidden when group is collapsed */}
+                    {!collapsed &&
+                      group.violations.map((v) => {
+                        const isActive = v.id === activeViolationId;
+                        const pageCount = rulePageCounts.get(v.ruleId) ?? 1;
+                        return (
+                          <tr
+                            key={v.id}
+                            tabIndex={0}
+                            data-violation-id={v.id}
+                            aria-selected={isActive}
+                            onClick={() => onRowClick(v.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                onRowClick(v.id);
+                              }
+                            }}
+                            className={[
+                              rowBaseClass,
+                              isActive
+                                ? "bg-accent border-l-2 border-l-primary"
+                                : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
+                          >
+                            <td className="px-3 py-2.5 align-top text-sm text-foreground">
+                              <SeverityBadge severity={v.impact} />
+                            </td>
+                            <td className="px-3 py-2.5 align-top text-sm text-foreground">
+                              <div>
+                                <p className="font-medium leading-snug">
+                                  {v.rule?.help ?? v.ruleId}
+                                </p>
+                                <p className="mt-0.5 text-xs text-muted-foreground">
+                                  {v.ruleId}
+                                  {pageCount > 1 && (
+                                    <span className="ml-2 text-primary/60">
+                                      · {pageCount} pages
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                            </td>
+                            <td className="px-3 py-2.5 align-top text-sm text-foreground">
+                              <StatusBadge status={v.status} />
+                            </td>
+                            <td className="px-3 py-2.5 align-top text-sm text-foreground">
+                              <PriorityBadge priority={v.priority} />
+                            </td>
+                            <td className="px-3 py-2.5 align-top text-sm text-foreground whitespace-nowrap">
+                              {new Date(v.firstSeenAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                },
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                );
+              })
             ) : (
               // Flat mode: standard paginated rows.
               <tbody>
