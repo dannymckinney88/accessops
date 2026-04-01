@@ -1,13 +1,25 @@
 // src/lib/data/scan-runs.ts
 //
-// Scan cadence reflects a realistic external vendor audit model:
-// one baseline audit per property in Sep 2024, followed by optional rescans
-// commissioned per-property based on remediation progress and risk.
+// Two audit checkpoints per property: a previous baseline (Sep 2024) and a
+// current audit. Dates reinforce each property story.
 //
-// Marketing Site:   Baseline Sep 2024 → Rescan Feb 2025 (team improved significantly)
-// Loan Application: Baseline Sep 2024 → Rescan Jan 2025 (regression discovered — worse)
-// Customer Dashboard: Baseline Sep 2024 → Rescan Mar 2025 (barely moved — stagnant)
-// Support Center:   Baseline Sep 2024 only (team has not commissioned a rescan)
+// Marketing Site:      Baseline Sep 15 2024 → Rescan Feb 12 2025
+//                      Team used the remediation window well. Feb scan shows
+//                      dramatic improvement — nearly clean.
+//
+// Loan Application:    Baseline Sep 18 2024 → Rescan Jan 30 2025
+//                      A Nov 2024 deploy introduced a broken form component.
+//                      Label associations, autocomplete, and select-name fail
+//                      across the full 8-step application flow. Urgent.
+//
+// Customer Dashboard:  Baseline Sep 20 2024 → Rescan Mar 5 2025
+//                      Team is aware and actively working the backlog, but
+//                      progress is slow. High debt persists with visible
+//                      in-progress and fixed movement in the current scan.
+//
+// Support Center:      Baseline Sep 22 2024 → Rescan Nov 4 2024
+//                      Team commissioned a follow-up after six weeks.
+//                      Nothing was fixed. Issues unchanged.
 
 import type { ScanRun } from "@/lib/data/types/domain";
 
@@ -17,25 +29,24 @@ export const scanRuns: ScanRun[] = [
     id: "sr-mkt-baseline",
     propertyId: "prop-marketing",
     status: "completed",
-    pageCount: 5,
+    pageCount: 8,
     triggeredBy: "vendor-audit",
     initiatedAt: "2024-09-15T09:00:00.000Z",
-    completedAt: "2024-09-15T09:18:33.000Z",
+    completedAt: "2024-09-15T09:42:18.000Z",
   },
   {
     id: "sr-mkt-rescan",
     propertyId: "prop-marketing",
     status: "completed",
-    pageCount: 5,
+    pageCount: 8,
     triggeredBy: "vendor-rescan",
     initiatedAt: "2025-02-12T10:00:00.000Z",
-    completedAt: "2025-02-12T10:14:47.000Z",
+    completedAt: "2025-02-12T10:38:54.000Z",
   },
 
   // ─── Loan Application ─────────────────────────────────────────────────────
-  // A November 2024 deploy introduced a new form component that broke label
-  // associations and autocomplete across the full application flow.
-  // The rescan was commissioned urgently after internal QA flagged the failures.
+  // Nov 2024 deploy broke form accessibility across the entire application
+  // flow. Rescan commissioned urgently after internal QA flagged failures.
   {
     id: "sr-loan-baseline",
     propertyId: "prop-loan-app",
@@ -43,16 +54,16 @@ export const scanRuns: ScanRun[] = [
     pageCount: 5,
     triggeredBy: "vendor-audit",
     initiatedAt: "2024-09-18T09:00:00.000Z",
-    completedAt: "2024-09-18T09:21:04.000Z",
+    completedAt: "2024-09-18T09:31:04.000Z",
   },
   {
     id: "sr-loan-rescan",
     propertyId: "prop-loan-app",
     status: "completed",
-    pageCount: 5,
+    pageCount: 8,
     triggeredBy: "vendor-rescan",
     initiatedAt: "2025-01-30T09:00:00.000Z",
-    completedAt: "2025-01-30T09:23:51.000Z",
+    completedAt: "2025-01-30T09:48:22.000Z",
   },
 
   // ─── Customer Dashboard ───────────────────────────────────────────────────
@@ -60,31 +71,40 @@ export const scanRuns: ScanRun[] = [
     id: "sr-dash-baseline",
     propertyId: "prop-dashboard",
     status: "completed",
-    pageCount: 5,
+    pageCount: 7,
     triggeredBy: "vendor-audit",
     initiatedAt: "2024-09-20T09:00:00.000Z",
-    completedAt: "2024-09-20T09:24:16.000Z",
+    completedAt: "2024-09-20T09:44:16.000Z",
   },
   {
     id: "sr-dash-rescan",
     propertyId: "prop-dashboard",
     status: "completed",
-    pageCount: 5,
+    pageCount: 7,
     triggeredBy: "vendor-rescan",
     initiatedAt: "2025-03-05T09:00:00.000Z",
-    completedAt: "2025-03-05T09:22:38.000Z",
+    completedAt: "2025-03-05T09:51:33.000Z",
   },
 
   // ─── Support Center ───────────────────────────────────────────────────────
-  // Team has not prioritized accessibility remediation.
-  // No rescan has been commissioned. Violations remain unaddressed.
+  // Team commissioned a follow-up six weeks after the baseline.
+  // No remediation work occurred in the intervening period.
   {
     id: "sr-sup-baseline",
     propertyId: "prop-support",
     status: "completed",
-    pageCount: 4,
+    pageCount: 5,
     triggeredBy: "vendor-audit",
     initiatedAt: "2024-09-22T09:00:00.000Z",
-    completedAt: "2024-09-22T09:16:29.000Z",
+    completedAt: "2024-09-22T09:36:29.000Z",
+  },
+  {
+    id: "sr-sup-rescan",
+    propertyId: "prop-support",
+    status: "completed",
+    pageCount: 5,
+    triggeredBy: "vendor-rescan",
+    initiatedAt: "2024-11-04T09:00:00.000Z",
+    completedAt: "2024-11-04T09:34:11.000Z",
   },
 ];

@@ -7,6 +7,24 @@ import type {
 } from "../types/domain";
 
 /**
+ * Returns the set of scan run IDs that represent the current (latest) audit
+ * for each property. Dashboard and Issues operate only on current audit data.
+ */
+const getCurrentAuditScanRunIds = (): Set<string> => {
+  const ids = new Set<string>();
+  for (const property of properties) {
+    const latest = scanRuns
+      .filter((r) => r.propertyId === property.id && r.status === "completed")
+      .sort(
+        (a, b) =>
+          new Date(b.initiatedAt).getTime() - new Date(a.initiatedAt).getTime(),
+      )[0];
+    if (latest) ids.add(latest.id);
+  }
+  return ids;
+};
+
+/**
  * Returns summary rows for the dashboard property health table.
  */
 export const getPropertyHealthSummaries = async (): Promise<
@@ -26,11 +44,10 @@ export const getPropertyHealthSummaries = async (): Promise<
 
     const latestScanRun = propertyScans[0] ?? null;
 
-    // Filter violations belonging only to this property's scan history
-    const propertyScanIds = new Set(propertyScans.map((scanRun) => scanRun.id));
-    const propertyViolations = violations.filter((violation) =>
-      propertyScanIds.has(violation.scanRunId),
-    );
+    // Current audit only: violations from the latest scan run for this property
+    const propertyViolations = latestScanRun
+      ? violations.filter((v) => v.scanRunId === latestScanRun.id)
+      : [];
 
     // Identify issues that are currently active (not fixed)
     const unfixedViolations = propertyViolations.filter(
@@ -77,7 +94,13 @@ export const getDashboardCurrentState =
   async (): Promise<DashboardCurrentState> => {
     const healthSummaries = await getPropertyHealthSummaries();
 
-    const unfixedViolations = violations.filter(
+    // Current audit only: restrict to the latest scan run per property
+    const currentScanRunIds = getCurrentAuditScanRunIds();
+    const currentViolations = violations.filter((v) =>
+      currentScanRunIds.has(v.scanRunId),
+    );
+
+    const unfixedViolations = currentViolations.filter(
       (violation) =>
         violation.status === "open" || violation.status === "in-progress",
     );
@@ -156,7 +179,7 @@ export const getDashboardCurrentState =
       });
 
     return {
-      totalViolations: violations.length,
+      totalViolations: currentViolations.length,
       criticalCount: criticalUnfixedViolations.length,
       highSeverityCount:
         severityDistribution[0].count + severityDistribution[1].count,
@@ -175,17 +198,19 @@ export const getDashboardCurrentState =
         (summary) => summary.trend === "regressing",
       ).length,
       unfixedCount: unfixedViolations.length,
-      openCount: violations.filter((violation) => violation.status === "open")
-        .length,
-      inProgressCount: violations.filter(
+      openCount: currentViolations.filter(
+        (violation) => violation.status === "open",
+      ).length,
+      inProgressCount: currentViolations.filter(
         (violation) => violation.status === "in-progress",
       ).length,
-      fixedCount: violations.filter((violation) => violation.status === "fixed")
-        .length,
-      verifiedCount: violations.filter(
+      fixedCount: currentViolations.filter(
+        (violation) => violation.status === "fixed",
+      ).length,
+      verifiedCount: currentViolations.filter(
         (violation) => violation.status === "verified",
       ).length,
-      acceptedRiskCount: violations.filter(
+      acceptedRiskCount: currentViolations.filter(
         (violation) => violation.status === "accepted-risk",
       ).length,
       severityDistribution,

@@ -6,13 +6,11 @@ interface DashboardPropertyHealthProps {
 }
 
 const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
-  const sorted = [...summary.propertyHealthSummaries]
-    .sort((a, b) => {
-      if (a.trend === "regressing" && b.trend !== "regressing") return -1;
-      if (b.trend === "regressing" && a.trend !== "regressing") return 1;
-      return b.criticalCount - a.criticalCount;
-    })
-    .slice(0, 3);
+  const sorted = [...summary.propertyHealthSummaries].sort((a, b) => {
+    if (a.trend === "regressing" && b.trend !== "regressing") return -1;
+    if (b.trend === "regressing" && a.trend !== "regressing") return 1;
+    return b.criticalCount - a.criticalCount;
+  });
 
   return (
     <ul className="flex flex-col gap-10" role="list">
@@ -31,7 +29,9 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
               )
             : 0;
 
-        const isHighRisk = trend !== "regressing" && criticalCount > 0;
+        const isHighRisk =
+          trend !== "regressing" && trend !== "improving" && criticalCount > 0;
+        const isImproving = trend === "improving";
 
         return (
           <li key={property.id} className="relative">
@@ -50,13 +50,15 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
                     className={`size-3 ${trend === "regressing" || isHighRisk ? "text-severity-critical" : "text-muted-foreground/30"}`}
                   />
                   <span
-                    className={`text-[10px] font-bold uppercase tracking-tight ${trend === "regressing" || isHighRisk ? "text-severity-critical" : "text-muted-foreground/60"}`}
+                    className={`text-[10px] font-bold uppercase tracking-tight ${trend === "regressing" || isHighRisk ? "text-severity-critical" : isImproving ? "text-primary/70" : "text-muted-foreground/60"}`}
                   >
                     {trend === "regressing"
                       ? "Regressing"
                       : isHighRisk
                         ? "High Risk"
-                        : "Stable"}
+                        : isImproving
+                          ? "Improving"
+                          : "Stable"}
                   </span>
                 </div>
               </div>
