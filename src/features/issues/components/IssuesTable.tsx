@@ -9,6 +9,7 @@ import {
   flexRender,
   type SortingState,
   type PaginationState,
+  type SortingFn,
 } from "@tanstack/react-table";
 import {
   ChevronUp,
@@ -32,6 +33,14 @@ const severityOrder: Record<string, number> = {
   minor: 3,
 };
 
+const statusOrder: Record<string, number> = {
+  open: 0,
+  "in-progress": 1,
+  fixed: 2,
+  verified: 3,
+  "accepted-risk": 4,
+};
+
 interface IssuesTableProps {
   violations: HydratedViolation[];
   activeViolationId: string | null;
@@ -50,6 +59,27 @@ const IssuesTable = ({
   viewMode,
   onRowClick,
 }: IssuesTableProps) => {
+  // Remediation sort: severity → scope (# pages affected, desc) → status → first seen (asc).
+  // Registered as a named sortingFn so columns.tsx can reference it by string key.
+  const remediationSort: SortingFn<HydratedViolation> = (rowA, rowB) => {
+    const sevDiff =
+      severityOrder[rowA.original.impact] - severityOrder[rowB.original.impact];
+    if (sevDiff !== 0) return sevDiff;
+
+    const countA = rulePageCounts.get(rowA.original.ruleId) ?? 1;
+    const countB = rulePageCounts.get(rowB.original.ruleId) ?? 1;
+    if (countB !== countA) return countB - countA; // more pages = higher priority
+
+    const statusDiff =
+      statusOrder[rowA.original.status] - statusOrder[rowB.original.status];
+    if (statusDiff !== 0) return statusDiff;
+
+    return (
+      new Date(rowA.original.firstSeenAt).getTime() -
+      new Date(rowB.original.firstSeenAt).getTime()
+    );
+  };
+
   const [sorting, setSorting] = useState<SortingState>([
     { id: "severity", desc: false },
   ]);
@@ -79,6 +109,7 @@ const IssuesTable = ({
     data: violations,
     columns: issueColumns,
     meta: { rulePageCounts },
+    sortingFns: { remediationSort },
     state: { sorting, pagination, columnVisibility },
     onSortingChange: (updater) => {
       setSorting(updater);
@@ -121,9 +152,16 @@ const IssuesTable = ({
       map.get(key)!.violations.push(v);
     }
     for (const g of map.values()) {
-      g.violations.sort(
-        (a, b) => severityOrder[a.impact] - severityOrder[b.impact],
-      );
+      g.violations.sort((a, b) => {
+        const sevDiff = severityOrder[a.impact] - severityOrder[b.impact];
+        if (sevDiff !== 0) return sevDiff;
+        const countA = rulePageCounts.get(a.ruleId) ?? 1;
+        const countB = rulePageCounts.get(b.ruleId) ?? 1;
+        if (countB !== countA) return countB - countA;
+        const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+        if (statusDiff !== 0) return statusDiff;
+        return new Date(a.firstSeenAt).getTime() - new Date(b.firstSeenAt).getTime();
+      });
       g.criticalCount = g.violations.filter(
         (v) => v.impact === "critical",
       ).length;

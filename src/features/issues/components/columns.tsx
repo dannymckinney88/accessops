@@ -1,4 +1,4 @@
-import { createColumnHelper } from "@tanstack/react-table";
+import { createColumnHelper, type SortingFn } from "@tanstack/react-table";
 import type { HydratedViolation } from "@/lib/data/index";
 import SeverityBadge from "@/components/common/SeverityBadge";
 import StatusBadge from "@/components/common/StatusBadge";
@@ -10,16 +10,14 @@ declare module "@tanstack/react-table" {
   interface TableMeta<TData> {
     rulePageCounts?: Map<string, number>;
   }
+  // Register the remediation sort so columns can reference it by name.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface SortingFns {
+    remediationSort: SortingFn<unknown>;
+  }
 }
 
 const col = createColumnHelper<HydratedViolation>();
-
-const severityOrder: Record<string, number> = {
-  critical: 0,
-  serious: 1,
-  moderate: 2,
-  minor: 3,
-};
 
 const priorityOrder: Record<string, number> = {
   urgent: 0,
@@ -33,8 +31,7 @@ export const issueColumns = [
     id: "severity",
     header: "Severity",
     cell: (info) => <SeverityBadge severity={info.getValue()} />,
-    sortingFn: (a, b) =>
-      severityOrder[a.original.impact] - severityOrder[b.original.impact],
+    sortingFn: "remediationSort",
   }),
 
   col.accessor((row) => row.rule?.help ?? row.ruleId, {
