@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useMemo, useEffect } from "react";
+import { useRef, useMemo, useEffect, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import type { HydratedViolation, Property } from "@/lib/data/index";
 import { useIssueFilters } from "../hooks/useIssueFilters";
-import IssueFilterBar, { type AvailablePage } from "./IssueFilterBar";
+import IssueFilterBar, { type AvailablePage, type AvailableRule } from "./IssueFilterBar";
 import IssuesTable from "./IssuesTable";
 import IssueDrawer from "./IssueDrawer";
 
@@ -19,6 +19,7 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
   const searchParams = useSearchParams();
 
   const activeViolationId = searchParams.get("issueId") ?? null;
+  const [viewMode, setViewMode] = useState<"flat" | "grouped">("flat");
 
   // Seed filter state from URL on mount (supports dashboard deep-links like ?pageId=X).
   const initialPropertyId = searchParams.get("propertyId") ?? null;
@@ -131,6 +132,19 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
       ? `${unfixedViolations.length} unfixed issues · ${criticalUnfixedCount} critical · ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`
       : `${unfixedViolations.length} unfixed issues · ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`;
 
+  // Derive unique rules for the rule filter dropdown (sorted alphabetically).
+  const availableRules = useMemo<AvailableRule[]>(() => {
+    const seen = new Map<string, string>();
+    for (const v of violations) {
+      if (!seen.has(v.ruleId)) {
+        seen.set(v.ruleId, v.rule?.help ?? v.ruleId);
+      }
+    }
+    return Array.from(seen.entries())
+      .map(([id, label]) => ({ id, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [violations]);
+
   // Derive unique pages from violations for the page filter dropdown.
   const availablePages = useMemo<AvailablePage[]>(() => {
     const seen = new Set<string>();
@@ -184,19 +198,23 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
         filters={filters}
         properties={properties}
         availablePages={availablePages}
+        availableRules={availableRules}
         ruleLabel={ruleLabel}
         totalCount={violations.length}
         filteredCount={filteredViolations.length}
         hasActiveFilters={hasActiveFilters}
         activeSearch={activeSearch}
+        viewMode={viewMode}
         onToggleSeverity={toggleSeverity}
         onSetPropertyId={setPropertyId}
         onSetPageId={setPageId}
+        onSetRuleId={setRuleId}
         onSetStatus={setStatus}
         onSetSearch={setSearch}
         onSetQuickFilter={setQuickFilter}
         onSetAll={setAll}
         onReset={reset}
+        onSetViewMode={setViewMode}
       />
 
       {filteredViolations.length === 0 ? (
@@ -221,6 +239,7 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
           violations={filteredViolations}
           activeViolationId={activeViolationId}
           rulePageCounts={rulePageCounts}
+          viewMode={viewMode}
           onRowClick={openDrawer}
         />
       )}

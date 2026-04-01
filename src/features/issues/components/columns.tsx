@@ -52,7 +52,7 @@ export const issueColumns = [
             {info.row.original.ruleId}
             {pageCount > 1 && (
               <span
-                className="ml-2 text-muted-foreground/70"
+                className="ml-2 text-primary/60"
                 title={`This rule has violations on ${pageCount} pages`}
               >
                 · {pageCount} pages

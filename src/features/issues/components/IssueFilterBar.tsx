@@ -12,23 +12,32 @@ export type AvailablePage = {
   propertyName: string;
 };
 
+export type AvailableRule = {
+  id: string;
+  label: string;
+};
+
 interface IssueFilterBarProps {
   filters: IssueFilters;
   properties: Property[];
   availablePages: AvailablePage[];
+  availableRules: AvailableRule[];
   ruleLabel: string | null;
   totalCount: number;
   filteredCount: number;
   hasActiveFilters: boolean;
   activeSearch: string;
+  viewMode: "flat" | "grouped";
   onToggleSeverity: (s: Severity) => void;
   onSetPropertyId: (id: string | null) => void;
   onSetPageId: (id: string | null) => void;
+  onSetRuleId: (id: string | null) => void;
   onSetStatus: (id: RemediationStatus | null) => void;
   onSetSearch: (q: string) => void;
   onSetQuickFilter: (chip: QuickFilterChip | null) => void;
   onSetAll: () => void;
   onReset: () => void;
+  onSetViewMode: (mode: "flat" | "grouped") => void;
 }
 
 const severityLabel: Record<Severity, string> = {
@@ -59,19 +68,23 @@ const IssueFilterBar = ({
   filters,
   properties,
   availablePages,
+  availableRules,
   ruleLabel,
   totalCount,
   filteredCount,
   hasActiveFilters,
   activeSearch,
+  viewMode,
   onToggleSeverity,
   onSetPropertyId,
   onSetPageId,
+  onSetRuleId,
   onSetStatus,
   onSetSearch,
   onSetQuickFilter,
   onSetAll,
   onReset,
+  onSetViewMode,
 }: IssueFilterBarProps) => {
   // Build human-readable labels for the active filter summary.
   const activeFilterLabels: string[] = [];
@@ -194,6 +207,20 @@ const IssueFilterBar = ({
             ))}
           </select>
 
+          <select
+            value={filters.ruleId ?? ""}
+            onChange={(e) => onSetRuleId(e.target.value || null)}
+            aria-label="Filter by rule"
+            className={`${inputClass} pr-2 max-w-[220px]`}
+          >
+            <option value="">All rules</option>
+            {availableRules.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+
           {hasActiveFilters && (
             <button
               type="button"
@@ -204,6 +231,37 @@ const IssueFilterBar = ({
               Clear all filters
             </button>
           )}
+
+          <div
+            role="group"
+            aria-label="View mode"
+            className="flex items-center rounded-md border border-input overflow-hidden shrink-0"
+          >
+            <button
+              type="button"
+              onClick={() => onSetViewMode("flat")}
+              aria-pressed={viewMode === "flat"}
+              className={`h-8 px-3 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${
+                viewMode === "flat"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Flat
+            </button>
+            <button
+              type="button"
+              onClick={() => onSetViewMode("grouped")}
+              aria-pressed={viewMode === "grouped"}
+              className={`h-8 px-3 text-xs font-medium border-l border-input transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${
+                viewMode === "grouped"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Group by Page
+            </button>
+          </div>
         </div>
       </div>
 
