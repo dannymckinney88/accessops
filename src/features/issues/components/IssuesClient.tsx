@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import type { HydratedViolation, Property } from "@/lib/data/index";
 import { useIssueFilters } from "../hooks/useIssueFilters";
@@ -19,6 +19,10 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
   const searchParams = useSearchParams();
 
   const activeViolationId = searchParams.get("issueId") ?? null;
+
+  // Seed filter state from URL on mount (supports dashboard deep-links like ?pageId=X).
+  const initialPropertyId = searchParams.get("propertyId") ?? null;
+  const initialPageId = searchParams.get("pageId") ?? null;
 
   // Tracks the violation ID whose row triggered the drawer open.
   // Used to restore focus to that row when the drawer closes.
@@ -79,11 +83,34 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
     setPropertyId,
     setPageId,
     setRuleId,
+    setStatus,
     setSearch,
     setQuickFilter,
     setAll,
     reset,
-  } = useIssueFilters(violations);
+  } = useIssueFilters(violations, {
+    propertyId: initialPropertyId,
+    pageId: initialPageId,
+  });
+
+  // Sync propertyId/pageId filter state back to URL so drawer open/close preserves them.
+  // Uses replace (not push) to avoid polluting browser history on each filter change.
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    const urlProp = params.get("propertyId") ?? null;
+    const urlPage = params.get("pageId") ?? null;
+
+    // Skip if URL already reflects current filter state.
+    if (urlProp === filters.propertyId && urlPage === filters.pageId) return;
+
+    if (filters.propertyId) params.set("propertyId", filters.propertyId);
+    else params.delete("propertyId");
+    if (filters.pageId) params.set("pageId", filters.pageId);
+    else params.delete("pageId");
+
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [filters.propertyId, filters.pageId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeViolation =
     activeViolationId !== null
@@ -165,6 +192,7 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
         onToggleSeverity={toggleSeverity}
         onSetPropertyId={setPropertyId}
         onSetPageId={setPageId}
+        onSetStatus={setStatus}
         onSetSearch={setSearch}
         onSetQuickFilter={setQuickFilter}
         onSetAll={setAll}

@@ -36,7 +36,7 @@ const IssuesTable = ({
   onRowClick,
 }: IssuesTableProps) => {
   const [sorting, setSorting] = useState<SortingState>([
-    { id: "firstSeenAt", desc: false },
+    { id: "severity", desc: false },
   ]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,

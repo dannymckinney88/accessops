@@ -24,6 +24,7 @@ interface IssueFilterBarProps {
   onToggleSeverity: (s: Severity) => void;
   onSetPropertyId: (id: string | null) => void;
   onSetPageId: (id: string | null) => void;
+  onSetStatus: (id: RemediationStatus | null) => void;
   onSetSearch: (q: string) => void;
   onSetQuickFilter: (chip: QuickFilterChip | null) => void;
   onSetAll: () => void;
@@ -66,6 +67,7 @@ const IssueFilterBar = ({
   onToggleSeverity,
   onSetPropertyId,
   onSetPageId,
+  onSetStatus,
   onSetSearch,
   onSetQuickFilter,
   onSetAll,
@@ -166,6 +168,30 @@ const IssueFilterBar = ({
                     {p.title}
                   </option>
                 ))}
+          </select>
+
+          <select
+            value={filters.status[0] ?? ""}
+            onChange={(e) =>
+              onSetStatus((e.target.value as RemediationStatus) || null)
+            }
+            aria-label="Filter by status"
+            className={`${inputClass} pr-2`}
+          >
+            <option value="">All statuses</option>
+            {(
+              [
+                "open",
+                "in-progress",
+                "fixed",
+                "verified",
+                "accepted-risk",
+              ] as RemediationStatus[]
+            ).map((s) => (
+              <option key={s} value={s}>
+                {statusLabel[s]}
+              </option>
+            ))}
           </select>
 
           {hasActiveFilters && (

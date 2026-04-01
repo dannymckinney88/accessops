@@ -36,8 +36,14 @@ const defaultFilters: IssueFilters = {
 const toggle = <T>(arr: T[], item: T): T[] =>
   arr.includes(item) ? arr.filter((i) => i !== item) : [...arr, item];
 
-export const useIssueFilters = (violations: HydratedViolation[]) => {
-  const [filters, setFilters] = useState<IssueFilters>(defaultFilters);
+export const useIssueFilters = (
+  violations: HydratedViolation[],
+  initialFilters?: Pick<IssueFilters, "propertyId" | "pageId">,
+) => {
+  const [filters, setFilters] = useState<IssueFilters>({
+    ...defaultFilters,
+    ...initialFilters,
+  });
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   // Debounce search input at 300ms; minimum 2 chars to activate.
@@ -61,6 +67,15 @@ export const useIssueFilters = (violations: HydratedViolation[]) => {
 
   const setRuleId = (id: string | null) =>
     setFilters((f) => ({ ...f, ruleId: id }));
+
+  // Selecting an explicit status replaces quick-filter semantics.
+  // Clearing it (null) restores whatever quickFilter was already active.
+  const setStatus = (id: RemediationStatus | null) =>
+    setFilters((f) => ({
+      ...f,
+      status: id ? [id] : [],
+      quickFilter: id ? null : f.quickFilter,
+    }));
 
   const setSearch = (q: string) => setFilters((f) => ({ ...f, search: q }));
 
@@ -146,6 +161,7 @@ export const useIssueFilters = (violations: HydratedViolation[]) => {
     setPropertyId,
     setPageId,
     setRuleId,
+    setStatus,
     setSearch,
     setQuickFilter,
     setAll,
