@@ -209,53 +209,52 @@ const IssuesTable = ({
 
             {viewMode === "grouped" && pageGroups ? (
               // Grouped mode: one <tbody> per page, collapsible group header + issue rows.
-              pageGroups.map((group) => {
+              pageGroups.map((group, idx) => {
                 const collapsed = collapsedGroups.has(group.pageId);
                 return (
-                  <tbody key={group.pageId} className="border-t-2 border-border/40">
+                  <tbody
+                    key={group.pageId}
+                    className={idx > 0 ? "border-t-4 border-border/50" : "border-t border-border/30"}
+                  >
                     {/* Group header row */}
-                    <tr className="bg-muted/30 hover:bg-muted/50 transition-colors">
-                      <td colSpan={visibleColCount} className="px-3 py-0">
+                    <tr className="bg-muted/50">
+                      <td colSpan={visibleColCount} className="py-0 pl-2 pr-3">
                         <button
                           type="button"
                           aria-expanded={!collapsed}
+                          aria-label={`${collapsed ? "Expand" : "Collapse"} ${group.pageTitle}`}
                           onClick={() => toggleGroup(group.pageId)}
-                          className="flex w-full items-center gap-2.5 py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset rounded-sm"
+                          className="flex w-full items-center gap-3 py-3.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset rounded-sm"
                         >
                           <ChevronDown
                             size={14}
                             aria-hidden="true"
-                            className={`shrink-0 text-muted-foreground transition-transform duration-150 ${
+                            className={`shrink-0 text-muted-foreground ${
                               collapsed ? "-rotate-90" : ""
                             }`}
                           />
                           <div className="flex-1 min-w-0">
-                            <span className="text-sm font-semibold text-foreground">
+                            <p className="text-sm font-bold text-foreground leading-snug">
                               {group.pageTitle}
-                            </span>
+                            </p>
                             {group.pagePath && (
-                              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                              <p className="mt-0.5 text-xs font-normal text-muted-foreground">
                                 {group.pagePath}
-                              </span>
+                              </p>
                             )}
                           </div>
-                          <div className="flex items-center gap-3 shrink-0 text-xs">
+                          <div className="flex items-center gap-4 shrink-0 text-xs">
                             {group.criticalCount > 0 && (
-                              <span className="font-semibold text-severity-critical">
-                                {group.criticalCount}{" "}
-                                {group.criticalCount === 1
-                                  ? "critical"
-                                  : "critical"}
+                              <span className="font-bold text-severity-critical">
+                                {group.criticalCount} critical
                               </span>
                             )}
-                            <span className="text-muted-foreground">
+                            <span className="font-medium text-foreground/70">
                               {group.violations.length}{" "}
-                              {group.violations.length === 1
-                                ? "issue"
-                                : "issues"}
+                              {group.violations.length === 1 ? "issue" : "issues"}
                             </span>
                             {group.propertyName && (
-                              <span className="text-muted-foreground/50">
+                              <span className="text-muted-foreground/40 hidden sm:inline">
                                 {group.propertyName}
                               </span>
                             )}
@@ -291,7 +290,7 @@ const IssuesTable = ({
                               .filter(Boolean)
                               .join(" ")}
                           >
-                            <td className="px-3 py-2.5 align-top text-sm text-foreground">
+                            <td className="pl-8 pr-3 py-2.5 align-top text-sm text-foreground">
                               <SeverityBadge severity={v.impact} />
                             </td>
                             <td className="px-3 py-2.5 align-top text-sm text-foreground">
