@@ -25,12 +25,14 @@ const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 interface IssuesTableProps {
   violations: HydratedViolation[];
   activeViolationId: string | null;
+  rulePageCounts: Map<string, number>;
   onRowClick: (id: string) => void;
 }
 
 const IssuesTable = ({
   violations,
   activeViolationId,
+  rulePageCounts,
   onRowClick,
 }: IssuesTableProps) => {
   const [sorting, setSorting] = useState<SortingState>([
@@ -44,6 +46,7 @@ const IssuesTable = ({
   const table = useReactTable({
     data: violations,
     columns: issueColumns,
+    meta: { rulePageCounts },
     state: { sorting, pagination },
     onSortingChange: (updater) => {
       setSorting(updater);

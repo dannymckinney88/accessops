@@ -14,6 +14,7 @@ export type IssueFilters = {
   severity: Severity[];
   status: RemediationStatus[];
   propertyId: string | null;
+  pageId: string | null;
   search: string; // raw input value — drives the controlled input
   quickFilter: QuickFilterChip | null;
 };
@@ -25,6 +26,7 @@ const defaultFilters: IssueFilters = {
   severity: [],
   status: [],
   propertyId: null,
+  pageId: null,
   search: "",
   quickFilter: "unfixed",
 };
@@ -49,7 +51,11 @@ export const useIssueFilters = (violations: HydratedViolation[]) => {
     setFilters((f) => ({ ...f, severity: toggle(f.severity, s) }));
 
   const setPropertyId = (id: string | null) =>
-    setFilters((f) => ({ ...f, propertyId: id }));
+    // Reset page filter when property changes — selected page may not exist in new property
+    setFilters((f) => ({ ...f, propertyId: id, pageId: null }));
+
+  const setPageId = (id: string | null) =>
+    setFilters((f) => ({ ...f, pageId: id }));
 
   const setSearch = (q: string) => setFilters((f) => ({ ...f, search: q }));
 
@@ -79,6 +85,7 @@ export const useIssueFilters = (violations: HydratedViolation[]) => {
     filters.severity.length > 0 ||
     filters.status.length > 0 ||
     filters.propertyId !== null ||
+    filters.pageId !== null ||
     filters.quickFilter !== "unfixed" ||
     activeSearch !== "";
 
@@ -94,6 +101,9 @@ export const useIssueFilters = (violations: HydratedViolation[]) => {
         filters.propertyId !== null &&
         v.property?.id !== filters.propertyId
       ) {
+        return false;
+      }
+      if (filters.pageId !== null && v.page?.id !== filters.pageId) {
         return false;
       }
       if (activeSearch !== "") {
@@ -125,6 +135,7 @@ export const useIssueFilters = (violations: HydratedViolation[]) => {
     activeSearch,
     toggleSeverity,
     setPropertyId,
+    setPageId,
     setSearch,
     setQuickFilter,
     setAll,

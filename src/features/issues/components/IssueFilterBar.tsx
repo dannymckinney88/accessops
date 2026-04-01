@@ -5,15 +5,24 @@ import type { Severity, RemediationStatus } from "@/lib/data/types/domain";
 import type { Property } from "@/lib/data/index";
 import IssueQuickFilters from "./IssueQuickFilters";
 
+export type AvailablePage = {
+  id: string;
+  title: string;
+  propertyId: string;
+  propertyName: string;
+};
+
 interface IssueFilterBarProps {
   filters: IssueFilters;
   properties: Property[];
+  availablePages: AvailablePage[];
   totalCount: number;
   filteredCount: number;
   hasActiveFilters: boolean;
   activeSearch: string;
   onToggleSeverity: (s: Severity) => void;
   onSetPropertyId: (id: string | null) => void;
+  onSetPageId: (id: string | null) => void;
   onSetSearch: (q: string) => void;
   onSetQuickFilter: (chip: QuickFilterChip | null) => void;
   onSetAll: () => void;
@@ -47,12 +56,14 @@ const inputClass =
 const IssueFilterBar = ({
   filters,
   properties,
+  availablePages,
   totalCount,
   filteredCount,
   hasActiveFilters,
   activeSearch,
   onToggleSeverity,
   onSetPropertyId,
+  onSetPageId,
   onSetSearch,
   onSetQuickFilter,
   onSetAll,
@@ -68,7 +79,31 @@ const IssueFilterBar = ({
     const prop = properties.find((p) => p.id === filters.propertyId);
     if (prop) activeFilterLabels.push(prop.name);
   }
+  if (filters.pageId) {
+    const page = availablePages.find((p) => p.id === filters.pageId);
+    if (page) activeFilterLabels.push(page.title);
+  }
   if (activeSearch) activeFilterLabels.push(`"${activeSearch}"`);
+
+  // Pages to show in the page dropdown.
+  // When a property is active, restrict to that property's pages.
+  const visiblePages = filters.propertyId
+    ? availablePages.filter((p) => p.propertyId === filters.propertyId)
+    : availablePages;
+
+  // Group pages by property for the optgroup display when no property filter is active.
+  const pagesByProperty = filters.propertyId
+    ? null
+    : visiblePages.reduce<Record<string, { propertyName: string; pages: AvailablePage[] }>>(
+        (acc, p) => {
+          if (!acc[p.propertyId]) {
+            acc[p.propertyId] = { propertyName: p.propertyName, pages: [] };
+          }
+          acc[p.propertyId].pages.push(p);
+          return acc;
+        },
+        {},
+      );
 
   return (
     <div className="flex flex-col gap-3">
@@ -104,6 +139,30 @@ const IssueFilterBar = ({
                 {p.name}
               </option>
             ))}
+          </select>
+
+          <select
+            value={filters.pageId ?? ""}
+            onChange={(e) => onSetPageId(e.target.value || null)}
+            aria-label="Filter by page"
+            className={`${inputClass} pr-2`}
+          >
+            <option value="">All pages</option>
+            {pagesByProperty
+              ? Object.entries(pagesByProperty).map(([propId, group]) => (
+                  <optgroup key={propId} label={group.propertyName}>
+                    {group.pages.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.title}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))
+              : visiblePages.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.title}
+                  </option>
+                ))}
           </select>
 
           {hasActiveFilters && (

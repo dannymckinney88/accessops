@@ -15,6 +15,7 @@ import PriorityBadge from "@/components/common/PriorityBadge";
 
 interface IssueDrawerProps {
   violation: HydratedViolation | null;
+  rulePageCount?: number;
   onClose: () => void;
   onFocusTrigger: () => void;
 }
@@ -26,7 +27,7 @@ const formatDate = (iso: string) =>
     year: "numeric",
   });
 
-const IssueDrawer = ({ violation, onClose, onFocusTrigger }: IssueDrawerProps) => {
+const IssueDrawer = ({ violation, rulePageCount, onClose, onFocusTrigger }: IssueDrawerProps) => {
   return (
     <Sheet
       open={violation !== null}
@@ -91,22 +92,10 @@ const IssueDrawer = ({ violation, onClose, onFocusTrigger }: IssueDrawerProps) =
                 </section>
               )}
 
-              {violation.rule?.howToFix && (
-                <section aria-labelledby="drawer-fix-heading">
-                  <h3
-                    id="drawer-fix-heading"
-                    className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                  >
-                    How to fix it
-                  </h3>
-                  <p className="text-sm leading-relaxed text-foreground">
-                    {violation.rule.howToFix}
-                  </p>
-                </section>
-              )}
-
               <Separator />
 
+              {/* What Failed comes before How To Fix — developer sees the failure
+                  before the guidance, which matches the natural debugging flow. */}
               <section aria-labelledby="drawer-what-failed-heading">
                 <h3
                   id="drawer-what-failed-heading"
@@ -165,8 +154,31 @@ const IssueDrawer = ({ violation, onClose, onFocusTrigger }: IssueDrawerProps) =
                       </dd>
                     </>
                   )}
+
+                  {rulePageCount !== undefined && rulePageCount > 1 && (
+                    <>
+                      <dt className="mt-4 text-xs text-muted-foreground">Scope</dt>
+                      <dd className="mt-1 text-sm text-foreground">
+                        This rule has violations on {rulePageCount} pages
+                      </dd>
+                    </>
+                  )}
                 </dl>
               </section>
+
+              {violation.rule?.howToFix && (
+                <section aria-labelledby="drawer-fix-heading">
+                  <h3
+                    id="drawer-fix-heading"
+                    className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                  >
+                    How to fix it
+                  </h3>
+                  <p className="text-sm leading-relaxed text-foreground">
+                    {violation.rule.howToFix}
+                  </p>
+                </section>
+              )}
 
               {violation.rule?.helpUrl && (
                 <>

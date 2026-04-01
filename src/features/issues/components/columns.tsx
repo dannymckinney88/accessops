@@ -4,6 +4,14 @@ import SeverityBadge from "@/components/common/SeverityBadge";
 import StatusBadge from "@/components/common/StatusBadge";
 import PriorityBadge from "@/components/common/PriorityBadge";
 
+// Augment TanStack Table's meta type for this table's custom data.
+declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface TableMeta<TData> {
+    rulePageCounts?: Map<string, number>;
+  }
+}
+
 const col = createColumnHelper<HydratedViolation>();
 
 const severityOrder: Record<string, number> = {
@@ -32,16 +40,28 @@ export const issueColumns = [
   col.accessor((row) => row.rule?.help ?? row.ruleId, {
     id: "rule",
     header: "Issue",
-    cell: (info) => (
-      <div>
-        <p className="font-medium text-foreground leading-snug">
-          {info.getValue()}
-        </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {info.row.original.ruleId}
-        </p>
-      </div>
-    ),
+    cell: (info) => {
+      const ruleId = info.row.original.ruleId;
+      const pageCount = info.table.options.meta?.rulePageCounts?.get(ruleId) ?? 1;
+      return (
+        <div>
+          <p className="font-medium text-foreground leading-snug">
+            {info.getValue()}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {info.row.original.ruleId}
+            {pageCount > 1 && (
+              <span
+                className="ml-2 text-muted-foreground/70"
+                title={`This rule has violations on ${pageCount} pages`}
+              >
+                · {pageCount} pages
+              </span>
+            )}
+          </p>
+        </div>
+      );
+    },
   }),
 
   col.accessor((row) => row.property?.name ?? "—", {

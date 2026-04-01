@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useMemo } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import type { HydratedViolation, Property } from "@/lib/data/index";
 import { useIssueFilters } from "../hooks/useIssueFilters";
-import IssueFilterBar from "./IssueFilterBar";
+import IssueFilterBar, { type AvailablePage } from "./IssueFilterBar";
 import IssuesTable from "./IssuesTable";
 import IssueDrawer from "./IssueDrawer";
 
@@ -77,6 +77,7 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
     activeSearch,
     toggleSeverity,
     setPropertyId,
+    setPageId,
     setSearch,
     setQuickFilter,
     setAll,
@@ -91,10 +92,52 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
   const unfixedViolations = violations.filter(
     (v) => v.status === "open" || v.status === "in-progress",
   );
+  const criticalUnfixedCount = unfixedViolations.filter(
+    (v) => v.impact === "critical",
+  ).length;
   const propertyCount = new Set(
     unfixedViolations.map((v) => v.property?.id).filter(Boolean),
   ).size;
-  const subtitle = `${unfixedViolations.length} unfixed issues · ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`;
+  const subtitle =
+    criticalUnfixedCount > 0
+      ? `${unfixedViolations.length} unfixed issues · ${criticalUnfixedCount} critical · ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`
+      : `${unfixedViolations.length} unfixed issues · ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`;
+
+  // Derive unique pages from violations for the page filter dropdown.
+  const availablePages = useMemo<AvailablePage[]>(() => {
+    const seen = new Set<string>();
+    const result: AvailablePage[] = [];
+    for (const v of violations) {
+      if (v.page && v.property && !seen.has(v.page.id)) {
+        seen.add(v.page.id);
+        result.push({
+          id: v.page.id,
+          title: v.page.title,
+          propertyId: v.property.id,
+          propertyName: v.property.name,
+        });
+      }
+    }
+    return result;
+  }, [violations]);
+
+  // Count distinct pages per rule across all violations (not just filtered).
+  // Used to surface "appears on N pages" hints in the table and drawer.
+  const rulePageCounts = useMemo<Map<string, number>>(() => {
+    const rulePagesMap = new Map<string, Set<string>>();
+    for (const v of violations) {
+      if (!v.page) continue;
+      if (!rulePagesMap.has(v.ruleId)) {
+        rulePagesMap.set(v.ruleId, new Set());
+      }
+      rulePagesMap.get(v.ruleId)!.add(v.page.id);
+    }
+    const counts = new Map<string, number>();
+    for (const [ruleId, pages] of rulePagesMap) {
+      counts.set(ruleId, pages.size);
+    }
+    return counts;
+  }, [violations]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -106,12 +149,14 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
       <IssueFilterBar
         filters={filters}
         properties={properties}
+        availablePages={availablePages}
         totalCount={violations.length}
         filteredCount={filteredViolations.length}
         hasActiveFilters={hasActiveFilters}
         activeSearch={activeSearch}
         onToggleSeverity={toggleSeverity}
         onSetPropertyId={setPropertyId}
+        onSetPageId={setPageId}
         onSetSearch={setSearch}
         onSetQuickFilter={setQuickFilter}
         onSetAll={setAll}
@@ -139,12 +184,16 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
         <IssuesTable
           violations={filteredViolations}
           activeViolationId={activeViolationId}
+          rulePageCounts={rulePageCounts}
           onRowClick={openDrawer}
         />
       )}
 
       <IssueDrawer
         violation={activeViolation}
+        rulePageCount={
+          activeViolation ? (rulePageCounts.get(activeViolation.ruleId) ?? 1) : undefined
+        }
         onClose={closeDrawer}
         onFocusTrigger={focusTriggerRow}
       />
