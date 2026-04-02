@@ -12,16 +12,17 @@ interface IssueQuickFiltersProps {
   onReset: () => void;
 }
 
-const activeClass =
-  "bg-foreground text-background border-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring";
-// Critical chip gets severity-matched styling when active so the filter
-// visually echoes what it represents. Kept restrained — only fires when active.
-const criticalActiveClass =
-  "bg-severity-critical text-background border-severity-critical focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring";
-const inactiveClass =
-  "bg-background text-foreground/80 border-border hover:border-foreground/40 hover:text-foreground focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring";
 const baseClass =
-  "inline-flex items-center  rounded-md border px-3 py-1 text-xs font-medium transition-colors outline-none";
+  "inline-flex items-center rounded-md border px-3 py-1 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-2";
+
+const inactiveClass =
+  "border-border bg-background text-foreground/80 hover:border-interactive-border-hover hover:bg-interactive-hover hover:text-interactive-hover-foreground active:border-interactive-border-active active:bg-interactive-active active:text-interactive-active-foreground";
+
+const activeClass =
+  "border-interactive-selected-border bg-interactive-selected text-interactive-selected-foreground hover:border-interactive-selected-border hover:bg-interactive-selected hover:text-interactive-selected-foreground active:border-interactive-selected-border active:bg-interactive-selected active:text-interactive-selected-foreground";
+
+const criticalActiveClass =
+  "border-interactive-critical-selected-border bg-interactive-critical-selected text-interactive-critical-selected-foreground hover:border-interactive-critical-selected-border hover:bg-interactive-critical-selected hover:text-interactive-critical-selected-foreground active:border-interactive-critical-selected-border active:bg-interactive-critical-selected active:text-interactive-critical-selected-foreground";
 
 const IssueQuickFilters = ({
   filters,
@@ -29,13 +30,12 @@ const IssueQuickFilters = ({
   onSetQuickFilter,
   onSetAll,
 }: IssueQuickFiltersProps) => {
-  // "All" is active when no quick filter chip is set and no other filters narrow the view.
-  // It cannot use !hasActiveFilters because the default state is "unfixed", not "all".
   const allActive =
     filters.quickFilter === null &&
     filters.severity.length === 0 &&
     filters.status.length === 0 &&
     filters.propertyId === null;
+
   const criticalActive = filters.severity.includes("critical");
   const myIssuesActive = filters.quickFilter === "my-issues";
   const unfixedActive = filters.quickFilter === "unfixed";
@@ -43,7 +43,7 @@ const IssueQuickFilters = ({
 
   return (
     <div
-      className="flex items-center gap-2 flex-wrap"
+      className="flex flex-wrap items-center gap-2"
       role="group"
       aria-label="Quick filters"
     >

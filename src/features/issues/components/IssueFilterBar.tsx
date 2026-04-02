@@ -63,9 +63,11 @@ const quickFilterLabel: Record<QuickFilterChip, string> = {
   "needs-attention": "Needs Attention",
 };
 
-const inputClass =
-  "h-8 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+const selectClass =
+  "h-8 rounded-md border border-input bg-background px-3 pr-8 text-sm text-foreground outline-none transition-colors hover:border-interactive-border-hover hover:bg-interactive-hover focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-2";
 
+const inputClass =
+  "h-8 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors hover:border-interactive-border-hover hover:bg-interactive-hover focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-2";
 const IssueFilterBar = ({
   filters,
   properties,
@@ -140,7 +142,6 @@ const IssueFilterBar = ({
 
   return (
     <div className="flex flex-col gap-2">
-
       {/* Unified filter row: quick chips + search + dropdowns */}
       <div className="flex flex-wrap items-center gap-3">
         <IssueQuickFilters
@@ -159,14 +160,14 @@ const IssueFilterBar = ({
             value={filters.search}
             onChange={(e) => onSetSearch(e.target.value)}
             aria-label="Search issues"
-            className={`${inputClass} w-48`}
+            className={selectClass}
           />
 
           <select
             value={filters.propertyId ?? ""}
             onChange={(e) => onSetPropertyId(e.target.value || null)}
             aria-label="Filter by property"
-            className={`${inputClass} pr-2`}
+            className={`${selectClass} pr-2`}
           >
             <option value="">All properties</option>
             {properties.map((property) => (
@@ -180,7 +181,7 @@ const IssueFilterBar = ({
             value={filters.pageId ?? ""}
             onChange={(e) => onSetPageId(e.target.value || null)}
             aria-label="Filter by page"
-            className={`${inputClass} pr-2`}
+            className={selectClass}
           >
             <option value="">All pages</option>
             {pagesByProperty
@@ -206,7 +207,7 @@ const IssueFilterBar = ({
               onSetStatus((e.target.value as RemediationStatus) || null)
             }
             aria-label="Filter by status"
-            className={`${inputClass} pr-2`}
+            className={selectClass}
           >
             <option value="">All statuses</option>
             {(
@@ -228,7 +229,7 @@ const IssueFilterBar = ({
             value={filters.ruleId ?? ""}
             onChange={(e) => onSetRuleId(e.target.value || null)}
             aria-label="Filter by rule"
-            className={`${inputClass} max-w-55 pr-2`}
+            className={`${selectClass} max-w-55`}
           >
             <option value="">All rules</option>
             {availableRules.map((rule) => (
@@ -243,7 +244,7 @@ const IssueFilterBar = ({
               type="button"
               onClick={onReset}
               aria-label="Clear all filters"
-              className="h-8 rounded-md border border-transparent px-3 text-xs text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="h-8 rounded-md border border-transparent px-3 text-xs text-muted-foreground outline-none transition-colors hover:border-interactive-border-hover hover:bg-interactive-hover hover:text-interactive-hover-foreground active:border-interactive-border-active active:bg-interactive-active active:text-interactive-active-foreground focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-2"
             >
               Clear
             </button>

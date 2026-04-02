@@ -69,6 +69,29 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
 
+  /* Interactive control states */
+  --color-interactive-hover: var(--interactive-hover);
+  --color-interactive-hover-foreground: var(--interactive-hover-foreground);
+  --color-interactive-active: var(--interactive-active);
+  --color-interactive-active-foreground: var(--interactive-active-foreground);
+  --color-interactive-selected: var(--interactive-selected);
+  --color-interactive-selected-foreground: var(
+    --interactive-selected-foreground
+  );
+  --color-interactive-selected-border: var(--interactive-selected-border);
+  --color-interactive-border-hover: var(--interactive-border-hover);
+  --color-interactive-border-active: var(--interactive-border-active);
+  --color-interactive-focus-ring: var(--interactive-focus-ring);
+
+  /* Severity-aware interaction variant */
+  --color-interactive-critical-selected: var(--interactive-critical-selected);
+  --color-interactive-critical-selected-foreground: var(
+    --interactive-critical-selected-foreground
+  );
+  --color-interactive-critical-selected-border: var(
+    --interactive-critical-selected-border
+  );
+
   /* Radius scale */
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
@@ -104,10 +127,10 @@
 
   /* ── Severity — only for severity meaning ───────────────────────────── */
   /* In :root — darker values so colored text passes on white background */
-  --severity-critical: oklch(0.45 0.22 25); /* darker red */
-  --severity-serious: oklch(0.48 0.18 55); /* darker amber */
-  --severity-moderate: oklch(0.48 0.16 85); /* darker gold */
-  --severity-minor: oklch(0.45 0.08 250); /* darker slate */
+  --severity-critical: oklch(0.45 0.22 25);
+  --severity-serious: oklch(0.48 0.18 55);
+  --severity-moderate: oklch(0.48 0.16 85);
+  --severity-minor: oklch(0.45 0.08 250);
 
   --status-open: oklch(0.45 0.22 25);
   --status-in-progress: oklch(0.45 0.15 250);
@@ -141,10 +164,39 @@
   /* ── Surface levels (light) ─────────────────────────────────────────── */
   --surface-raised: oklch(0.97 0 0);
   --surface-overlay: oklch(0.94 0 0);
+
+  /* ── Interactive controls (light) ──────────────────────────────────── */
+  /* Neutral hover/pressed/selected states for chips, segmented controls,
+     filter buttons, and low-emphasis actions. These stay separate from
+     severity/status tokens so interaction styling remains predictable. */
+  --interactive-hover: oklch(0.955 0.01 240);
+  --interactive-hover-foreground: var(--foreground);
+
+  --interactive-active: oklch(0.93 0.015 240);
+  --interactive-active-foreground: var(--foreground);
+
+  /* Selected/toggled controls */
+  /* Selected/toggled controls — neutral, not semantic-success */
+  --interactive-selected: oklch(0.18 0.01 260);
+  --interactive-selected-foreground: oklch(0.985 0 0);
+  --interactive-selected-border: oklch(0.18 0.01 260);
+
+  /* Interaction borders — stronger than default chrome, quieter than selected */
+  --interactive-border-hover: oklch(0.82 0.01 240);
+  --interactive-border-active: oklch(0.72 0.02 240);
+
+  /* Keyboard focus ring for interactive controls */
+  --interactive-focus-ring: oklch(0.62 0.12 185);
+
+  /* Severity-tied selected state — use only when the selected control
+     should visibly communicate critical severity meaning */
+  --interactive-critical-selected: var(--severity-critical);
+  --interactive-critical-selected-foreground: oklch(0.985 0 0);
+  --interactive-critical-selected-border: oklch(0.42 0.2 25);
 }
 
 .dark {
-  /* ── Base surfaces (navy enterprise) ───────────────────────────────── */
+  /* ── Base surfaces (dark / navy enterprise)  ────────────────────────────────── */
   --background: oklch(0.15 0.02 260);
   --foreground: oklch(0.93 0.01 260);
   --card: oklch(0.19 0.02 260);
@@ -152,7 +204,7 @@
   --popover: oklch(0.19 0.02 260);
   --popover-foreground: oklch(0.93 0.01 260);
 
-  /* ── Brand: electric teal ───────────────────────────────────────────── */
+  /* ── Brand: electric teal (dark) ──────────────────────────────────────────── */
   /* dark */
   --primary: oklch(0.62 0.12 185);
   --primary-foreground: oklch(0.15 0.02 260);
@@ -163,14 +215,13 @@
   --muted: oklch(0.22 0.015 260);
   --muted-foreground: oklch(0.72 0.02 260);
 
-  /* ── Severity — L ≥ 0.72 so text-severity-* on dark surfaces passes
-        4.5:1, and solid badge bg achieves 4.5:1 with dark:text-background ── */
+  /* ── Severity (dark)  ────────────────────────────────────────────────  */
   --severity-critical: oklch(0.72 0.22 25);
   --severity-serious: oklch(0.78 0.18 50);
   --severity-moderate: oklch(0.82 0.14 85);
   --severity-minor: oklch(0.76 0.08 250);
 
-  /* ── Status — same brightness targets; badges use dark:text-background ── */
+  /* ── Status (dark)— same brightness targets; badges use dark:text-background ── */
   --status-open: oklch(0.78 0.22 25);
 
   --status-in-progress: oklch(0.72 0.16 250);
@@ -178,17 +229,17 @@
   --status-verified: oklch(0.76 0.18 145);
   --status-accepted-risk: oklch(0.7 0.04 260);
 
-  /* ── Trend — elevated so icon labels read on dark card surfaces ─────── */
+  /* ── Trend (dark)— elevated so icon labels read on dark card surfaces ─────── */
   --trend-improving: oklch(0.76 0.18 145);
   --trend-regressing: oklch(0.72 0.22 25);
   --trend-stable: oklch(0.7 0.04 260);
   --trend-insufficient: oklch(0.65 0.02 260);
 
-  /* ── Accent (hover / active backgrounds) ────────────────────────────── */
+  /* ── Accent (hover / active backgrounds) (dark) ────────────────────────────── */
   --accent: oklch(0.25 0.025 260);
   --accent-foreground: oklch(0.9 0.01 260);
 
-  /* ── Semantic ───────────────────────────────────────────────────────── */
+  /* ── Semantic (dark) ───────────────────────────────────────────────────────── */
   --destructive: oklch(0.55 0.2 25);
   --destructive-foreground: oklch(0.95 0.01 25);
   /* In .dark */
@@ -196,7 +247,7 @@
   --input: oklch(0.35 0.02 260);
   --ring: oklch(0.72 0.15 185);
 
-  /* ── Sidebar: darkest layer in the surface hierarchy ───────────────── */
+  /* ── Sidebar: darkest layer in the surface hierarchy (dark) ───────────────── */
   --sidebar-background: oklch(0.13 0.02 260);
   --sidebar-foreground: oklch(0.7 0.02 260);
   --sidebar-primary: oklch(0.72 0.15 185);
@@ -206,9 +257,35 @@
   --sidebar-border: oklch(0.24 0.02 260);
   --sidebar-ring: oklch(0.72 0.15 185);
 
-  /* ── Surface levels ─────────────────────────────────────────────────── */
+  /* ── Surface levels (dark) ─────────────────────────────────────────────────── */
   --surface-raised: oklch(0.21 0.02 260);
   --surface-overlay: oklch(0.24 0.02 260);
+
+  /* ── Interactive controls (dark) ───────────────────────────────────── */
+  /* Dark controls need more lift than light mode so hover and pressed
+     states stay visible against the navy surface stack. */
+  --interactive-hover: oklch(0.27 0.025 260);
+  --interactive-hover-foreground: var(--foreground);
+
+  --interactive-active: oklch(0.31 0.03 260);
+  --interactive-active-foreground: var(--foreground);
+
+  /* Selected/toggled controls — neutral ink against dark surfaces */
+  --interactive-selected: oklch(0.92 0.01 260);
+  --interactive-selected-foreground: oklch(0.16 0.02 260);
+  --interactive-selected-border: oklch(0.92 0.01 260);
+
+  /* Interaction borders — stronger than passive borders, quieter than selected */
+  --interactive-border-hover: oklch(0.5 0.025 260);
+  --interactive-border-active: oklch(0.6 0.03 260);
+
+  /* Keyboard focus ring for interactive controls */
+  --interactive-focus-ring: oklch(0.74 0.14 185);
+
+  /* Severity-tied selected state */
+  --interactive-critical-selected: oklch(0.72 0.22 25);
+  --interactive-critical-selected-foreground: oklch(0.15 0.02 260);
+  --interactive-critical-selected-border: oklch(0.76 0.2 25);
 }
 
 @layer base {
@@ -220,5 +297,20 @@
   }
   html {
     @apply font-sans;
+  }
+
+  /* Interactive affordance */
+  button,
+  [role="button"],
+  a[href],
+  select,
+  summary {
+    cursor: pointer;
+  }
+
+  /* Disabled states */
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
   }
 }
