@@ -32,6 +32,11 @@ const formatDate = (iso: string) =>
     year: "numeric",
   });
 
+const inlineActionClass =
+  "ml-3 inline-flex items-center rounded-sm px-1.5 py-1 text-xs font-medium text-foreground underline underline-offset-4 outline-none transition-colors hover:bg-interactive-hover hover:text-interactive-hover-foreground active:bg-interactive-active active:text-interactive-active-foreground focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-2";
+
+const externalLinkClass =
+  "inline-flex items-center rounded-sm px-1.5 py-1 text-xs font-medium text-foreground underline underline-offset-4 outline-none transition-colors hover:bg-interactive-hover hover:text-interactive-hover-foreground active:bg-interactive-active active:text-interactive-active-foreground focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-2";
 const IssueDrawer = ({
   viewMode,
   violation,
@@ -73,7 +78,10 @@ const IssueDrawer = ({
                 <StatusBadge status={groupedIssue.status} />
                 <PriorityBadge priority={groupedIssue.priority} />
               </div>
-              <SheetTitle id="issue-details-title" className="text-base leading-snug">
+              <SheetTitle
+                id="issue-details-title"
+                className="text-base leading-snug"
+              >
                 {groupedIssue.rule?.help ?? groupedIssue.ruleId}
               </SheetTitle>
               <SheetDescription id="issue-details-context">
@@ -181,7 +189,7 @@ const IssueDrawer = ({
                     <button
                       type="button"
                       onClick={() => onViewAllInstances(groupedIssue.ruleId)}
-                      className="ml-3 rounded-sm text-xs text-primary underline underline-offset-4 outline-none transition-colors hover:text-primary/80 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      className={inlineActionClass}
                     >
                       View all instances
                     </button>
@@ -264,7 +272,10 @@ const IssueDrawer = ({
                 <StatusBadge status={violation.status} />
                 <PriorityBadge priority={violation.priority} />
               </div>
-              <SheetTitle id="issue-details-title" className="text-base leading-snug">
+              <SheetTitle
+                id="issue-details-title"
+                className="text-base leading-snug"
+              >
                 {violation.rule?.help ?? violation.ruleId}
               </SheetTitle>
               <SheetDescription id="issue-details-context">
@@ -413,7 +424,7 @@ const IssueDrawer = ({
                     href={violation.rule.helpUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="rounded-sm text-xs text-muted-foreground underline underline-offset-4 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    className={externalLinkClass}
                   >
                     View full guidance on Deque University
                     <span className="sr-only"> (opens in new tab)</span>
