@@ -40,7 +40,6 @@ interface IssueFilterBarProps {
   onSetQuickFilter: (chip: QuickFilterChip | null) => void;
   onSetAll: () => void;
   onReset: () => void;
-  onSetViewMode: (mode: IssueViewMode) => void;
 }
 
 const severityLabel: Record<Severity, string> = {
@@ -88,7 +87,6 @@ const IssueFilterBar = ({
   onSetQuickFilter,
   onSetAll,
   onReset,
-  onSetViewMode,
 }: IssueFilterBarProps) => {
   const activeFilterLabels: string[] = [];
 
@@ -141,7 +139,9 @@ const IssueFilterBar = ({
         : `Showing ${filteredCount} of ${totalCount} issues`;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-2">
+
+      {/* Unified filter row: quick chips + search + dropdowns */}
       <div className="flex flex-wrap items-center gap-3">
         <IssueQuickFilters
           filters={filters}
@@ -152,14 +152,14 @@ const IssueFilterBar = ({
           onReset={onReset}
         />
 
-        <div className="ml-auto flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           <input
             type="search"
             placeholder="Search issues…"
             value={filters.search}
             onChange={(e) => onSetSearch(e.target.value)}
             aria-label="Search issues"
-            className={`${inputClass} w-52`}
+            className={`${inputClass} w-48`}
           />
 
           <select
@@ -245,55 +245,13 @@ const IssueFilterBar = ({
               aria-label="Clear all filters"
               className="h-8 rounded-md border border-transparent px-3 text-xs text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              Clear all filters
+              Clear
             </button>
           )}
-
-          <div
-            role="group"
-            aria-label="View mode"
-            className="flex shrink-0 items-center overflow-hidden rounded-md border border-input"
-          >
-            <button
-              type="button"
-              onClick={() => onSetViewMode("flat")}
-              aria-pressed={viewMode === "flat"}
-              className={`h-8 px-3 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
-                viewMode === "flat"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-background text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Flat
-            </button>
-            <button
-              type="button"
-              onClick={() => onSetViewMode("grouped-page")}
-              aria-pressed={viewMode === "grouped-page"}
-              className={`h-8 border-l border-input px-3 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
-                viewMode === "grouped-page"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-background text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Group by Page
-            </button>
-            <button
-              type="button"
-              onClick={() => onSetViewMode("grouped-rule")}
-              aria-pressed={viewMode === "grouped-rule"}
-              className={`h-8 border-l border-input px-3 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
-                viewMode === "grouped-rule"
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-background text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Group by Rule
-            </button>
-          </div>
         </div>
       </div>
 
+      {/* Summary */}
       {(hasActiveFilters || viewMode !== "flat") && (
         <p role="status" className="text-xs text-muted-foreground">
           {summaryText}

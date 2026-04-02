@@ -226,16 +226,61 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
       : filteredViolations.length === 0;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1
-          ref={headingRef}
-          tabIndex={-1}
-          className="text-2xl font-semibold tracking-tight outline-none"
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between gap-4 border-b pb-4">
+        <div>
+          <h1
+            ref={headingRef}
+            tabIndex={-1}
+            className="text-2xl font-semibold tracking-tight outline-none"
+          >
+            Issues
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+        </div>
+
+        <div
+          role="group"
+          aria-label="View mode"
+          className="flex shrink-0 items-center overflow-hidden rounded-md border border-input"
         >
-          Issues
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+          <button
+            type="button"
+            onClick={() => setViewMode("flat")}
+            aria-pressed={viewMode === "flat"}
+            className={`h-8 px-3 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
+              viewMode === "flat"
+                ? "bg-foreground text-background"
+                : "bg-background text-foreground/80 hover:text-foreground"
+            }`}
+          >
+            Flat
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("grouped-page")}
+            aria-pressed={viewMode === "grouped-page"}
+            className={`h-8 border-l border-input px-3 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
+              viewMode === "grouped-page"
+                ? "bg-foreground text-background"
+                : "bg-background text-foreground/80 hover:text-foreground"
+            }`}
+          >
+            Group by Page
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("grouped-rule")}
+            aria-pressed={viewMode === "grouped-rule"}
+            className={`h-8 border-l border-input px-3 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
+              viewMode === "grouped-rule"
+                ? "bg-foreground text-background"
+                : "bg-background text-foreground/80 hover:text-foreground"
+            }`}
+          >
+            Group by Rule
+          </button>
+        </div>
       </div>
 
       <IssueFilterBar
@@ -261,7 +306,6 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
         onSetQuickFilter={setQuickFilter}
         onSetAll={setAll}
         onReset={reset}
-        onSetViewMode={setViewMode}
       />
 
       {isEmpty ? (
