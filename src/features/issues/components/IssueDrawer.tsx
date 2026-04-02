@@ -55,8 +55,11 @@ const IssueDrawer = ({
       }}
     >
       <SheetContent
+        id="issue-details-drawer"
         side="right"
         className="flex flex-col gap-0 overflow-hidden p-0"
+        aria-labelledby="issue-details-title"
+        aria-describedby="issue-details-context"
         onCloseAutoFocus={(e) => {
           e.preventDefault();
           onFocusTrigger();
@@ -70,10 +73,10 @@ const IssueDrawer = ({
                 <StatusBadge status={groupedIssue.status} />
                 <PriorityBadge priority={groupedIssue.priority} />
               </div>
-              <SheetTitle className="text-base leading-snug">
+              <SheetTitle id="issue-details-title" className="text-base leading-snug">
                 {groupedIssue.rule?.help ?? groupedIssue.ruleId}
               </SheetTitle>
-              <SheetDescription>
+              <SheetDescription id="issue-details-context">
                 Affects {groupedIssue.affectedPagesCount}{" "}
                 {groupedIssue.affectedPagesCount === 1 ? "page" : "pages"} ·{" "}
                 {groupedIssue.totalInstances}{" "}
@@ -261,10 +264,10 @@ const IssueDrawer = ({
                 <StatusBadge status={violation.status} />
                 <PriorityBadge priority={violation.priority} />
               </div>
-              <SheetTitle className="text-base leading-snug">
+              <SheetTitle id="issue-details-title" className="text-base leading-snug">
                 {violation.rule?.help ?? violation.ruleId}
               </SheetTitle>
-              <SheetDescription>
+              <SheetDescription id="issue-details-context">
                 {violation.property?.name}
                 {violation.page ? ` · ${violation.page.title}` : ""}
               </SheetDescription>
