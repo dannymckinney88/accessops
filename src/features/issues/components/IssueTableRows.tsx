@@ -1,6 +1,7 @@
 import { flexRender, type Row } from "@tanstack/react-table";
 import { ChevronDown } from "lucide-react";
 import type { HydratedViolation } from "@/lib/data/index";
+import type { User } from "@/lib/data/types/domain";
 import SeverityBadge from "@/components/common/SeverityBadge";
 import StatusBadge from "@/components/common/StatusBadge";
 import PriorityBadge from "@/components/common/PriorityBadge";
@@ -13,6 +14,8 @@ export const rowBaseClass =
 
 export const rowActiveClass = "border-l-2 border-l-primary bg-accent/40";
 
+export const rowSelectedClass = "bg-interactive-selected/10";
+
 export const triggerButtonClass =
   "w-full rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 
@@ -23,12 +26,16 @@ export const formatDate = (iso: string) =>
     year: "numeric",
   });
 
+const assignSelectClass =
+  "h-7 w-full min-w-24 rounded border border-input bg-background px-2 text-xs text-foreground outline-none transition-colors hover:border-interactive-border-hover focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-1";
+
 // ── Interaction model ──────────────────────────────────────────────────────────
 //
 //   • <tr onClick> catches all mouse clicks (full-row activation)
 //   • <button> inside a plain <td> is the sole keyboard / AT entry point
 //   • Button has no onClick — Enter/Space fire a click that bubbles to <tr>
 //   • Button accessible name = visible rule text + sr-only ", open details"
+//   • Checkbox <td> and assignee <td> stop propagation to prevent drawer open
 
 // ── PageGroupHeader ────────────────────────────────────────────────────────────
 
@@ -151,6 +158,9 @@ export function GroupedPageRow({
       <td className="px-3 py-2.5 align-top text-sm text-foreground">
         <StatusBadge status={violation.status} />
       </td>
+      <td className="px-3 py-2.5 align-top text-sm text-muted-foreground">
+        {violation.assignee?.name ?? "—"}
+      </td>
       <td className="px-3 py-2.5 align-top text-sm text-foreground">
         <PriorityBadge priority={violation.priority} />
       </td>
@@ -234,22 +244,52 @@ export function GroupedRuleRow({
 interface FlatViolationRowProps {
   row: Row<HydratedViolation>;
   isActive: boolean;
+  isSelected: boolean;
+  assignableUsers: User[];
   onRowClick: (id: string) => void;
+  onToggleSelect: (id: string, checked: boolean) => void;
+  onAssign: (id: string, assigneeId: string | null) => void;
 }
 
 export function FlatViolationRow({
   row,
   isActive,
+  isSelected,
+  assignableUsers,
   onRowClick,
+  onToggleSelect,
+  onAssign,
 }: FlatViolationRowProps) {
+  const violation = row.original;
+  const currentAssignee = violation.assignee;
+  const currentAssigneeIsInactive = currentAssignee && !currentAssignee.isActive;
+
   return (
     <tr
-      data-issue-id={row.original.id}
-      onClick={() => onRowClick(row.original.id)}
-      className={[rowBaseClass, isActive ? rowActiveClass : ""]
+      data-issue-id={violation.id}
+      onClick={() => onRowClick(violation.id)}
+      className={[
+        rowBaseClass,
+        isActive ? rowActiveClass : "",
+        isSelected && !isActive ? rowSelectedClass : "",
+      ]
         .filter(Boolean)
         .join(" ")}
     >
+      {/* Checkbox cell — stops propagation so it doesn't open the drawer */}
+      <td
+        className="w-10 px-3 py-2.5 align-top"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={(e) => onToggleSelect(violation.id, e.target.checked)}
+          aria-label={`Select ${violation.rule?.help ?? violation.ruleId}`}
+          className="rounded border-input outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+        />
+      </td>
+
       {row.getVisibleCells().map((cell) => {
         if (cell.column.id === "rule") {
           return (
@@ -266,6 +306,35 @@ export function FlatViolationRow({
                 {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 <span className="sr-only">, open details</span>
               </button>
+            </td>
+          );
+        }
+
+        if (cell.column.id === "assignee") {
+          return (
+            <td
+              key={cell.id}
+              className="px-3 py-2.5 align-top text-sm text-foreground"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <select
+                value={violation.assigneeId ?? ""}
+                onChange={(e) => onAssign(violation.id, e.target.value || null)}
+                aria-label={`Assign ${violation.rule?.help ?? violation.ruleId}`}
+                className={assignSelectClass}
+              >
+                <option value="">Unassigned</option>
+                {currentAssigneeIsInactive && (
+                  <option value={currentAssignee.id} disabled>
+                    {currentAssignee.name} (inactive)
+                  </option>
+                )}
+                {assignableUsers.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.name}
+                  </option>
+                ))}
+              </select>
             </td>
           );
         }

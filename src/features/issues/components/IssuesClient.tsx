@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import type { HydratedViolation, Property } from "@/lib/data/index";
+import type { RemediationStatus, User } from "@/lib/data/types/domain";
 import { useIssueFilters } from "../hooks/useIssueFilters";
 import { aggregateIssues } from "../utils/aggregateIssues";
 import IssueFilterBar, {
@@ -16,12 +17,21 @@ import IssuesTable from "./IssuesTable";
 interface IssuesClientProps {
   violations: HydratedViolation[];
   properties: Property[];
+  currentUser: User;
+  users: User[];
 }
 
-const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
+const IssuesClient = ({ violations: initialViolations, properties, currentUser, users }: IssuesClientProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  const [violations, setViolations] = useState<HydratedViolation[]>(initialViolations);
+
+  const assignableUsers = useMemo(
+    () => users.filter((u) => u.isActive),
+    [users],
+  );
 
   const activeViolationId = searchParams.get("issueId") ?? null;
   const activeGroupId = searchParams.get("groupId") ?? null;
@@ -33,8 +43,6 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const triggerRowIdRef = useRef<string | null>(null);
 
-  // Move focus to the page heading on mount so SPA navigation from Dashboard
-  // lands on a stable element instead of leaving focus on a detached anchor.
   useEffect(() => {
     headingRef.current?.focus();
   }, []);
@@ -89,6 +97,63 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
     });
   };
 
+  const handleAssign = (id: string, assigneeId: string | null) => {
+    setViolations((prev) =>
+      prev.map((v) => {
+        if (v.id !== id) return v;
+        const assignee = assigneeId
+          ? (users.find((u) => u.id === assigneeId) ?? undefined)
+          : undefined;
+        return { ...v, assigneeId: assigneeId ?? undefined, assignee };
+      }),
+    );
+  };
+
+  const handleBulkAssign = (ids: string[], assigneeId: string | null) => {
+    const idSet = new Set(ids);
+    setViolations((prev) =>
+      prev.map((v) => {
+        if (!idSet.has(v.id)) return v;
+        const assignee = assigneeId
+          ? (users.find((u) => u.id === assigneeId) ?? undefined)
+          : undefined;
+        return { ...v, assigneeId: assigneeId ?? undefined, assignee };
+      }),
+    );
+  };
+
+  const handleBulkStatus = (ids: string[], status: RemediationStatus) => {
+    const idSet = new Set(ids);
+    setViolations((prev) =>
+      prev.map((v) => {
+        if (!idSet.has(v.id)) return v;
+        return { ...v, status };
+      }),
+    );
+  };
+
+  const handleUpdateViolation = (
+    id: string,
+    patch: { assigneeId?: string | null; status?: RemediationStatus },
+  ) => {
+    setViolations((prev) =>
+      prev.map((v) => {
+        if (v.id !== id) return v;
+        const updated = { ...v };
+        if ("assigneeId" in patch) {
+          updated.assigneeId = patch.assigneeId ?? undefined;
+          updated.assignee = patch.assigneeId
+            ? (users.find((u) => u.id === patch.assigneeId) ?? undefined)
+            : undefined;
+        }
+        if (patch.status !== undefined) {
+          updated.status = patch.status;
+        }
+        return updated;
+      }),
+    );
+  };
+
   const {
     filters,
     filteredViolations,
@@ -99,11 +164,12 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
     setPageId,
     setRuleId,
     setStatus,
+    setAssigneeId,
     setSearch,
     setQuickFilter,
     setAll,
     reset,
-  } = useIssueFilters(violations, {
+  } = useIssueFilters(violations, currentUser.id, {
     propertyId: initialPropertyId,
     pageId: initialPageId,
   });
@@ -132,9 +198,7 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
 
   const activeViolation =
     activeViolationId !== null
-      ? (filteredViolations.find(
-          (violation) => violation.id === activeViolationId,
-        ) ?? null)
+      ? (violations.find((v) => v.id === activeViolationId) ?? null)
       : null;
 
   const activeGroupedIssue =
@@ -143,16 +207,13 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
       : null;
 
   const unfixedViolations = violations.filter(
-    (violation) =>
-      violation.status === "open" || violation.status === "in-progress",
+    (v) => v.status === "open" || v.status === "in-progress",
   );
   const criticalUnfixedCount = unfixedViolations.filter(
-    (violation) => violation.impact === "critical",
+    (v) => v.impact === "critical",
   ).length;
   const propertyCount = new Set(
-    unfixedViolations
-      .map((violation) => violation.property?.id)
-      .filter(Boolean),
+    unfixedViolations.map((v) => v.property?.id).filter(Boolean),
   ).size;
   const subtitle =
     criticalUnfixedCount > 0
@@ -197,8 +258,7 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
   }, [violations]);
 
   const ruleLabel = filters.ruleId
-    ? (violations.find((violation) => violation.ruleId === filters.ruleId)?.rule
-        ?.help ?? filters.ruleId)
+    ? (violations.find((v) => v.ruleId === filters.ruleId)?.rule?.help ?? filters.ruleId)
     : null;
 
   const rulePageCounts = useMemo(() => {
@@ -289,6 +349,7 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
       <IssueFilterBar
         filters={filters}
         properties={properties}
+        assignableUsers={assignableUsers}
         availablePages={availablePages}
         availableRules={availableRules}
         ruleLabel={ruleLabel}
@@ -305,6 +366,7 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
         onSetPageId={setPageId}
         onSetRuleId={setRuleId}
         onSetStatus={setStatus}
+        onSetAssigneeId={setAssigneeId}
         onSetSearch={setSearch}
         onSetQuickFilter={setQuickFilter}
         onSetAll={setAll}
@@ -336,8 +398,12 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
           activeGroupId={activeGroupId}
           rulePageCounts={rulePageCounts}
           viewMode={viewMode}
+          assignableUsers={assignableUsers}
           onViolationRowClick={openViolationDrawer}
           onGroupedIssueRowClick={openGroupedIssueDrawer}
+          onAssign={handleAssign}
+          onBulkAssign={handleBulkAssign}
+          onBulkStatus={handleBulkStatus}
         />
       )}
 
@@ -345,6 +411,7 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
         viewMode={viewMode}
         violation={activeViolation}
         groupedIssue={activeGroupedIssue}
+        assignableUsers={assignableUsers}
         rulePageCount={
           activeViolation
             ? (rulePageCounts.get(activeViolation.ruleId) ?? 1)
@@ -357,6 +424,7 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
           setViewMode("flat");
           closeDrawer();
         }}
+        onUpdateViolation={handleUpdateViolation}
       />
     </div>
   );

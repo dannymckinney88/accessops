@@ -4,8 +4,6 @@ import { useState, useMemo, useEffect } from "react";
 import type { HydratedViolation } from "@/lib/data/index";
 import type { Severity, RemediationStatus } from "@/lib/data/types/domain";
 
-const CURRENT_ASSIGNEE = "Alex Rivera";
-
 export type QuickFilterChip = "my-issues" | "unfixed" | "needs-attention";
 
 export type IssueFilters = {
@@ -14,6 +12,7 @@ export type IssueFilters = {
   propertyId: string | null;
   pageId: string | null;
   ruleId: string | null;
+  assigneeId: string | null; // null = all, "unassigned" = no assignee, userId = specific user
   search: string;
   quickFilter: QuickFilterChip | null;
 };
@@ -24,6 +23,7 @@ const defaultFilters: IssueFilters = {
   propertyId: null,
   pageId: null,
   ruleId: null,
+  assigneeId: null,
   search: "",
   quickFilter: "unfixed",
 };
@@ -33,6 +33,7 @@ const toggle = <T,>(arr: T[], item: T): T[] =>
 
 export const useIssueFilters = (
   violations: HydratedViolation[],
+  currentUserId: string,
   initialFilters?: Pick<IssueFilters, "propertyId" | "pageId">,
 ) => {
   const [filters, setFilters] = useState<IssueFilters>({
@@ -67,6 +68,9 @@ export const useIssueFilters = (
       quickFilter: id ? null : f.quickFilter,
     }));
 
+  const setAssigneeId = (id: string | null) =>
+    setFilters((f) => ({ ...f, assigneeId: id }));
+
   const setSearch = (q: string) => setFilters((f) => ({ ...f, search: q }));
 
   const setQuickFilter = (chip: QuickFilterChip | null) =>
@@ -91,6 +95,7 @@ export const useIssueFilters = (
     filters.propertyId !== null ||
     filters.pageId !== null ||
     filters.ruleId !== null ||
+    filters.assigneeId !== null ||
     filters.quickFilter !== "unfixed" ||
     activeSearch !== "";
 
@@ -111,6 +116,13 @@ export const useIssueFilters = (
       if (filters.ruleId !== null && v.ruleId !== filters.ruleId) {
         return false;
       }
+      if (filters.assigneeId !== null) {
+        if (filters.assigneeId === "unassigned") {
+          if (v.assigneeId) return false;
+        } else {
+          if (v.assigneeId !== filters.assigneeId) return false;
+        }
+      }
       if (activeSearch !== "") {
         const q = activeSearch.toLowerCase();
         const matchesRule = v.rule?.help.toLowerCase().includes(q) ?? false;
@@ -118,7 +130,7 @@ export const useIssueFilters = (
         const matchesProperty = v.property?.name.toLowerCase().includes(q) ?? false;
         if (!matchesRule && !matchesPage && !matchesProperty) return false;
       }
-      if (filters.quickFilter === "my-issues" && v.assignedTo !== CURRENT_ASSIGNEE) {
+      if (filters.quickFilter === "my-issues" && v.assigneeId !== currentUserId) {
         return false;
       }
       if (
@@ -134,7 +146,7 @@ export const useIssueFilters = (
       }
       return true;
     });
-  }, [violations, filters, activeSearch]);
+  }, [violations, filters, activeSearch, currentUserId]);
 
   return {
     filters,
@@ -146,6 +158,7 @@ export const useIssueFilters = (
     setPageId,
     setRuleId,
     setStatus,
+    setAssigneeId,
     setSearch,
     setQuickFilter,
     setAll,

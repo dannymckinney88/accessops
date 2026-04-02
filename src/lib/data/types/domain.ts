@@ -1,5 +1,15 @@
 export type Severity = "minor" | "moderate" | "serious" | "critical";
 
+export type UserRole = "admin" | "auditor" | "developer" | "qa";
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  isActive: boolean;
+}
+
 export type ScanStatus = "queued" | "running" | "completed" | "failed";
 
 export type RemediationStatus =
@@ -92,7 +102,7 @@ export interface ViolationInstance {
   status: RemediationStatus;
   priority: Priority;
   notes?: string;
-  assignedTo?: string;
+  assigneeId?: string;
   // verifiedAt: set when a later audit confirms the issue is no longer present.
   verifiedAt?: string;
 }

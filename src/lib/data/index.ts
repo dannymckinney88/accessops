@@ -16,3 +16,4 @@ export * from "./queries/dashboard";
 export * from "./queries/scans";
 export * from "./queries/issues";
 export * from "./queries/compare";
+export * from "./queries/users";

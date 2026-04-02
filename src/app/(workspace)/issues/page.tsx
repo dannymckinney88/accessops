@@ -1,11 +1,13 @@
 import { Suspense } from "react";
-import { getHydratedViolations, getProperties } from "@/lib/data/index";
+import { getHydratedViolations, getProperties, getCurrentUser, getUsers } from "@/lib/data/index";
 import IssuesClient from "@/features/issues/components/IssuesClient";
 
 export default async function IssuesPage() {
-  const [violations, properties] = await Promise.all([
+  const [violations, properties, currentUser, users] = await Promise.all([
     getHydratedViolations(),
     getProperties(),
+    getCurrentUser(),
+    getUsers(),
   ]);
 
   // Suspense is required because IssuesClient uses useSearchParams.
@@ -29,7 +31,7 @@ export default async function IssuesPage() {
         </div>
       }
     >
-      <IssuesClient violations={violations} properties={properties} />
+      <IssuesClient violations={violations} properties={properties} currentUser={currentUser} users={users} />
     </Suspense>
   );
 }
