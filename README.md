@@ -66,7 +66,7 @@ It reflects **current audit state only** — no trends, no history, no noise.
 
 ![Issues Table](public/assets/screenshots/issues.png)
 
-<br>
+The Issues screen is where accessibility work actually happens.
 
 The Issues screen is where accessibility work actually happens.
 
@@ -100,7 +100,7 @@ This bridges the gap between audit findings and actual implementation.
 
 ![Scans View](public/assets/screenshots/scans.png)
 
-<br>
+Scans provides a lightweight history of audits.
 
 Scans provides a lightweight history of audits.
 
@@ -111,8 +111,6 @@ Scans provides a lightweight history of audits.
 ---
 
 ### 📱 Mobile
-
-<br>
 
 ![Mobile Dashboard](public/assets/screenshots/mobile-dash.png)
 

@@ -71,10 +71,28 @@ export const pages: Page[] = [
     title: "Employment & Income",
   },
   {
+    id: "page-loan-assets",
+    propertyId: "prop-loan-app",
+    path: "/apply/assets",
+    title: "Assets & Liabilities",
+  },
+  {
+    id: "page-loan-housing",
+    propertyId: "prop-loan-app",
+    path: "/apply/housing",
+    title: "Housing Information",
+  },
+  {
     id: "page-loan-review",
     propertyId: "prop-loan-app",
     path: "/apply/review",
     title: "Review Application",
+  },
+  {
+    id: "page-loan-documents",
+    propertyId: "prop-loan-app",
+    path: "/apply/documents",
+    title: "Document Upload",
   },
   {
     id: "page-loan-confirm",

@@ -10,8 +10,8 @@ const DashboardNeedsAttention = ({ summary }: DashboardNeedsAttentionProps) => {
   // Top 2 highest-risk properties: regressing first, then critical count, then unfixed.
   const top2 = [...propertyHealthSummaries]
     .sort((a, b) => {
-      const aRegressing = a.trend === "regressing" ? 1 : 0;
-      const bRegressing = b.trend === "regressing" ? 1 : 0;
+      const aRegressing = a.trend === "high-risk" ? 1 : 0;
+      const bRegressing = b.trend === "high-risk" ? 1 : 0;
       if (bRegressing !== aRegressing) return bRegressing - aRegressing;
       if (b.criticalCount !== a.criticalCount)
         return b.criticalCount - a.criticalCount;
@@ -53,9 +53,9 @@ const DashboardNeedsAttention = ({ summary }: DashboardNeedsAttentionProps) => {
                   <p className="truncate text-sm font-medium text-foreground">
                     {index + 1}. {property.name}
                   </p>
-                  {trend === "regressing" && (
+                  {trend === "high-risk" && (
                     <span className="shrink-0 text-xs font-medium text-trend-regressing">
-                      Regressing
+                      High Risk
                     </span>
                   )}
                 </div>

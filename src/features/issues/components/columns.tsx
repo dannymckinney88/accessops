@@ -1,17 +1,23 @@
-import { createColumnHelper } from "@tanstack/react-table";
+import { createColumnHelper, type SortingFn } from "@tanstack/react-table";
 import type { HydratedViolation } from "@/lib/data/index";
 import SeverityBadge from "@/components/common/SeverityBadge";
 import StatusBadge from "@/components/common/StatusBadge";
 import PriorityBadge from "@/components/common/PriorityBadge";
 
-const col = createColumnHelper<HydratedViolation>();
+// Augment TanStack Table's meta type for this table's custom data.
+declare module "@tanstack/react-table" {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface TableMeta<TData> {
+    rulePageCounts?: Map<string, number>;
+  }
+  // Register the remediation sort so columns can reference it by name.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  interface SortingFns {
+    remediationSort: SortingFn<unknown>;
+  }
+}
 
-const severityOrder: Record<string, number> = {
-  critical: 0,
-  serious: 1,
-  moderate: 2,
-  minor: 3,
-};
+const col = createColumnHelper<HydratedViolation>();
 
 const priorityOrder: Record<string, number> = {
   urgent: 0,
@@ -25,23 +31,34 @@ export const issueColumns = [
     id: "severity",
     header: "Severity",
     cell: (info) => <SeverityBadge severity={info.getValue()} />,
-    sortingFn: (a, b) =>
-      severityOrder[a.original.impact] - severityOrder[b.original.impact],
+    sortingFn: "remediationSort",
   }),
 
   col.accessor((row) => row.rule?.help ?? row.ruleId, {
     id: "rule",
     header: "Issue",
-    cell: (info) => (
-      <div>
-        <p className="font-medium text-foreground leading-snug">
-          {info.getValue()}
-        </p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {info.row.original.ruleId}
-        </p>
-      </div>
-    ),
+    cell: (info) => {
+      const ruleId = info.row.original.ruleId;
+      const pageCount = info.table.options.meta?.rulePageCounts?.get(ruleId) ?? 1;
+      return (
+        <div>
+          <p className="font-medium text-foreground leading-snug">
+            {info.getValue()}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {info.row.original.ruleId}
+            {pageCount > 1 && (
+              <span
+                className="ml-2 text-primary/60"
+                title={`This rule has violations on ${pageCount} pages`}
+              >
+                · {pageCount} pages
+              </span>
+            )}
+          </p>
+        </div>
+      );
+    },
   }),
 
   col.accessor((row) => row.property?.name ?? "—", {

@@ -14,6 +14,8 @@ export type IssueFilters = {
   severity: Severity[];
   status: RemediationStatus[];
   propertyId: string | null;
+  pageId: string | null;
+  ruleId: string | null;
   search: string; // raw input value — drives the controlled input
   quickFilter: QuickFilterChip | null;
 };
@@ -25,6 +27,8 @@ const defaultFilters: IssueFilters = {
   severity: [],
   status: [],
   propertyId: null,
+  pageId: null,
+  ruleId: null,
   search: "",
   quickFilter: "unfixed",
 };
@@ -32,8 +36,14 @@ const defaultFilters: IssueFilters = {
 const toggle = <T>(arr: T[], item: T): T[] =>
   arr.includes(item) ? arr.filter((i) => i !== item) : [...arr, item];
 
-export const useIssueFilters = (violations: HydratedViolation[]) => {
-  const [filters, setFilters] = useState<IssueFilters>(defaultFilters);
+export const useIssueFilters = (
+  violations: HydratedViolation[],
+  initialFilters?: Pick<IssueFilters, "propertyId" | "pageId">,
+) => {
+  const [filters, setFilters] = useState<IssueFilters>({
+    ...defaultFilters,
+    ...initialFilters,
+  });
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   // Debounce search input at 300ms; minimum 2 chars to activate.
@@ -49,7 +59,23 @@ export const useIssueFilters = (violations: HydratedViolation[]) => {
     setFilters((f) => ({ ...f, severity: toggle(f.severity, s) }));
 
   const setPropertyId = (id: string | null) =>
-    setFilters((f) => ({ ...f, propertyId: id }));
+    // Reset page filter when property changes — selected page may not exist in new property
+    setFilters((f) => ({ ...f, propertyId: id, pageId: null }));
+
+  const setPageId = (id: string | null) =>
+    setFilters((f) => ({ ...f, pageId: id }));
+
+  const setRuleId = (id: string | null) =>
+    setFilters((f) => ({ ...f, ruleId: id }));
+
+  // Selecting an explicit status replaces quick-filter semantics.
+  // Clearing it (null) restores whatever quickFilter was already active.
+  const setStatus = (id: RemediationStatus | null) =>
+    setFilters((f) => ({
+      ...f,
+      status: id ? [id] : [],
+      quickFilter: id ? null : f.quickFilter,
+    }));
 
   const setSearch = (q: string) => setFilters((f) => ({ ...f, search: q }));
 
@@ -79,6 +105,8 @@ export const useIssueFilters = (violations: HydratedViolation[]) => {
     filters.severity.length > 0 ||
     filters.status.length > 0 ||
     filters.propertyId !== null ||
+    filters.pageId !== null ||
+    filters.ruleId !== null ||
     filters.quickFilter !== "unfixed" ||
     activeSearch !== "";
 
@@ -94,6 +122,12 @@ export const useIssueFilters = (violations: HydratedViolation[]) => {
         filters.propertyId !== null &&
         v.property?.id !== filters.propertyId
       ) {
+        return false;
+      }
+      if (filters.pageId !== null && v.page?.id !== filters.pageId) {
+        return false;
+      }
+      if (filters.ruleId !== null && v.ruleId !== filters.ruleId) {
         return false;
       }
       if (activeSearch !== "") {
@@ -125,6 +159,9 @@ export const useIssueFilters = (violations: HydratedViolation[]) => {
     activeSearch,
     toggleSeverity,
     setPropertyId,
+    setPageId,
+    setRuleId,
+    setStatus,
     setSearch,
     setQuickFilter,
     setAll,

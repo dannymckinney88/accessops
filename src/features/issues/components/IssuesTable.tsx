@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -9,6 +9,7 @@ import {
   flexRender,
   type SortingState,
   type PaginationState,
+  type SortingFn,
 } from "@tanstack/react-table";
 import {
   ChevronUp,
@@ -18,50 +19,166 @@ import {
   ChevronRight,
 } from "lucide-react";
 import type { HydratedViolation } from "@/lib/data/index";
+import SeverityBadge from "@/components/common/SeverityBadge";
+import StatusBadge from "@/components/common/StatusBadge";
+import PriorityBadge from "@/components/common/PriorityBadge";
 import { issueColumns } from "./columns";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 
+const severityOrder: Record<string, number> = {
+  critical: 0,
+  serious: 1,
+  moderate: 2,
+  minor: 3,
+};
+
+const statusOrder: Record<string, number> = {
+  open: 0,
+  "in-progress": 1,
+  fixed: 2,
+  verified: 3,
+  "accepted-risk": 4,
+};
+
 interface IssuesTableProps {
   violations: HydratedViolation[];
   activeViolationId: string | null;
+  rulePageCounts: Map<string, number>;
+  viewMode: "flat" | "grouped";
   onRowClick: (id: string) => void;
 }
+
+const rowBaseClass =
+  "border-b last:border-0 cursor-pointer outline-none transition-colors hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring focus-visible:bg-muted/40";
 
 const IssuesTable = ({
   violations,
   activeViolationId,
+  rulePageCounts,
+  viewMode,
   onRowClick,
 }: IssuesTableProps) => {
+  // Remediation sort: severity → scope (# pages affected, desc) → status → first seen (asc).
+  // Registered as a named sortingFn so columns.tsx can reference it by string key.
+  const remediationSort: SortingFn<HydratedViolation> = (rowA, rowB) => {
+    const sevDiff =
+      severityOrder[rowA.original.impact] - severityOrder[rowB.original.impact];
+    if (sevDiff !== 0) return sevDiff;
+
+    const countA = rulePageCounts.get(rowA.original.ruleId) ?? 1;
+    const countB = rulePageCounts.get(rowB.original.ruleId) ?? 1;
+    if (countB !== countA) return countB - countA; // more pages = higher priority
+
+    const statusDiff =
+      statusOrder[rowA.original.status] - statusOrder[rowB.original.status];
+    if (statusDiff !== 0) return statusDiff;
+
+    return (
+      new Date(rowA.original.firstSeenAt).getTime() -
+      new Date(rowB.original.firstSeenAt).getTime()
+    );
+  };
+
   const [sorting, setSorting] = useState<SortingState>([
-    { id: "firstSeenAt", desc: false },
+    { id: "severity", desc: false },
   ]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 25,
   });
+  // Tracks which page groups are collapsed. Default: all expanded (empty set).
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
+    new Set(),
+  );
+
+  const toggleGroup = (pageId: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(pageId)) next.delete(pageId);
+      else next.add(pageId);
+      return next;
+    });
+  };
+
+  // In grouped mode, hide page and property columns (redundant with group headers).
+  const columnVisibility: Record<string, boolean> =
+    viewMode === "grouped" ? { page: false, property: false } : {};
 
   const table = useReactTable({
     data: violations,
     columns: issueColumns,
-    state: { sorting, pagination },
+    meta: { rulePageCounts },
+    sortingFns: { remediationSort },
+    state: { sorting, pagination, columnVisibility },
     onSortingChange: (updater) => {
       setSorting(updater);
-      // Reset to page 0 on sort change so users see the top of the new order.
       setPagination((p) => ({ ...p, pageIndex: 0 }));
     },
     onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    // Reset to page 0 whenever the data array changes (i.e. filters change).
     autoResetPageIndex: true,
   });
+
+  // Grouped mode: sort violations by severity within each page group,
+  // then order groups by most critical issues first.
+  const pageGroups = useMemo(() => {
+    if (viewMode !== "grouped") return null;
+    const map = new Map<
+      string,
+      {
+        pageId: string;
+        pageTitle: string;
+        pagePath: string;
+        propertyName: string;
+        criticalCount: number;
+        violations: HydratedViolation[];
+      }
+    >();
+    for (const v of violations) {
+      const key = v.page?.id ?? "__none__";
+      if (!map.has(key)) {
+        map.set(key, {
+          pageId: key,
+          pageTitle: v.page?.title ?? "No page",
+          pagePath: v.page?.path ?? "",
+          propertyName: v.property?.name ?? "",
+          criticalCount: 0,
+          violations: [],
+        });
+      }
+      map.get(key)!.violations.push(v);
+    }
+    for (const g of map.values()) {
+      g.violations.sort((a, b) => {
+        const sevDiff = severityOrder[a.impact] - severityOrder[b.impact];
+        if (sevDiff !== 0) return sevDiff;
+        const countA = rulePageCounts.get(a.ruleId) ?? 1;
+        const countB = rulePageCounts.get(b.ruleId) ?? 1;
+        if (countB !== countA) return countB - countA;
+        const statusDiff = statusOrder[a.status] - statusOrder[b.status];
+        if (statusDiff !== 0) return statusDiff;
+        return new Date(a.firstSeenAt).getTime() - new Date(b.firstSeenAt).getTime();
+      });
+      g.criticalCount = g.violations.filter(
+        (v) => v.impact === "critical",
+      ).length;
+    }
+    return Array.from(map.values()).sort((a, b) => {
+      if (b.criticalCount !== a.criticalCount)
+        return b.criticalCount - a.criticalCount;
+      return b.violations.length - a.violations.length;
+    });
+  }, [violations, viewMode]);
 
   const { pageIndex, pageSize } = table.getState().pagination;
   const total = violations.length;
   const start = total === 0 ? 0 : pageIndex * pageSize + 1;
   const end = Math.min((pageIndex + 1) * pageSize, total);
+
+  const visibleColCount = table.getVisibleLeafColumns().length;
 
   return (
     <div className="flex flex-col gap-3" data-issues-table>
@@ -127,50 +244,176 @@ const IssuesTable = ({
                 </tr>
               ))}
             </thead>
-            <tbody>
-              {table.getRowModel().rows.map((row) => {
-                const isActive = row.original.id === activeViolationId;
+
+            {viewMode === "grouped" && pageGroups ? (
+              // Grouped mode: one <tbody> per page, collapsible group header + issue rows.
+              pageGroups.map((group, idx) => {
+                const collapsed = collapsedGroups.has(group.pageId);
                 return (
-                  <tr
-                    key={row.id}
-                    tabIndex={0}
-                    data-violation-id={row.original.id}
-                    aria-selected={isActive}
-                    onClick={() => onRowClick(row.original.id)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        onRowClick(row.original.id);
-                      }
-                    }}
-                    className={[
-                      "border-b last:border-0 cursor-pointer outline-none transition-colors",
-                      "hover:bg-muted/50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring focus-visible:bg-muted/40",
-                      isActive ? "bg-accent border-l-2 border-l-primary" : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
+                  <tbody
+                    key={group.pageId}
+                    className={idx > 0 ? "border-t-4 border-border/50" : "border-t border-border/30"}
                   >
-                    {row.getVisibleCells().map((cell) => (
-                      <td
-                        key={cell.id}
-                        className="px-3 py-2.5 align-top text-sm text-foreground"
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
+                    {/* Group header row */}
+                    <tr className="bg-muted/50">
+                      <td colSpan={visibleColCount} className="py-0 pl-2 pr-3">
+                        <button
+                          type="button"
+                          aria-expanded={!collapsed}
+                          aria-label={`${collapsed ? "Expand" : "Collapse"} ${group.pageTitle}`}
+                          onClick={() => toggleGroup(group.pageId)}
+                          className="flex w-full items-center gap-3 py-3.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset rounded-sm"
+                        >
+                          <ChevronDown
+                            size={14}
+                            aria-hidden="true"
+                            className={`shrink-0 text-muted-foreground ${
+                              collapsed ? "-rotate-90" : ""
+                            }`}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-foreground leading-snug">
+                              {group.pageTitle}
+                            </p>
+                            {group.pagePath && (
+                              <p className="mt-0.5 text-xs font-normal text-muted-foreground">
+                                {group.pagePath}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-4 shrink-0 text-xs">
+                            {group.criticalCount > 0 && (
+                              <span className="font-bold text-severity-critical">
+                                {group.criticalCount} critical
+                              </span>
+                            )}
+                            <span className="font-medium text-foreground/70">
+                              {group.violations.length}{" "}
+                              {group.violations.length === 1 ? "issue" : "issues"}
+                            </span>
+                            {group.propertyName && (
+                              <span className="text-muted-foreground/40 hidden sm:inline">
+                                {group.propertyName}
+                              </span>
+                            )}
+                          </div>
+                        </button>
                       </td>
-                    ))}
-                  </tr>
+                    </tr>
+
+                    {/* Issue rows — hidden when group is collapsed */}
+                    {!collapsed &&
+                      group.violations.map((v) => {
+                        const isActive = v.id === activeViolationId;
+                        const pageCount = rulePageCounts.get(v.ruleId) ?? 1;
+                        return (
+                          <tr
+                            key={v.id}
+                            tabIndex={0}
+                            data-violation-id={v.id}
+                            aria-selected={isActive}
+                            onClick={() => onRowClick(v.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                onRowClick(v.id);
+                              }
+                            }}
+                            className={[
+                              rowBaseClass,
+                              isActive
+                                ? "bg-accent border-l-2 border-l-primary"
+                                : "",
+                            ]
+                              .filter(Boolean)
+                              .join(" ")}
+                          >
+                            <td className="pl-8 pr-3 py-2.5 align-top text-sm text-foreground">
+                              <SeverityBadge severity={v.impact} />
+                            </td>
+                            <td className="px-3 py-2.5 align-top text-sm text-foreground">
+                              <div>
+                                <p className="font-medium leading-snug">
+                                  {v.rule?.help ?? v.ruleId}
+                                </p>
+                                <p className="mt-0.5 text-xs text-muted-foreground">
+                                  {v.ruleId}
+                                  {pageCount > 1 && (
+                                    <span className="ml-2 text-primary/60">
+                                      · {pageCount} pages
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                            </td>
+                            <td className="px-3 py-2.5 align-top text-sm text-foreground">
+                              <StatusBadge status={v.status} />
+                            </td>
+                            <td className="px-3 py-2.5 align-top text-sm text-foreground">
+                              <PriorityBadge priority={v.priority} />
+                            </td>
+                            <td className="px-3 py-2.5 align-top text-sm text-foreground whitespace-nowrap">
+                              {new Date(v.firstSeenAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                },
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
                 );
-              })}
-            </tbody>
+              })
+            ) : (
+              // Flat mode: standard paginated rows.
+              <tbody>
+                {table.getRowModel().rows.map((row) => {
+                  const isActive = row.original.id === activeViolationId;
+                  return (
+                    <tr
+                      key={row.id}
+                      tabIndex={0}
+                      data-violation-id={row.original.id}
+                      aria-selected={isActive}
+                      onClick={() => onRowClick(row.original.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          onRowClick(row.original.id);
+                        }
+                      }}
+                      className={[
+                        rowBaseClass,
+                        isActive ? "bg-accent border-l-2 border-l-primary" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td
+                          key={cell.id}
+                          className="px-3 py-2.5 align-top text-sm text-foreground"
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            )}
           </table>
         </div>
       </div>
 
-      {total > PAGE_SIZE_OPTIONS[0] && (
+      {viewMode === "flat" && total > PAGE_SIZE_OPTIONS[0] && (
         <nav
           aria-label="Pagination"
           className="flex items-center justify-between px-1"

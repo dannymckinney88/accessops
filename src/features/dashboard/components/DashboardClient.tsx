@@ -25,7 +25,7 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
     (criticalCount > 0 ? ` · ${criticalCount} critical` : "");
 
   const regressingProperty = propertyHealthSummaries.find(
-    (s) => s.trend === "regressing",
+    (s) => s.trend === "high-risk",
   );
   return (
     <div className="flex flex-col gap-6 max-w-7xl mx-auto">
@@ -40,7 +40,7 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
               <span className="font-bold">
                 {regressingProperty.property.name}
               </span>{" "}
-              is regressing
+              has unresolved critical issues
             </p>
           </div>
           <a

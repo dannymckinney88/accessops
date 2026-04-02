@@ -6,13 +6,11 @@ interface DashboardPropertyHealthProps {
 }
 
 const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
-  const sorted = [...summary.propertyHealthSummaries]
-    .sort((a, b) => {
-      if (a.trend === "regressing" && b.trend !== "regressing") return -1;
-      if (b.trend === "regressing" && a.trend !== "regressing") return 1;
-      return b.criticalCount - a.criticalCount;
-    })
-    .slice(0, 3);
+  const sorted = [...summary.propertyHealthSummaries].sort((a, b) => {
+    if (a.trend === "high-risk" && b.trend !== "high-risk") return -1;
+    if (b.trend === "high-risk" && a.trend !== "high-risk") return 1;
+    return b.criticalCount - a.criticalCount;
+  });
 
   return (
     <ul className="flex flex-col gap-10" role="list">
@@ -31,7 +29,9 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
               )
             : 0;
 
-        const isHighRisk = trend !== "regressing" && criticalCount > 0;
+        const isHighRisk = trend === "high-risk";
+        const isImproving =
+          trend === "active-remediation" || trend === "healthy";
 
         return (
           <li key={property.id} className="relative">
@@ -47,16 +47,18 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
                 </p>
                 <div className="flex items-center gap-1.5">
                   <AlertTriangle
-                    className={`size-3 ${trend === "regressing" || isHighRisk ? "text-severity-critical" : "text-muted-foreground/30"}`}
+                    className={`size-3 ${isHighRisk ? "text-severity-critical" : "text-muted-foreground/30"}`}
                   />
                   <span
-                    className={`text-[10px] font-bold uppercase tracking-tight ${trend === "regressing" || isHighRisk ? "text-severity-critical" : "text-muted-foreground/60"}`}
+                    className={`text-[10px] font-bold uppercase tracking-tight ${isHighRisk ? "text-severity-critical" : isImproving ? "text-primary/70" : "text-muted-foreground/60"}`}
                   >
-                    {trend === "regressing"
-                      ? "Regressing"
-                      : isHighRisk
-                        ? "High Risk"
-                        : "Stable"}
+                    {trend === "high-risk"
+                      ? "High Risk"
+                      : trend === "healthy"
+                        ? "Healthy"
+                        : trend === "active-remediation"
+                          ? "Active Remediation"
+                          : "Stagnant"}
                   </span>
                 </div>
               </div>
@@ -75,7 +77,7 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
             {/* Tightened Progress Bar */}
             <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted/40">
               <div
-                className={`h-full transition-all duration-500 ${trend === "regressing" ? "bg-severity-critical" : "bg-primary/80"}`}
+                className={`h-full transition-all duration-500 ${trend === "high-risk" ? "bg-severity-critical" : "bg-primary/80"}`}
                 style={{ width: `${resolvedPct}%` }}
               />
             </div>

@@ -76,11 +76,13 @@ const DashboardTopSummary = ({ summary }: DashboardTopSummaryProps) => {
             trend,
           }) => {
             const trendText =
-              trend === "regressing"
-                ? "Regressing"
-                : trend === "improving"
-                  ? "Improving"
-                  : null;
+              trend === "high-risk"
+                ? "High Risk"
+                : trend === "healthy"
+                  ? "Healthy"
+                  : trend === "active-remediation"
+                    ? "Active"
+                    : null;
 
             return (
               <li
@@ -102,9 +104,11 @@ const DashboardTopSummary = ({ summary }: DashboardTopSummaryProps) => {
                   {trendText && (
                     <span
                       className={
-                        trend === "regressing"
-                          ? "font-medium text-foreground" // ← this line
-                          : "text-muted-foreground"
+                        trend === "high-risk"
+                          ? "font-medium text-severity-critical"
+                          : trend === "healthy"
+                            ? "font-medium text-primary/70"
+                            : "text-muted-foreground"
                       }
                     >
                       {trendText}
