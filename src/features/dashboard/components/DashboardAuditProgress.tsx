@@ -80,9 +80,15 @@ const DashboardAuditProgress = ({ summary }: DashboardAuditProgressProps) => {
         {rows.map(({ label, count, color, ariaDesc }) => {
           const barPct = (count / maxCount) * 100;
           return (
-            <div key={label} className="grid grid-cols-[80px_1fr_32px] items-center gap-3">
+            <div
+              key={label}
+              className="grid grid-cols-[80px_1fr_32px] items-center gap-3"
+            >
               <dt className="text-xs text-muted-foreground">{label}</dt>
-              <dd className="flex items-center gap-2" aria-label={`${count} ${ariaDesc}`}>
+              <dd
+                className="flex items-center gap-2"
+                aria-label={`${count} ${ariaDesc}`}
+              >
                 <div className="h-4 flex-1 overflow-hidden rounded-sm bg-muted">
                   {count > 0 && (
                     <div
@@ -109,7 +115,7 @@ const DashboardAuditProgress = ({ summary }: DashboardAuditProgressProps) => {
       {/* x-axis tick labels */}
       <div className="grid grid-cols-[80px_1fr_32px] gap-3" aria-hidden="true">
         <div />
-        <div className="flex justify-between px-0.5 text-[10px] text-muted-foreground/60">
+        <div className="flex justify-between px-0.5 text-[10px] text-muted-foreground">
           <span>0</span>
           <span>{Math.round(maxCount / 2)}</span>
           <span>{maxCount}</span>

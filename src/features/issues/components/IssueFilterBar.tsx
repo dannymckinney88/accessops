@@ -5,6 +5,8 @@ import type { Severity, RemediationStatus } from "@/lib/data/types/domain";
 import type { Property } from "@/lib/data/index";
 import IssueQuickFilters from "./IssueQuickFilters";
 
+export type IssueViewMode = "flat" | "grouped-page" | "grouped-rule";
+
 export type AvailablePage = {
   id: string;
   title: string;
@@ -25,9 +27,10 @@ interface IssueFilterBarProps {
   ruleLabel: string | null;
   totalCount: number;
   filteredCount: number;
+  groupedCount?: number;
   hasActiveFilters: boolean;
   activeSearch: string;
-  viewMode: "flat" | "grouped";
+  viewMode: IssueViewMode;
   onToggleSeverity: (s: Severity) => void;
   onSetPropertyId: (id: string | null) => void;
   onSetPageId: (id: string | null) => void;
@@ -37,7 +40,7 @@ interface IssueFilterBarProps {
   onSetQuickFilter: (chip: QuickFilterChip | null) => void;
   onSetAll: () => void;
   onReset: () => void;
-  onSetViewMode: (mode: "flat" | "grouped") => void;
+  onSetViewMode: (mode: IssueViewMode) => void;
 }
 
 const severityLabel: Record<Severity, string> = {
@@ -72,6 +75,7 @@ const IssueFilterBar = ({
   ruleLabel,
   totalCount,
   filteredCount,
+  groupedCount,
   hasActiveFilters,
   activeSearch,
   viewMode,
@@ -86,46 +90,59 @@ const IssueFilterBar = ({
   onReset,
   onSetViewMode,
 }: IssueFilterBarProps) => {
-  // Build human-readable labels for the active filter summary.
   const activeFilterLabels: string[] = [];
+
   if (filters.quickFilter)
     activeFilterLabels.push(quickFilterLabel[filters.quickFilter]);
-  filters.severity.forEach((s) => activeFilterLabels.push(severityLabel[s]));
-  filters.status.forEach((s) => activeFilterLabels.push(statusLabel[s]));
+  filters.severity.forEach((severity) =>
+    activeFilterLabels.push(severityLabel[severity]),
+  );
+  filters.status.forEach((status) =>
+    activeFilterLabels.push(statusLabel[status]),
+  );
+
   if (filters.propertyId) {
-    const prop = properties.find((p) => p.id === filters.propertyId);
-    if (prop) activeFilterLabels.push(prop.name);
+    const property = properties.find((item) => item.id === filters.propertyId);
+    if (property) activeFilterLabels.push(property.name);
   }
+
   if (filters.pageId) {
-    const page = availablePages.find((p) => p.id === filters.pageId);
+    const page = availablePages.find((item) => item.id === filters.pageId);
     if (page) activeFilterLabels.push(page.title);
   }
+
   if (filters.ruleId && ruleLabel) activeFilterLabels.push(ruleLabel);
   if (activeSearch) activeFilterLabels.push(`"${activeSearch}"`);
 
-  // Pages to show in the page dropdown.
-  // When a property is active, restrict to that property's pages.
   const visiblePages = filters.propertyId
-    ? availablePages.filter((p) => p.propertyId === filters.propertyId)
+    ? availablePages.filter((page) => page.propertyId === filters.propertyId)
     : availablePages;
 
-  // Group pages by property for the optgroup display when no property filter is active.
   const pagesByProperty = filters.propertyId
     ? null
-    : visiblePages.reduce<Record<string, { propertyName: string; pages: AvailablePage[] }>>(
-        (acc, p) => {
-          if (!acc[p.propertyId]) {
-            acc[p.propertyId] = { propertyName: p.propertyName, pages: [] };
-          }
-          acc[p.propertyId].pages.push(p);
-          return acc;
-        },
-        {},
-      );
+    : visiblePages.reduce<
+        Record<string, { propertyName: string; pages: AvailablePage[] }>
+      >((acc, page) => {
+        if (!acc[page.propertyId]) {
+          acc[page.propertyId] = {
+            propertyName: page.propertyName,
+            pages: [],
+          };
+        }
+        acc[page.propertyId].pages.push(page);
+        return acc;
+      }, {});
+
+  const summaryText =
+    viewMode === "grouped-rule" && groupedCount !== undefined
+      ? `Showing ${groupedCount} grouped issues from ${filteredCount} issue instances`
+      : viewMode === "grouped-page"
+        ? `Showing ${filteredCount} issues grouped by page`
+        : `Showing ${filteredCount} of ${totalCount} issues`;
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center gap-3 flex-wrap">
+      <div className="flex flex-wrap items-center gap-3">
         <IssueQuickFilters
           filters={filters}
           hasActiveFilters={hasActiveFilters}
@@ -135,7 +152,7 @@ const IssueFilterBar = ({
           onReset={onReset}
         />
 
-        <div className="flex items-center gap-2 ml-auto flex-wrap">
+        <div className="ml-auto flex flex-wrap items-center gap-2">
           <input
             type="search"
             placeholder="Search issues…"
@@ -152,9 +169,9 @@ const IssueFilterBar = ({
             className={`${inputClass} pr-2`}
           >
             <option value="">All properties</option>
-            {properties.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
+            {properties.map((property) => (
+              <option key={property.id} value={property.id}>
+                {property.name}
               </option>
             ))}
           </select>
@@ -167,18 +184,18 @@ const IssueFilterBar = ({
           >
             <option value="">All pages</option>
             {pagesByProperty
-              ? Object.entries(pagesByProperty).map(([propId, group]) => (
-                  <optgroup key={propId} label={group.propertyName}>
-                    {group.pages.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.title}
+              ? Object.entries(pagesByProperty).map(([propertyId, group]) => (
+                  <optgroup key={propertyId} label={group.propertyName}>
+                    {group.pages.map((page) => (
+                      <option key={page.id} value={page.id}>
+                        {page.title}
                       </option>
                     ))}
                   </optgroup>
                 ))
-              : visiblePages.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.title}
+              : visiblePages.map((page) => (
+                  <option key={page.id} value={page.id}>
+                    {page.title}
                   </option>
                 ))}
           </select>
@@ -200,9 +217,9 @@ const IssueFilterBar = ({
                 "verified",
                 "accepted-risk",
               ] as RemediationStatus[]
-            ).map((s) => (
-              <option key={s} value={s}>
-                {statusLabel[s]}
+            ).map((status) => (
+              <option key={status} value={status}>
+                {statusLabel[status]}
               </option>
             ))}
           </select>
@@ -211,12 +228,12 @@ const IssueFilterBar = ({
             value={filters.ruleId ?? ""}
             onChange={(e) => onSetRuleId(e.target.value || null)}
             aria-label="Filter by rule"
-            className={`${inputClass} pr-2 max-w-[220px]`}
+            className={`${inputClass} max-w-55 pr-2`}
           >
             <option value="">All rules</option>
-            {availableRules.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.label}
+            {availableRules.map((rule) => (
+              <option key={rule.id} value={rule.id}>
+                {rule.label}
               </option>
             ))}
           </select>
@@ -226,7 +243,7 @@ const IssueFilterBar = ({
               type="button"
               onClick={onReset}
               aria-label="Clear all filters"
-              className="h-8 rounded-md border border-transparent px-3 text-xs text-muted-foreground outline-none hover:text-foreground hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-colors"
+              className="h-8 rounded-md border border-transparent px-3 text-xs text-muted-foreground outline-none transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               Clear all filters
             </button>
@@ -235,13 +252,13 @@ const IssueFilterBar = ({
           <div
             role="group"
             aria-label="View mode"
-            className="flex items-center rounded-md border border-input overflow-hidden shrink-0"
+            className="flex shrink-0 items-center overflow-hidden rounded-md border border-input"
           >
             <button
               type="button"
               onClick={() => onSetViewMode("flat")}
               aria-pressed={viewMode === "flat"}
-              className={`h-8 px-3 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${
+              className={`h-8 px-3 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
                 viewMode === "flat"
                   ? "bg-primary text-primary-foreground"
                   : "bg-background text-muted-foreground hover:text-foreground"
@@ -251,23 +268,35 @@ const IssueFilterBar = ({
             </button>
             <button
               type="button"
-              onClick={() => onSetViewMode("grouped")}
-              aria-pressed={viewMode === "grouped"}
-              className={`h-8 px-3 text-xs font-medium border-l border-input transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset ${
-                viewMode === "grouped"
+              onClick={() => onSetViewMode("grouped-page")}
+              aria-pressed={viewMode === "grouped-page"}
+              className={`h-8 border-l border-input px-3 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
+                viewMode === "grouped-page"
                   ? "bg-primary text-primary-foreground"
                   : "bg-background text-muted-foreground hover:text-foreground"
               }`}
             >
               Group by Page
             </button>
+            <button
+              type="button"
+              onClick={() => onSetViewMode("grouped-rule")}
+              aria-pressed={viewMode === "grouped-rule"}
+              className={`h-8 border-l border-input px-3 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
+                viewMode === "grouped-rule"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-background text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Group by Rule
+            </button>
           </div>
         </div>
       </div>
 
-      {hasActiveFilters && (
+      {(hasActiveFilters || viewMode !== "flat") && (
         <p role="status" className="text-xs text-muted-foreground">
-          Showing {filteredCount} of {totalCount} issues
+          {summaryText}
           {activeFilterLabels.length > 0 && (
             <> &middot; Filtered by: {activeFilterLabels.join(", ")}</>
           )}

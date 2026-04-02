@@ -4,7 +4,7 @@ const config: Record<Severity, { label: string; className: string }> = {
   critical: {
     label: "Critical",
     className:
-      "bg-severity-critical/15 text-severity-critical border border-severity-critical/40",
+      "bg-severity-critical/10 text-severity-critical border border-severity-critical/15",
   },
   serious: {
     label: "Serious",
