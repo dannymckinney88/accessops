@@ -13,13 +13,13 @@ interface IssueQuickFiltersProps {
 }
 
 const activeClass =
-  "bg-primary text-primary-foreground border-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring";
+  "bg-foreground text-background border-primary focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring";
 // Critical chip gets severity-matched styling when active so the filter
 // visually echoes what it represents. Kept restrained — only fires when active.
 const criticalActiveClass =
-  "bg-severity-critical text-primary-foreground border-severity-critical focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring";
+  "bg-severity-critical text-background border-severity-critical focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring";
 const inactiveClass =
-  "bg-background text-muted-foreground border-border hover:border-foreground/40 hover:text-foreground focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring";
+  "bg-background text-foreground/80 border-border hover:border-foreground/40 hover:text-foreground focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-ring";
 const baseClass =
   "inline-flex items-center  rounded-md border px-3 py-1 text-xs font-medium transition-colors outline-none";
 
