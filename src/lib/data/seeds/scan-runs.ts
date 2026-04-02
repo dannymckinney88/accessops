@@ -1,23 +1,23 @@
 // src/lib/data/scan-runs.ts
 //
-// Two audit checkpoints per property: a previous baseline (Sep 2024) and a
+// Two audit checkpoints per property: a previous audit (Sep 2024) and a
 // current audit. Dates reinforce each property story.
 //
-// Marketing Site:      Baseline Sep 15 2024 → Rescan Feb 12 2025
+// Marketing Site:      Previous audit Sep 15 2024 → Current audit Feb 12 2025
 //                      Team used the remediation window well. Feb scan shows
 //                      dramatic improvement — nearly clean.
 //
-// Loan Application:    Baseline Sep 18 2024 → Rescan Jan 30 2025
+// Loan Application:    Previous audit Sep 18 2024 → Current audit Jan 30 2025
 //                      A Nov 2024 deploy introduced a broken form component.
 //                      Label associations, autocomplete, and select-name fail
 //                      across the full 8-step application flow. Urgent.
 //
-// Customer Dashboard:  Baseline Sep 20 2024 → Rescan Mar 5 2025
+// Customer Dashboard:  Previous audit Sep 20 2024 → Current audit Mar 5 2025
 //                      Team is aware and actively working the backlog, but
 //                      progress is slow. High debt persists with visible
 //                      in-progress and fixed movement in the current scan.
 //
-// Support Center:      Baseline Sep 22 2024 → Rescan Nov 4 2024
+// Support Center:      Previous audit Sep 22 2024 → Current audit Nov 4 2024
 //                      Team commissioned a follow-up after six weeks.
 //                      Nothing was fixed. Issues unchanged.
 
@@ -87,7 +87,7 @@ export const scanRuns: ScanRun[] = [
   },
 
   // ─── Support Center ───────────────────────────────────────────────────────
-  // Team commissioned a follow-up six weeks after the baseline.
+  // Team commissioned a follow-up six weeks after the previous audit.
   // No remediation work occurred in the intervening period.
   {
     id: "sr-sup-baseline",

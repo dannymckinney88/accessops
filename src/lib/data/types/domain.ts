@@ -106,7 +106,12 @@ export type PropertyHealthSummary = {
   criticalCount: number;
   seriousCount: number;
   unfixedCount: number;
-  trend: "high-risk" | "active-remediation" | "healthy" | "stagnant" | "insufficient-data";
+  trend:
+    | "high-risk"
+    | "active-remediation"
+    | "healthy"
+    | "stagnant"
+    | "insufficient-data";
 };
 
 export type SeverityDistributionPoint = {
@@ -160,7 +165,7 @@ export type DashboardSummary = DashboardCurrentState;
 
 // --- Scans Screen Specific Types ---
 
-export type ScanType = "Baseline" | "Rescan";
+export type ScanType = "Previous audit" | "Current audit";
 
 export type ScanPageRowData = {
   page: Page;
@@ -198,4 +203,13 @@ export type ScansScreenData = {
   scanRows: ScanRowData[];
   propertyHealthItems: PropertyHealthItem[];
   alertSummary: string | null;
+};
+
+export type HistoricalScanSummary = {
+  scanRunId: string;
+  totalIssues: number;
+  resolvedIssues: number;
+  remainingIssues: number;
+  criticalRemaining: number;
+  severitySummary?: Partial<Record<Severity, number>>;
 };

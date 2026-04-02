@@ -949,7 +949,7 @@ const buildViolations = (seed: ViolationSeed): ViolationInstance[] => {
 
 const violationRegistry: ViolationSeed[] = [
   // ══════════════════════════════════════════════════════════════════════════
-  // MARKETING SITE — BASELINE (Sep 15, 2024)
+  // MARKETING SITE — PREVIOUS AUDIT (Sep 15, 2024)
   // All 132 violations are now verified — confirmed clean by the Feb 2025
   // rescan. The team addressed every issue found in the original audit.
   // ══════════════════════════════════════════════════════════════════════════
@@ -1291,7 +1291,7 @@ const violationRegistry: ViolationSeed[] = [
   },
 
   // ══════════════════════════════════════════════════════════════════════════
-  // MARKETING SITE — RESCAN (Feb 12, 2025)
+  // MARKETING SITE — CURRENT AUDIT (Feb 12, 2025)
   // Nearly clean. Residual color-contrast across most pages.
   // Two critical issues remain in progress (image-alt on Home, button-name on About).
   // Contact page fully resolved. Total: 27 violations, 21 remaining, 2 critical.
@@ -1491,7 +1491,7 @@ const violationRegistry: ViolationSeed[] = [
   },
 
   // ══════════════════════════════════════════════════════════════════════════
-  // LOAN APPLICATION — BASELINE (Sep 18, 2024)
+  // LOAN APPLICATION — PREVIOUS AUDIT (Sep 18, 2024)
   // Pre-regression state. 58 violations across 5 pages.
   // Manageable color-contrast, button-name, and link-name issues.
   // Some heading-order and label violations already fixed.
@@ -1684,7 +1684,7 @@ const violationRegistry: ViolationSeed[] = [
   },
 
   // ══════════════════════════════════════════════════════════════════════════
-  // LOAN APPLICATION — RESCAN (Jan 30, 2025) — REGRESSION
+  // LOAN APPLICATION — CURRENT AUDIT (Jan 30, 2025) — REGRESSION
   //
   // A Nov 2024 deploy introduced a new shared form component built without
   // accessibility support. Label associations, autocomplete attributes, and
@@ -2052,7 +2052,7 @@ const violationRegistry: ViolationSeed[] = [
   },
 
   // ══════════════════════════════════════════════════════════════════════════
-  // CUSTOMER DASHBOARD — BASELINE (Sep 20, 2024)
+  // CUSTOMER DASHBOARD — PREVIOUS AUDIT (Sep 20, 2024)
   // 145 violations across 7 pages. High debt load.
   // Table issues dominate Accounts, Transactions, and Statements.
   // ARIA and label failures throughout interactive pages.
@@ -2378,7 +2378,7 @@ const violationRegistry: ViolationSeed[] = [
   },
 
   // ══════════════════════════════════════════════════════════════════════════
-  // CUSTOMER DASHBOARD — RESCAN (Mar 5, 2025)
+  // CUSTOMER DASHBOARD — CURRENT AUDIT (Mar 5, 2025)
   // 124 violations. Active work is visible — fixed and in-progress present —
   // but overall progress is limited. Critical issues persist throughout.
   // Several violations assigned to Alex Rivera.
@@ -2773,7 +2773,7 @@ const violationRegistry: ViolationSeed[] = [
   },
 
   // ══════════════════════════════════════════════════════════════════════════
-  // SUPPORT CENTER — BASELINE (Sep 22, 2024)
+  // SUPPORT CENTER — PREVIOUS AUDIT (Sep 22, 2024)
   // 75 violations across 5 pages. Consistent pattern of button-name, link-name,
   // color-contrast, and bypass failures. No remediation work has started.
   // ══════════════════════════════════════════════════════════════════════════
@@ -2981,8 +2981,8 @@ const violationRegistry: ViolationSeed[] = [
   },
 
   // ══════════════════════════════════════════════════════════════════════════
-  // SUPPORT CENTER — RESCAN (Nov 4, 2024) — STAGNANT
-  // 75 violations. Six weeks after the baseline, nothing changed.
+  // SUPPORT CENTER — CURRENT AUDIT (Nov 4, 2024) — STAGNANT
+  // 75 violations. Six weeks after the previous audit, nothing changed.
   // One color-contrast fix on the home page is the only movement.
   // Every other issue remains open and unassigned.
   // ══════════════════════════════════════════════════════════════════════════

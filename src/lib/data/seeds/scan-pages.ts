@@ -14,7 +14,7 @@
 import type { ScanPage } from "../types/domain";
 
 export const scanPages: ScanPage[] = [
-  // ── Marketing Site — Baseline (Sep 15, 2024) ─────────────────────────────
+  // ── Marketing Site — Previous Audit (Sep 15, 2024) ─────────────────────────────
   // Story: Large initial problem set. Team responded well.
   // All baseline violations are now verified — confirmed clean by Feb 2025 rescan.
   {
@@ -90,7 +90,7 @@ export const scanPages: ScanPage[] = [
     criticalRemaining: 0,
   },
 
-  // ── Marketing Site — Rescan (Feb 12, 2025) ───────────────────────────────
+  // ── Marketing Site — Current Audit (Feb 12, 2025) ───────────────────────────────
   // Story: Nearly clean. Verified dominates — bulk of baseline issues confirmed
   // resolved. One critical in-progress on Home (image-alt, Alex Rivera).
   // Contact and Careers fully resolved. Residual serious color-contrast on mid pages.
@@ -167,7 +167,7 @@ export const scanPages: ScanPage[] = [
     criticalRemaining: 0,
   },
 
-  // ── Loan Application — Baseline (Sep 18, 2024) ───────────────────────────
+  // ── Loan Application — Previous Audit (Sep 18, 2024) ───────────────────────────
   // Story: Pre-regression state. Manageable issues. Some fixed.
   // Color-contrast, button-name, and link-name are the core problems.
   {
@@ -216,7 +216,7 @@ export const scanPages: ScanPage[] = [
     criticalRemaining: 2,
   },
 
-  // ── Loan Application — Rescan (Jan 30, 2025) — REGRESSION ────────────────
+  // ── Loan Application — Current Audit (Jan 30, 2025) — REGRESSION ────────────────
   // Story: Nov 2024 deploy introduced a new form component without accessible
   // labels, autocomplete attributes, or named select elements. Critical
   // failures span all 8 steps of the application flow. Nothing is fixed.
@@ -293,7 +293,7 @@ export const scanPages: ScanPage[] = [
     criticalRemaining: 7,
   },
 
-  // ── Customer Dashboard — Baseline (Sep 20, 2024) ──────────────────────────
+  // ── Customer Dashboard — Previous Audit (Sep 20, 2024) ──────────────────────────
   // Story: Significant unresolved debt. Team is aware — some violations marked
   // in-progress — but nothing has been fixed yet. High critical count throughout.
   {
@@ -360,7 +360,7 @@ export const scanPages: ScanPage[] = [
     criticalRemaining: 4,
   },
 
-  // ── Customer Dashboard — Rescan (Mar 5, 2025) ─────────────────────────────
+  // ── Customer Dashboard — Current Audit (Mar 5, 2025) ─────────────────────────────
   // Story: Active work is visible — fixed and in-progress violations present —
   // but the backlog is large and overall count barely moved. Still high risk.
   {
@@ -427,7 +427,7 @@ export const scanPages: ScanPage[] = [
     criticalRemaining: 3,
   },
 
-  // ── Support Center — Baseline (Sep 22, 2024) ──────────────────────────────
+  // ── Support Center — Previous Audit (Sep 22, 2024) ──────────────────────────────
   // Story: Consistent pattern of button-name, link-name, color-contrast,
   // and bypass failures. Team has not begun remediation work.
   {
@@ -476,8 +476,8 @@ export const scanPages: ScanPage[] = [
     criticalRemaining: 2,
   },
 
-  // ── Support Center — Rescan (Nov 4, 2024) — STAGNANT ─────────────────────
-  // Story: Six weeks after the baseline, essentially nothing has changed.
+  // ── Support Center — Current Audit (Nov 4, 2024) — STAGNANT ─────────────────────
+  // Story: Six weeks after the previous audit, essentially nothing has changed.
   // One color-contrast fix on the home page is the only movement.
   // Every other issue remains open and unassigned.
   {

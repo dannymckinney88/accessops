@@ -5,6 +5,7 @@ import { scanPages } from "./scan-pages";
 import { rules } from "./rules";
 import { violations } from "./violations";
 import { ruleContent } from "./rule-contnet";
+import { historicalScanSummaries } from "./historical-scan-summaries";
 
 export {
   properties,
@@ -14,4 +15,5 @@ export {
   rules,
   violations,
   ruleContent,
+  historicalScanSummaries,
 };
