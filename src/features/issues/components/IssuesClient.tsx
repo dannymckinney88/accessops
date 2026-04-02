@@ -30,7 +30,14 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
   const initialPropertyId = searchParams.get("propertyId") ?? null;
   const initialPageId = searchParams.get("pageId") ?? null;
 
+  const headingRef = useRef<HTMLHeadingElement>(null);
   const triggerRowIdRef = useRef<string | null>(null);
+
+  // Move focus to the page heading on mount so SPA navigation from Dashboard
+  // lands on a stable element instead of leaving focus on a detached anchor.
+  useEffect(() => {
+    headingRef.current?.focus();
+  }, []);
 
   const openViolationDrawer = (id: string) => {
     triggerRowIdRef.current = id;
@@ -60,24 +67,24 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
     const id = triggerRowIdRef.current;
 
     if (id) {
-      const row = document.querySelector<HTMLElement>(
-        `[data-issue-id="${id}"]`,
+      const trigger = document.querySelector<HTMLElement>(
+        `[data-issue-id="${id}"] button`,
       );
-      if (row) {
+      if (trigger) {
         requestAnimationFrame(() => {
-          row.focus();
+          trigger.focus();
           triggerRowIdRef.current = null;
         });
         return;
       }
     }
 
-    const firstRow = document.querySelector<HTMLElement>(
-      "[data-issues-table] [data-issue-id]",
+    const firstTrigger = document.querySelector<HTMLElement>(
+      "[data-issues-table] [data-issue-id] button",
     );
 
     requestAnimationFrame(() => {
-      firstRow?.focus();
+      firstTrigger?.focus();
       triggerRowIdRef.current = null;
     });
   };
@@ -221,7 +228,13 @@ const IssuesClient = ({ violations, properties }: IssuesClientProps) => {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Issues</h1>
+        <h1
+          ref={headingRef}
+          tabIndex={-1}
+          className="text-2xl font-semibold tracking-tight outline-none"
+        >
+          Issues
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
       </div>
 

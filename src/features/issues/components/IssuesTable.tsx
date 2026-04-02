@@ -7,6 +7,7 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  type Row,
   type PaginationState,
   type SortingFn,
   type SortingState,
@@ -26,6 +27,8 @@ import { issueColumns } from "./columns";
 import type { AggregatedIssue } from "../utils/aggregateIssues";
 import type { IssueViewMode } from "./IssueFilterBar";
 
+// ── Constants ──────────────────────────────────────────────────────────────────
+
 const PAGE_SIZE_OPTIONS = [10, 25, 50] as const;
 
 const severityOrder: Record<string, number> = {
@@ -43,6 +46,269 @@ const statusOrder: Record<string, number> = {
   "accepted-risk": 4,
 };
 
+const rowBaseClass =
+  "border-b last:border-0 cursor-pointer transition-colors hover:bg-muted/50";
+
+const rowActiveClass = "border-l-2 border-l-primary bg-accent/40";
+
+const triggerButtonClass =
+  "w-full rounded-sm text-left outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+// ── Local row subcomponents ────────────────────────────────────────────────────
+//
+// Interaction model:
+//   • <tr onClick> catches all mouse clicks (full-row activation)
+//   • <button> inside a plain <td> is the sole keyboard / AT entry point
+//   • Button has no onClick — Enter/Space fire a click that bubbles to <tr>
+//   • Button accessible name = visible rule text + sr-only ", open details"
+
+interface PageGroupHeaderProps {
+  pageTitle: string;
+  pagePath: string;
+  propertyName: string;
+  issueCount: number;
+  criticalCount: number;
+  collapsed: boolean;
+  colSpan: number;
+  onToggle: () => void;
+}
+
+function PageGroupHeader({
+  pageTitle,
+  pagePath,
+  propertyName,
+  issueCount,
+  criticalCount,
+  collapsed,
+  colSpan,
+  onToggle,
+}: PageGroupHeaderProps) {
+  return (
+    <tr className="bg-muted/50">
+      <td colSpan={colSpan} className="py-0 pl-2 pr-3">
+        <button
+          type="button"
+          aria-expanded={!collapsed}
+          aria-label={`${collapsed ? "Expand" : "Collapse"} ${pageTitle}, ${issueCount} ${issueCount === 1 ? "issue" : "issues"}`}
+          onClick={onToggle}
+          className="flex w-full items-center gap-3 rounded-sm py-3.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+        >
+          <ChevronDown
+            size={14}
+            aria-hidden="true"
+            className={`shrink-0 text-muted-foreground ${collapsed ? "-rotate-90" : ""}`}
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold leading-snug text-foreground">
+              {pageTitle}
+            </p>
+            {pagePath && (
+              <p className="mt-0.5 text-xs font-normal text-muted-foreground">
+                {pagePath}
+              </p>
+            )}
+          </div>
+          <div className="flex shrink-0 items-center gap-4 text-xs">
+            {criticalCount > 0 && (
+              <span className="font-bold text-severity-critical">
+                {criticalCount} critical
+              </span>
+            )}
+            <span className="font-medium text-foreground/70">
+              {issueCount} {issueCount === 1 ? "issue" : "issues"}
+            </span>
+            {propertyName && (
+              <span className="hidden text-muted-foreground sm:inline">
+                {propertyName}
+              </span>
+            )}
+          </div>
+        </button>
+      </td>
+    </tr>
+  );
+}
+
+interface GroupedPageRowProps {
+  violation: HydratedViolation;
+  isActive: boolean;
+  pageCount: number;
+  onRowClick: (id: string) => void;
+}
+
+function GroupedPageRow({
+  violation,
+  isActive,
+  pageCount,
+  onRowClick,
+}: GroupedPageRowProps) {
+  return (
+    <tr
+      data-issue-id={violation.id}
+      onClick={() => onRowClick(violation.id)}
+      className={[rowBaseClass, isActive ? rowActiveClass : ""]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      <td className="px-3 py-2.5 align-top text-sm text-foreground">
+        <SeverityBadge severity={violation.impact} />
+      </td>
+
+      <td className="px-3 py-2.5 align-top text-sm font-normal text-foreground">
+        <button
+          type="button"
+          aria-current={isActive ? "true" : undefined}
+          className={triggerButtonClass}
+        >
+          <p className="font-medium leading-snug text-foreground underline-offset-4 hover:underline">
+            {violation.rule?.help ?? violation.ruleId}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {violation.ruleId}
+            {pageCount > 1 && (
+              <span className="ml-2 text-muted-foreground">
+                · {pageCount} pages
+              </span>
+            )}
+          </p>
+          <span className="sr-only">, open details</span>
+        </button>
+      </td>
+
+      <td className="px-3 py-2.5 align-top text-sm text-foreground">
+        <StatusBadge status={violation.status} />
+      </td>
+      <td className="px-3 py-2.5 align-top text-sm text-foreground">
+        <PriorityBadge priority={violation.priority} />
+      </td>
+      <td className="whitespace-nowrap px-3 py-2.5 align-top text-sm text-foreground">
+        {formatDate(violation.firstSeenAt)}
+      </td>
+    </tr>
+  );
+}
+
+interface GroupedRuleRowProps {
+  issue: AggregatedIssue;
+  isActive: boolean;
+  onRowClick: (id: string) => void;
+}
+
+function GroupedRuleRow({ issue, isActive, onRowClick }: GroupedRuleRowProps) {
+  return (
+    <tr
+      data-issue-id={issue.id}
+      onClick={() => onRowClick(issue.id)}
+      className={[rowBaseClass, isActive ? rowActiveClass : ""]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      <td className="px-3 py-2.5 align-top text-sm text-foreground">
+        <SeverityBadge severity={issue.severity} />
+      </td>
+
+      <td className="px-3 py-2.5 align-top text-sm font-normal text-foreground">
+        <button
+          type="button"
+          aria-current={isActive ? "true" : undefined}
+          className={triggerButtonClass}
+        >
+          <p className="font-medium leading-snug text-foreground underline-offset-4 hover:underline">
+            {issue.rule?.help ?? issue.ruleId}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {issue.ruleId}
+            <span className="ml-2 text-muted-foreground">
+              · affects {issue.affectedPagesCount}{" "}
+              {issue.affectedPagesCount === 1 ? "page" : "pages"}
+            </span>
+            <span className="ml-2 text-muted-foreground">
+              · {issue.totalInstances} instances
+            </span>
+            <span className="ml-2 text-muted-foreground">
+              ·{" "}
+              {issue.affectedPropertiesCount === 1
+                ? (issue.affectedProperties[0]?.name ?? "—")
+                : `${issue.affectedPropertiesCount} properties`}
+            </span>
+          </p>
+          <span className="sr-only">, open details</span>
+        </button>
+      </td>
+
+      <td className="px-3 py-2.5 align-top text-sm text-foreground">
+        <StatusBadge status={issue.status} />
+      </td>
+      <td className="px-3 py-2.5 align-top text-sm text-foreground">
+        <PriorityBadge priority={issue.priority} />
+      </td>
+      <td className="whitespace-nowrap px-3 py-2.5 align-top text-sm text-foreground">
+        {formatDate(issue.firstSeenAt)}
+      </td>
+    </tr>
+  );
+}
+
+interface FlatViolationRowProps {
+  row: Row<HydratedViolation>;
+  isActive: boolean;
+  onRowClick: (id: string) => void;
+}
+
+function FlatViolationRow({
+  row,
+  isActive,
+  onRowClick,
+}: FlatViolationRowProps) {
+  return (
+    <tr
+      data-issue-id={row.original.id}
+      onClick={() => onRowClick(row.original.id)}
+      className={[rowBaseClass, isActive ? rowActiveClass : ""]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      {row.getVisibleCells().map((cell) => {
+        if (cell.column.id === "rule") {
+          return (
+            <td
+              key={cell.id}
+              className="px-3 py-2.5 align-top text-sm font-normal text-foreground"
+            >
+              <button
+                type="button"
+                aria-current={isActive ? "true" : undefined}
+                className={triggerButtonClass}
+              >
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                <span className="sr-only">, open details</span>
+              </button>
+            </td>
+          );
+        }
+
+        return (
+          <td
+            key={cell.id}
+            className="px-3 py-2.5 align-top text-sm text-foreground"
+          >
+            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+          </td>
+        );
+      })}
+    </tr>
+  );
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
+
 interface IssuesTableProps {
   violations: HydratedViolation[];
   groupedIssues: AggregatedIssue[];
@@ -53,16 +319,6 @@ interface IssuesTableProps {
   onViolationRowClick: (id: string) => void;
   onGroupedIssueRowClick: (id: string) => void;
 }
-
-const rowBaseClass =
-  "cursor-pointer border-b last:border-0 outline-none transition-colors hover:bg-muted/50 focus-visible:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring";
-
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
 
 const IssuesTable = ({
   violations,
@@ -75,9 +331,9 @@ const IssuesTable = ({
   onGroupedIssueRowClick,
 }: IssuesTableProps) => {
   const remediationSort: SortingFn<HydratedViolation> = (rowA, rowB) => {
-    const sevDiff =
+    const severityDiff =
       severityOrder[rowA.original.impact] - severityOrder[rowB.original.impact];
-    if (sevDiff !== 0) return sevDiff;
+    if (severityDiff !== 0) return severityDiff;
 
     const countA = rulePageCounts.get(rowA.original.ruleId) ?? 1;
     const countB = rulePageCounts.get(rowB.original.ruleId) ?? 1;
@@ -135,6 +391,7 @@ const IssuesTable = ({
 
   const sortedViolations = useMemo(
     () => table.getSortedRowModel().rows.map((row) => row.original),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [table, sorting, violations],
   );
 
@@ -173,8 +430,7 @@ const IssuesTable = ({
     }
 
     return Array.from(map.values()).sort((a, b) => {
-      if (b.criticalCount !== a.criticalCount)
-        return b.criticalCount - a.criticalCount;
+      if (b.criticalCount !== a.criticalCount) return b.criticalCount - a.criticalCount;
       return b.violations.length - a.violations.length;
     });
   }, [sortedViolations, viewMode]);
@@ -183,16 +439,13 @@ const IssuesTable = ({
     if (viewMode !== "grouped-rule") return [];
 
     return [...groupedIssues].sort((a, b) => {
-      const sevDiff = severityOrder[a.severity] - severityOrder[b.severity];
-      if (sevDiff !== 0) return sevDiff;
-      if (b.affectedPagesCount !== a.affectedPagesCount) {
+      const severityDiff = severityOrder[a.severity] - severityOrder[b.severity];
+      if (severityDiff !== 0) return severityDiff;
+      if (b.affectedPagesCount !== a.affectedPagesCount)
         return b.affectedPagesCount - a.affectedPagesCount;
-      }
       const statusDiff = statusOrder[a.status] - statusOrder[b.status];
       if (statusDiff !== 0) return statusDiff;
-      return (
-        new Date(a.firstSeenAt).getTime() - new Date(b.firstSeenAt).getTime()
-      );
+      return new Date(a.firstSeenAt).getTime() - new Date(b.firstSeenAt).getTime();
     });
   }, [groupedIssues, viewMode]);
 
@@ -200,7 +453,16 @@ const IssuesTable = ({
   const total = violations.length;
   const start = total === 0 ? 0 : pageIndex * pageSize + 1;
   const end = Math.min((pageIndex + 1) * pageSize, total);
-  const visibleColCount = table.getVisibleLeafColumns().length;
+
+  const visibleColCount = table
+    .getVisibleLeafColumns()
+    .filter((column) => {
+      if (viewMode === "grouped-page")
+        return column.id !== "page" && column.id !== "property";
+      if (viewMode === "grouped-rule")
+        return ["severity", "rule", "status", "priority", "firstSeenAt"].includes(column.id);
+      return true;
+    }).length;
 
   return (
     <div className="flex flex-col gap-3" data-issues-table>
@@ -212,31 +474,26 @@ const IssuesTable = ({
                 ? "Accessibility issues grouped by rule"
                 : viewMode === "grouped-page"
                   ? "Accessibility issues grouped by page"
-                  : "Accessibility violations"}
+                  : "Accessibility violations table"}
             </caption>
+
             <thead>
               <tr className="border-b bg-muted/50">
                 {table
                   .getHeaderGroups()[0]
                   .headers.filter((header) => {
-                    if (viewMode === "grouped-page") {
+                    if (viewMode === "grouped-page")
                       return header.id !== "page" && header.id !== "property";
-                    }
-                    if (viewMode === "grouped-rule") {
-                      return [
-                        "severity",
-                        "rule",
-                        "status",
-                        "priority",
-                        "firstSeenAt",
-                      ].includes(header.id);
-                    }
+                    if (viewMode === "grouped-rule")
+                      return ["severity", "rule", "status", "priority", "firstSeenAt"].includes(
+                        header.id,
+                      );
                     return true;
                   })
                   .map((header) => {
                     const sorted = header.column.getIsSorted();
-                    const canSort =
-                      viewMode === "flat" && header.column.getCanSort();
+                    const canSort = viewMode === "flat" && header.column.getCanSort();
+
                     const ariaSort =
                       sorted === "asc"
                         ? ("ascending" as const)
@@ -264,10 +521,16 @@ const IssuesTable = ({
                               header.getContext(),
                             )}
                             {sorted === "asc" && (
-                              <ChevronUp size={12} aria-hidden="true" />
+                              <>
+                                <ChevronUp size={12} aria-hidden="true" />
+                                <span className="sr-only"> (ascending)</span>
+                              </>
                             )}
                             {sorted === "desc" && (
-                              <ChevronDown size={12} aria-hidden="true" />
+                              <>
+                                <ChevronDown size={12} aria-hidden="true" />
+                                <span className="sr-only"> (descending)</span>
+                              </>
                             )}
                             {!sorted && (
                               <ChevronsUpDown
@@ -292,6 +555,7 @@ const IssuesTable = ({
             {viewMode === "grouped-page" ? (
               pageGroups.map((group, index) => {
                 const collapsed = collapsedGroups.has(group.pageId);
+
                 return (
                   <tbody
                     key={group.pageId}
@@ -301,219 +565,51 @@ const IssuesTable = ({
                         : "border-t border-border/30"
                     }
                   >
-                    <tr className="bg-muted/50">
-                      <td colSpan={visibleColCount} className="py-0 pl-2 pr-3">
-                        <button
-                          type="button"
-                          aria-expanded={!collapsed}
-                          aria-label={`${collapsed ? "Expand" : "Collapse"} ${group.pageTitle}`}
-                          onClick={() => toggleGroup(group.pageId)}
-                          className="flex w-full items-center gap-3 rounded-sm py-3.5 text-left outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
-                        >
-                          <ChevronDown
-                            size={14}
-                            aria-hidden="true"
-                            className={`shrink-0 text-muted-foreground ${collapsed ? "-rotate-90" : ""}`}
-                          />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-bold leading-snug text-foreground">
-                              {group.pageTitle}
-                            </p>
-                            {group.pagePath && (
-                              <p className="mt-0.5 text-xs font-normal text-muted-foreground">
-                                {group.pagePath}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex shrink-0 items-center gap-4 text-xs">
-                            {group.criticalCount > 0 && (
-                              <span className="font-bold text-severity-critical">
-                                {group.criticalCount} critical
-                              </span>
-                            )}
-                            <span className="font-medium text-foreground/70">
-                              {group.violations.length}{" "}
-                              {group.violations.length === 1
-                                ? "issue"
-                                : "issues"}
-                            </span>
-                            {group.propertyName && (
-                              <span className="hidden text-muted-foreground sm:inline">
-                                {group.propertyName}
-                              </span>
-                            )}
-                          </div>
-                        </button>
-                      </td>
-                    </tr>
+                    <PageGroupHeader
+                      pageTitle={group.pageTitle}
+                      pagePath={group.pagePath}
+                      propertyName={group.propertyName}
+                      issueCount={group.violations.length}
+                      criticalCount={group.criticalCount}
+                      collapsed={collapsed}
+                      colSpan={visibleColCount}
+                      onToggle={() => toggleGroup(group.pageId)}
+                    />
 
                     {!collapsed &&
-                      group.violations.map((violation) => {
-                        const isActive = violation.id === activeViolationId;
-                        return (
-                          <tr
-                            key={violation.id}
-                            tabIndex={0}
-                            data-issue-id={violation.id}
-                            aria-selected={isActive}
-                            onClick={() => onViolationRowClick(violation.id)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter" || e.key === " ") {
-                                e.preventDefault();
-                                onViolationRowClick(violation.id);
-                              }
-                            }}
-                            className={[
-                              rowBaseClass,
-                              isActive
-                                ? "border-l-2 border-l-primary bg-accent"
-                                : "",
-                            ]
-                              .filter(Boolean)
-                              .join(" ")}
-                          >
-                            <td className="px-3 py-2.5 align-top text-sm text-foreground">
-                              <SeverityBadge severity={violation.impact} />
-                            </td>
-                            <td className="px-3 py-2.5 align-top text-sm text-foreground">
-                              <div>
-                                <p className="font-medium leading-snug text-foreground">
-                                  {violation.rule?.help ?? violation.ruleId}
-                                </p>
-                                <p className="mt-0.5 text-xs text-muted-foreground">
-                                  {violation.ruleId}
-                                  {(rulePageCounts.get(violation.ruleId) ?? 1) >
-                                    1 && (
-                                    <span className="ml-2 text-muted-foreground">
-                                      · {rulePageCounts.get(violation.ruleId)}{" "}
-                                      pages
-                                    </span>
-                                  )}
-                                </p>
-                              </div>
-                            </td>
-                            <td className="px-3 py-2.5 align-top text-sm text-foreground">
-                              <StatusBadge status={violation.status} />
-                            </td>
-                            <td className="px-3 py-2.5 align-top text-sm text-foreground">
-                              <PriorityBadge priority={violation.priority} />
-                            </td>
-                            <td className="px-3 py-2.5 align-top text-sm text-foreground whitespace-nowrap">
-                              {formatDate(violation.firstSeenAt)}
-                            </td>
-                          </tr>
-                        );
-                      })}
+                      group.violations.map((violation) => (
+                        <GroupedPageRow
+                          key={violation.id}
+                          violation={violation}
+                          isActive={violation.id === activeViolationId}
+                          pageCount={rulePageCounts.get(violation.ruleId) ?? 1}
+                          onRowClick={onViolationRowClick}
+                        />
+                      ))}
                   </tbody>
                 );
               })
             ) : viewMode === "grouped-rule" ? (
               <tbody>
-                {sortedGroupedIssues.map((issue) => {
-                  const isActive = issue.id === activeGroupId;
-                  return (
-                    <tr
-                      key={issue.id}
-                      tabIndex={0}
-                      data-issue-id={issue.id}
-                      aria-selected={isActive}
-                      onClick={() => onGroupedIssueRowClick(issue.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          onGroupedIssueRowClick(issue.id);
-                        }
-                      }}
-                      className={[
-                        rowBaseClass,
-                        isActive ? "border-l-2 border-l-primary bg-accent" : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                    >
-                      <td className="px-3 py-2.5 align-top text-sm text-foreground">
-                        <SeverityBadge severity={issue.severity} />
-                      </td>
-                      <td className="px-3 py-2.5 align-top text-sm text-foreground">
-                        <div>
-                          <p className="font-medium leading-snug text-foreground">
-                            {issue.rule?.help ?? issue.ruleId}
-                          </p>
-                          <p className="mt-0.5 text-xs text-muted-foreground">
-                            {issue.ruleId}
-                            <span className="ml-2 text-muted-foreground">
-                              · affects {issue.affectedPagesCount}{" "}
-                              {issue.affectedPagesCount === 1
-                                ? "page"
-                                : "pages"}
-                            </span>
-                            <span className="ml-2">
-                              · {issue.totalInstances} instances
-                            </span>
-                          </p>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2.5 align-top text-sm text-foreground whitespace-nowrap">
-                        {issue.affectedPropertiesCount === 1
-                          ? (issue.affectedProperties[0]?.name ?? "—")
-                          : `${issue.affectedPropertiesCount} properties`}
-                      </td>
-                      <td className="px-3 py-2.5 align-top text-sm text-foreground whitespace-nowrap">
-                        {issue.affectedPagesCount === 1
-                          ? (issue.affectedPages[0]?.title ?? "—")
-                          : `${issue.affectedPagesCount} pages`}
-                      </td>
-                      <td className="px-3 py-2.5 align-top text-sm text-foreground">
-                        <StatusBadge status={issue.status} />
-                      </td>
-                      <td className="px-3 py-2.5 align-top text-sm text-foreground">
-                        <PriorityBadge priority={issue.priority} />
-                      </td>
-                      <td className="px-3 py-2.5 align-top text-sm text-foreground whitespace-nowrap">
-                        {formatDate(issue.firstSeenAt)}
-                      </td>
-                    </tr>
-                  );
-                })}
+                {sortedGroupedIssues.map((issue) => (
+                  <GroupedRuleRow
+                    key={issue.id}
+                    issue={issue}
+                    isActive={issue.id === activeGroupId}
+                    onRowClick={onGroupedIssueRowClick}
+                  />
+                ))}
               </tbody>
             ) : (
               <tbody>
-                {table.getRowModel().rows.map((row) => {
-                  const isActive = row.original.id === activeViolationId;
-                  return (
-                    <tr
-                      key={row.id}
-                      tabIndex={0}
-                      data-issue-id={row.original.id}
-                      aria-selected={isActive}
-                      onClick={() => onViolationRowClick(row.original.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          onViolationRowClick(row.original.id);
-                        }
-                      }}
-                      className={[
-                        rowBaseClass,
-                        isActive ? "border-l-2 border-l-primary bg-accent" : "",
-                      ]
-                        .filter(Boolean)
-                        .join(" ")}
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <td
-                          key={cell.id}
-                          className="px-3 py-2.5 align-top text-sm text-foreground"
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
+                {table.getRowModel().rows.map((row) => (
+                  <FlatViolationRow
+                    key={row.id}
+                    row={row}
+                    isActive={row.original.id === activeViolationId}
+                    onRowClick={onViolationRowClick}
+                  />
+                ))}
               </tbody>
             )}
           </table>
@@ -522,7 +618,7 @@ const IssuesTable = ({
 
       {viewMode === "flat" && total > PAGE_SIZE_OPTIONS[0] && (
         <nav
-          aria-label="Pagination"
+          aria-label="Issues pagination"
           className="flex items-center justify-between px-1"
         >
           <div className="flex items-center gap-2">
@@ -532,6 +628,7 @@ const IssuesTable = ({
             >
               Rows per page
             </label>
+
             <select
               id="issues-page-size"
               value={pageSize}
@@ -559,16 +656,17 @@ const IssuesTable = ({
               type="button"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
-              aria-label="Previous page"
+              aria-label="Previous page of issues"
               className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-input bg-background text-foreground outline-none transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <ChevronLeft size={14} aria-hidden="true" />
             </button>
+
             <button
               type="button"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
-              aria-label="Next page"
+              aria-label="Next page of issues"
               className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-input bg-background text-foreground outline-none transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
               <ChevronRight size={14} aria-hidden="true" />
