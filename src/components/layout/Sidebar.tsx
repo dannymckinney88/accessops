@@ -1,19 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import {
-  LayoutDashboard,
-  ScanLine,
-  AlertTriangle,
-  GitCompare,
-} from "lucide-react";
+import { LayoutDashboard, ScanLine, AlertTriangle } from "lucide-react";
 import SidebarNavItem from "./SidebarNavItem";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Issues", href: "/issues", icon: AlertTriangle },
   { label: "Scans", href: "/scans", icon: ScanLine },
-  { label: "Compare", href: "/compare", icon: GitCompare, disabled: true },
 ];
 
 interface SidebarProps {

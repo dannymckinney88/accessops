@@ -10,7 +10,6 @@ interface ScanListProps {
 const ScanList = ({ rows, totalCount, isFiltered }: ScanListProps) => {
   return (
     <section aria-labelledby="scan-list-heading">
-      {/* ── Section heading + count ──────────────────────────────────────── */}
       <div className="mb-3 flex items-baseline justify-between gap-4">
         <h2
           id="scan-list-heading"
@@ -18,22 +17,18 @@ const ScanList = ({ rows, totalCount, isFiltered }: ScanListProps) => {
         >
           Audit Records
         </h2>
+
         <p
           className="text-xs text-muted-foreground"
           aria-live="polite"
           aria-atomic="true"
         >
-          {isFiltered ? (
-            <>
-              Showing {rows.length} of {totalCount}
-            </>
-          ) : (
-            <>{totalCount} total</>
-          )}
+          {isFiltered
+            ? `Showing ${rows.length} of ${totalCount}`
+            : `${totalCount} total`}
         </p>
       </div>
 
-      {/* ── Scan list ───────────────────────────────────────────────────── */}
       {rows.length === 0 ? (
         <div
           role="status"
