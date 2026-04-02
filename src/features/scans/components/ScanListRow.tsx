@@ -109,7 +109,7 @@ const ScanListRow = ({ row }: ScanListRowProps) => {
           <span
             className={`text-xs font-medium leading-tight ${
               row.scanType === "Baseline"
-                ? "text-primary"
+                ? "text-emerald-800 dark:text-emerald-300"
                 : "text-muted-foreground"
             }`}
           >

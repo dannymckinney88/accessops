@@ -50,7 +50,13 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
                     className={`size-3 ${isHighRisk ? "text-severity-critical" : "text-muted-foreground/30"}`}
                   />
                   <span
-                    className={`text-[10px] font-bold uppercase tracking-tight ${isHighRisk ? "text-severity-critical" : isImproving ? "text-primary/70" : "text-muted-foreground/60"}`}
+                    className={`text-[10px] font-bold uppercase tracking-tight ${
+                      isHighRisk
+                        ? "text-severity-critical"
+                        : isImproving
+                          ? "text-emerald-800 dark:text-emerald-300"
+                          : "text-muted-foreground"
+                    }`}
                   >
                     {trend === "high-risk"
                       ? "High Risk"
@@ -68,7 +74,7 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
                 <span className="text-xs font-bold text-severity-critical tabular-nums">
                   {criticalCount} critical
                 </span>
-                <span className="text-[10px] font-medium text-muted-foreground/60 tabular-nums">
+                <span className="text-[10px] font-medium text-muted-foreground tabular-nums">
                   {resolvedPct}% resolved
                 </span>
               </div>

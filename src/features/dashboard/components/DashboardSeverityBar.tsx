@@ -16,7 +16,9 @@ const DashboardSeverityBar = ({ summary }: DashboardSeverityBarProps) => {
 
   if (unfixedCount === 0) {
     return (
-      <p className="text-sm text-muted-foreground">No unfixed issues remaining.</p>
+      <p className="text-sm text-muted-foreground">
+        No unfixed issues remaining.
+      </p>
     );
   }
 
@@ -67,7 +69,7 @@ const DashboardSeverityBar = ({ summary }: DashboardSeverityBarProps) => {
             >
               {/* Only show count label if segment is wide enough */}
               {pct >= 10 && (
-                <span className="text-xs font-semibold text-white tabular-nums drop-shadow-sm">
+                <span className="text-xs font-semibold tabular-nums text-white dark:text-black/80">
                   {count}
                 </span>
               )}

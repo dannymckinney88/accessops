@@ -39,7 +39,7 @@ const DashboardHighestRisk = ({ summary }: DashboardHighestRiskProps) => {
                     <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
                       {page.pageTitle}
                     </span>
-                    <span className="truncate text-[10px] font-mono text-muted-foreground/40">
+                    <span className="truncate text-[10px] font-mono text-muted-foreground/80">
                       {page.pagePath}
                     </span>
                   </div>
