@@ -4,14 +4,10 @@ import SeverityBadge from "@/components/common/SeverityBadge";
 import StatusBadge from "@/components/common/StatusBadge";
 import PriorityBadge from "@/components/common/PriorityBadge";
 
-// Augment TanStack Table's meta type for this table's custom data.
 declare module "@tanstack/react-table" {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface TableMeta<TData> {
     rulePageCounts?: Map<string, number>;
   }
-  // Register the remediation sort so columns can reference it by name.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface SortingFns {
     remediationSort: SortingFn<unknown>;
   }
@@ -39,7 +35,8 @@ export const issueColumns = [
     header: "Issue",
     cell: (info) => {
       const ruleId = info.row.original.ruleId;
-      const pageCount = info.table.options.meta?.rulePageCounts?.get(ruleId) ?? 1;
+      const pageCount =
+        info.table.options.meta?.rulePageCounts?.get(ruleId) ?? 1;
       return (
         <div>
           <p className="font-medium text-foreground leading-snug">
@@ -49,7 +46,7 @@ export const issueColumns = [
             {info.row.original.ruleId}
             {pageCount > 1 && (
               <span
-                className="ml-2 text-primary/60"
+                className="ml-2 text-muted-foreground"
                 title={`This rule has violations on ${pageCount} pages`}
               >
                 · {pageCount} pages
@@ -74,7 +71,7 @@ export const issueColumns = [
     cell: (info) => (
       <div>
         <p>{info.getValue()}</p>
-        <p className="text-xs text-muted-foreground mt-0.5">
+        <p className="mt-0.5 text-xs text-muted-foreground">
           {info.row.original.page?.path}
         </p>
       </div>
