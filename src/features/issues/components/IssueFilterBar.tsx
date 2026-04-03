@@ -1,7 +1,7 @@
 "use client";
 
 import type { IssueFilters, QuickFilterChip } from "../hooks/useIssueFilters";
-import type { Severity, RemediationStatus } from "@/lib/data/types/domain";
+import type { Severity, RemediationStatus, User } from "@/lib/data/types/domain";
 import type { Property } from "@/lib/data/index";
 import IssueQuickFilters from "./IssueQuickFilters";
 
@@ -22,6 +22,7 @@ export type AvailableRule = {
 interface IssueFilterBarProps {
   filters: IssueFilters;
   properties: Property[];
+  assignableUsers: User[];
   availablePages: AvailablePage[];
   availableRules: AvailableRule[];
   ruleLabel: string | null;
@@ -36,6 +37,7 @@ interface IssueFilterBarProps {
   onSetPageId: (id: string | null) => void;
   onSetRuleId: (id: string | null) => void;
   onSetStatus: (id: RemediationStatus | null) => void;
+  onSetAssigneeId: (id: string | null) => void;
   onSetSearch: (q: string) => void;
   onSetQuickFilter: (chip: QuickFilterChip | null) => void;
   onSetAll: () => void;
@@ -71,6 +73,7 @@ const inputClass =
 const IssueFilterBar = ({
   filters,
   properties,
+  assignableUsers,
   availablePages,
   availableRules,
   ruleLabel,
@@ -85,6 +88,7 @@ const IssueFilterBar = ({
   onSetPageId,
   onSetRuleId,
   onSetStatus,
+  onSetAssigneeId,
   onSetSearch,
   onSetQuickFilter,
   onSetAll,
@@ -112,6 +116,14 @@ const IssueFilterBar = ({
   }
 
   if (filters.ruleId && ruleLabel) activeFilterLabels.push(ruleLabel);
+  if (filters.assigneeId) {
+    if (filters.assigneeId === "unassigned") {
+      activeFilterLabels.push("Unassigned");
+    } else {
+      const user = assignableUsers.find((u) => u.id === filters.assigneeId);
+      if (user) activeFilterLabels.push(user.name);
+    }
+  }
   if (activeSearch) activeFilterLabels.push(`"${activeSearch}"`);
 
   const visiblePages = filters.propertyId
@@ -235,6 +247,21 @@ const IssueFilterBar = ({
             {availableRules.map((rule) => (
               <option key={rule.id} value={rule.id}>
                 {rule.label}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={filters.assigneeId ?? ""}
+            onChange={(e) => onSetAssigneeId(e.target.value || null)}
+            aria-label="Filter by assignee"
+            className={`${selectClass} pr-2`}
+          >
+            <option value="">All assignees</option>
+            <option value="unassigned">Unassigned</option>
+            {assignableUsers.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.name}
               </option>
             ))}
           </select>

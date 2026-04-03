@@ -11,7 +11,7 @@
 //   status       — current remediation state
 //   group        — optional suffix when the same page/rule appears with different
 //                  statuses or assignees (prevents ID collisions)
-//   assignedTo   — optional assignee name
+//   assigneeId   — optional user ID
 //   priority     — optional override; defaults to getPriority(impact)
 
 import type { ViolationInstance } from "@/lib/data/types/domain";
@@ -24,7 +24,7 @@ type ViolationSeed = {
   impact: ViolationInstance["impact"];
   status: ViolationInstance["status"];
   group?: string;
-  assignedTo?: string;
+  assigneeId?: string;
   priority?: ViolationInstance["priority"];
 };
 
@@ -935,7 +935,7 @@ const buildViolations = (seed: ViolationSeed): ViolationInstance[] => {
       html: tpl.html,
       target: [tpl.target],
       failureSummary: tpl.failureSummary,
-      ...(seed.assignedTo ? { assignedTo: seed.assignedTo } : {}),
+      ...(seed.assigneeId ? { assigneeId: seed.assigneeId } : {}),
     };
   });
 };
@@ -1305,7 +1305,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 1,
     impact: "critical",
     status: "in-progress",
-    assignedTo: "Alex Rivera",
+    assigneeId: "u-alex",
   },
   {
     scanPageId: "sp-mkt-r-home",
@@ -1754,6 +1754,7 @@ const violationRegistry: ViolationSeed[] = [
     impact: "critical",
     status: "open",
     priority: "urgent",
+    assigneeId: "u-jordan",
   },
   {
     scanPageId: "sp-loan-r-personal",
@@ -1799,6 +1800,7 @@ const violationRegistry: ViolationSeed[] = [
     impact: "critical",
     status: "open",
     priority: "urgent",
+    assigneeId: "u-jordan",
   },
   {
     scanPageId: "sp-loan-r-employment",
@@ -2424,7 +2426,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 3,
     impact: "serious",
     status: "in-progress",
-    assignedTo: "Alex Rivera",
+    assigneeId: "u-alex",
   },
 
   // ── Accounts (20 = 18 remaining + 2 fixed) ────────────────────────────────
@@ -2510,7 +2512,7 @@ const violationRegistry: ViolationSeed[] = [
     impact: "critical",
     status: "in-progress",
     group: "ip",
-    assignedTo: "Alex Rivera",
+    assigneeId: "u-alex",
   },
   {
     scanPageId: "sp-dash-r-txn",
@@ -2545,6 +2547,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 3,
     impact: "critical",
     status: "open",
+    assigneeId: "u-marcus",
   },
   {
     scanPageId: "sp-dash-r-transfer",
@@ -2561,7 +2564,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 2,
     impact: "critical",
     status: "in-progress",
-    assignedTo: "Alex Rivera",
+    assigneeId: "u-alex",
   },
   {
     scanPageId: "sp-dash-r-transfer",
@@ -2579,7 +2582,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 3,
     impact: "critical",
     status: "open",
-    assignedTo: "Alex Rivera",
+    assigneeId: "u-alex",
   },
   {
     scanPageId: "sp-dash-r-transfer",
@@ -2675,7 +2678,7 @@ const violationRegistry: ViolationSeed[] = [
     impact: "critical",
     status: "in-progress",
     group: "ip",
-    assignedTo: "Alex Rivera",
+    assigneeId: "u-alex",
   },
   {
     scanPageId: "sp-dash-r-profile",
@@ -2692,7 +2695,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 3,
     impact: "critical",
     status: "open",
-    assignedTo: "Alex Rivera",
+    assigneeId: "u-alex",
   },
   {
     scanPageId: "sp-dash-r-profile",
@@ -2702,7 +2705,7 @@ const violationRegistry: ViolationSeed[] = [
     impact: "critical",
     status: "in-progress",
     group: "ip",
-    assignedTo: "Alex Rivera",
+    assigneeId: "u-alex",
   },
   {
     scanPageId: "sp-dash-r-profile",
@@ -2995,6 +2998,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 4,
     impact: "critical",
     status: "open",
+    assigneeId: "u-priya",
   },
   {
     scanPageId: "sp-sup-r-home",
@@ -3046,6 +3050,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 3,
     impact: "critical",
     status: "open",
+    assigneeId: "u-tom",
   },
   {
     scanPageId: "sp-sup-r-accounts",

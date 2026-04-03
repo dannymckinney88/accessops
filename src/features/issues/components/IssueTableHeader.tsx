@@ -3,15 +3,37 @@ import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import type { HydratedViolation } from "@/lib/data/index";
 import type { IssueViewMode } from "./IssueFilterBar";
 
+interface SelectionHeaderProps {
+  allSelected: boolean;
+  someSelected: boolean;
+  pageCount: number;
+  onSelectAll: (checked: boolean) => void;
+}
+
 interface IssueTableHeaderProps {
   headers: Header<HydratedViolation, unknown>[];
   viewMode: IssueViewMode;
+  selectionProps?: SelectionHeaderProps;
 }
 
-export function IssueTableHeader({ headers, viewMode }: IssueTableHeaderProps) {
+export function IssueTableHeader({ headers, viewMode, selectionProps }: IssueTableHeaderProps) {
   return (
     <thead>
       <tr className="border-b bg-muted/50">
+        {selectionProps && (
+          <th scope="col" className="w-10 px-3 py-2.5">
+            <input
+              type="checkbox"
+              checked={selectionProps.allSelected}
+              ref={(el) => {
+                if (el) el.indeterminate = selectionProps.someSelected && !selectionProps.allSelected;
+              }}
+              onChange={(e) => selectionProps.onSelectAll(e.target.checked)}
+              aria-label={`Select all on this page (${selectionProps.pageCount})`}
+              className="rounded border-input outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+            />
+          </th>
+        )}
         {headers.map((header) => {
           const sorted = header.column.getIsSorted();
           const canSort = viewMode === "flat" && header.column.getCanSort();

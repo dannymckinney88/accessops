@@ -83,6 +83,12 @@ export const issueColumns = [
     cell: (info) => <StatusBadge status={info.getValue()} />,
   }),
 
+  col.accessor((row) => row.assignee?.name ?? "—", {
+    id: "assignee",
+    header: "Assigned",
+    enableSorting: false,
+  }),
+
   col.accessor("priority", {
     header: "Priority",
     cell: (info) => <PriorityBadge priority={info.getValue()} />,

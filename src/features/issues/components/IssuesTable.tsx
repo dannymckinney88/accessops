@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   getCoreRowModel,
   getPaginationRowModel,
@@ -11,6 +11,7 @@ import {
   type SortingState,
 } from "@tanstack/react-table";
 import type { HydratedViolation } from "@/lib/data/index";
+import type { RemediationStatus, User } from "@/lib/data/types/domain";
 import { issueColumns } from "./columns";
 import type { AggregatedIssue } from "../utils/aggregateIssues";
 import type { IssueViewMode } from "./IssueFilterBar";
@@ -40,6 +41,14 @@ const statusOrder: Record<string, number> = {
   "accepted-risk": 4,
 };
 
+const statusLabel: Record<RemediationStatus, string> = {
+  open: "Open",
+  "in-progress": "In Progress",
+  fixed: "Fixed",
+  verified: "Verified",
+  "accepted-risk": "Accepted Risk",
+};
+
 const GROUPED_RULE_COLUMNS = ["severity", "rule", "status", "priority", "firstSeenAt"];
 
 // ── Props ──────────────────────────────────────────────────────────────────────
@@ -51,8 +60,12 @@ interface IssuesTableProps {
   activeGroupId: string | null;
   rulePageCounts: Map<string, number>;
   viewMode: IssueViewMode;
+  assignableUsers: User[];
   onViolationRowClick: (id: string) => void;
   onGroupedIssueRowClick: (id: string) => void;
+  onAssign: (id: string, assigneeId: string | null) => void;
+  onBulkAssign: (ids: string[], assigneeId: string | null) => void;
+  onBulkStatus: (ids: string[], status: RemediationStatus) => void;
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -64,8 +77,12 @@ const IssuesTable = ({
   activeGroupId,
   rulePageCounts,
   viewMode,
+  assignableUsers,
   onViolationRowClick,
   onGroupedIssueRowClick,
+  onAssign,
+  onBulkAssign,
+  onBulkStatus,
 }: IssuesTableProps) => {
   const remediationSort: SortingFn<HydratedViolation> = (rowA, rowB) => {
     const severityDiff =
@@ -94,6 +111,14 @@ const IssuesTable = ({
     pageSize: 25,
   });
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkAssignValue, setBulkAssignValue] = useState("");
+  const [bulkStatusValue, setBulkStatusValue] = useState("");
+
+  // Clear selection on any meaningful boundary change
+  useEffect(() => {
+    setSelectedIds(new Set());
+  }, [violations, sorting, pagination.pageIndex, pagination.pageSize, viewMode]);
 
   const toggleGroup = (groupId: string) => {
     setCollapsedGroups((prev) => {
@@ -104,8 +129,13 @@ const IssuesTable = ({
     });
   };
 
+  // Hide "assignee" in grouped-rule; hide "page"/"property" in grouped-page
   const columnVisibility: Record<string, boolean> =
-    viewMode === "grouped-page" ? { page: false, property: false } : {};
+    viewMode === "grouped-page"
+      ? { page: false, property: false }
+      : viewMode === "grouped-rule"
+        ? { assignee: false }
+        : {};
 
   const table = useReactTable({
     data: violations,
@@ -192,6 +222,53 @@ const IssuesTable = ({
   const { pageIndex, pageSize } = table.getState().pagination;
   const total = violations.length;
 
+  const currentPageRows = table.getRowModel().rows;
+  const currentPageIds = currentPageRows.map((r) => r.original.id);
+  const allPageSelected =
+    currentPageIds.length > 0 && currentPageIds.every((id) => selectedIds.has(id));
+  const somePageSelected = currentPageIds.some((id) => selectedIds.has(id));
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        currentPageIds.forEach((id) => next.add(id));
+        return next;
+      });
+    } else {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        currentPageIds.forEach((id) => next.delete(id));
+        return next;
+      });
+    }
+  };
+
+  const handleToggleSelect = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const handleBulkAssignApply = () => {
+    if (!bulkAssignValue) return;
+    const ids = Array.from(selectedIds);
+    onBulkAssign(ids, bulkAssignValue === "unassigned" ? null : bulkAssignValue);
+    setSelectedIds(new Set());
+    setBulkAssignValue("");
+  };
+
+  const handleBulkStatusApply = () => {
+    if (!bulkStatusValue) return;
+    const ids = Array.from(selectedIds);
+    onBulkStatus(ids, bulkStatusValue as RemediationStatus);
+    setSelectedIds(new Set());
+    setBulkStatusValue("");
+  };
+
   const tableCaption =
     viewMode === "grouped-rule"
       ? "Accessibility issues grouped by rule"
@@ -199,14 +276,116 @@ const IssuesTable = ({
         ? "Accessibility issues grouped by page"
         : "Accessibility violations table";
 
+  const selectionCount = selectedIds.size;
+  const showBulkBar = viewMode === "flat" && selectionCount > 0;
+
+  const bulkSelectClass =
+    "h-8 rounded-md border border-input bg-background px-3 pr-8 text-sm text-foreground outline-none transition-colors hover:border-interactive-border-hover hover:bg-interactive-hover focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-2";
+
+  const bulkApplyClass =
+    "h-8 rounded-md border border-input bg-background px-3 text-sm font-medium outline-none transition-colors hover:border-interactive-border-hover hover:bg-interactive-hover hover:text-interactive-hover-foreground active:bg-interactive-active active:text-interactive-active-foreground focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed";
+
   return (
     <div className="flex flex-col gap-3" data-issues-table>
+      {/* Bulk action bar */}
+      {showBulkBar && (
+        <div
+          role="region"
+          aria-label="Bulk actions"
+          className="flex flex-wrap items-center gap-3 rounded-lg border border-input bg-muted/40 px-4 py-2.5"
+        >
+          <span className="text-sm font-medium text-foreground">
+            {selectionCount} {selectionCount === 1 ? "issue" : "issues"} selected
+          </span>
+
+          <div className="flex items-center gap-1.5">
+            <select
+              value={bulkAssignValue}
+              onChange={(e) => setBulkAssignValue(e.target.value)}
+              aria-label="Bulk assign to"
+              className={bulkSelectClass}
+            >
+              <option value="">Assign to…</option>
+              <option value="unassigned">Unassign</option>
+              {assignableUsers.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={handleBulkAssignApply}
+              disabled={!bulkAssignValue}
+              aria-label="Apply assignment"
+              className={bulkApplyClass}
+            >
+              Apply
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <select
+              value={bulkStatusValue}
+              onChange={(e) => setBulkStatusValue(e.target.value)}
+              aria-label="Bulk set status"
+              className={bulkSelectClass}
+            >
+              <option value="">Set status…</option>
+              {(
+                [
+                  "open",
+                  "in-progress",
+                  "fixed",
+                  "accepted-risk",
+                ] as RemediationStatus[]
+              ).map((s) => (
+                <option key={s} value={s}>
+                  {statusLabel[s]}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={handleBulkStatusApply}
+              disabled={!bulkStatusValue}
+              aria-label="Apply status change"
+              className={bulkApplyClass}
+            >
+              Apply
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            aria-label="Deselect all"
+            className="ml-auto h-8 rounded-md border border-transparent px-3 text-xs text-muted-foreground outline-none transition-colors hover:border-interactive-border-hover hover:bg-interactive-hover hover:text-interactive-hover-foreground focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-2"
+          >
+            Deselect all
+          </button>
+        </div>
+      )}
+
       <div className="overflow-hidden rounded-lg border">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <caption className="sr-only">{tableCaption}</caption>
 
-            <IssueTableHeader headers={visibleHeaders} viewMode={viewMode} />
+            <IssueTableHeader
+              headers={visibleHeaders}
+              viewMode={viewMode}
+              selectionProps={
+                viewMode === "flat"
+                  ? {
+                      allSelected: allPageSelected,
+                      someSelected: somePageSelected,
+                      pageCount: currentPageIds.length,
+                      onSelectAll: handleSelectAll,
+                    }
+                  : undefined
+              }
+            />
 
             {viewMode === "grouped-page" ? (
               pageGroups.map((group, index) => {
@@ -254,12 +433,16 @@ const IssuesTable = ({
               </tbody>
             ) : (
               <tbody>
-                {table.getRowModel().rows.map((row) => (
+                {currentPageRows.map((row) => (
                   <FlatViolationRow
                     key={row.id}
                     row={row}
                     isActive={row.original.id === activeViolationId}
+                    isSelected={selectedIds.has(row.original.id)}
+                    assignableUsers={assignableUsers}
                     onRowClick={onViolationRowClick}
+                    onToggleSelect={handleToggleSelect}
+                    onAssign={onAssign}
                   />
                 ))}
               </tbody>

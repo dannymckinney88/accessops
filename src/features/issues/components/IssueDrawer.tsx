@@ -3,7 +3,6 @@
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -11,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import type { HydratedViolation } from "@/lib/data/index";
 import type { AggregatedIssue } from "../utils/aggregateIssues";
 import type { IssueViewMode } from "./IssueFilterBar";
+import type { RemediationStatus, User } from "@/lib/data/types/domain";
 import SeverityBadge from "@/components/common/SeverityBadge";
 import StatusBadge from "@/components/common/StatusBadge";
 import PriorityBadge from "@/components/common/PriorityBadge";
@@ -19,10 +19,15 @@ interface IssueDrawerProps {
   viewMode: IssueViewMode;
   violation: HydratedViolation | null;
   groupedIssue: AggregatedIssue | null;
+  assignableUsers: User[];
   rulePageCount?: number;
   onClose: () => void;
   onFocusTrigger: () => void;
   onViewAllInstances: (ruleId: string) => void;
+  onUpdateViolation: (
+    id: string,
+    patch: { assigneeId?: string | null; status?: RemediationStatus },
+  ) => void;
 }
 
 const formatDate = (iso: string) =>
@@ -37,14 +42,19 @@ const inlineActionClass =
 
 const externalLinkClass =
   "inline-flex items-center rounded-sm px-1.5 py-1 text-xs font-medium text-foreground underline underline-offset-4 outline-none transition-colors hover:bg-interactive-hover hover:text-interactive-hover-foreground active:bg-interactive-active active:text-interactive-active-foreground focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-2";
+const drawerSelectClass =
+  "h-8 rounded-md border border-input bg-background px-2 pr-7 text-sm text-foreground outline-none transition-colors hover:border-interactive-border-hover hover:bg-interactive-hover focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-2";
+
 const IssueDrawer = ({
   viewMode,
   violation,
   groupedIssue,
+  assignableUsers,
   rulePageCount,
   onClose,
   onFocusTrigger,
   onViewAllInstances,
+  onUpdateViolation,
 }: IssueDrawerProps) => {
   const groupedRuleMode = viewMode === "grouped-rule";
   const sampleViolation = groupedRuleMode
@@ -63,13 +73,12 @@ const IssueDrawer = ({
         id="issue-details-drawer"
         side="right"
         className="flex flex-col gap-0 overflow-hidden p-0"
-        aria-labelledby="issue-details-title"
-        aria-describedby="issue-details-context"
         onCloseAutoFocus={(e) => {
           e.preventDefault();
           onFocusTrigger();
         }}
       >
+        <SheetTitle className="sr-only">Issue details</SheetTitle>
         {groupedRuleMode && groupedIssue && sampleViolation && (
           <>
             <SheetHeader className="border-b px-6 py-5">
@@ -78,18 +87,15 @@ const IssueDrawer = ({
                 <StatusBadge status={groupedIssue.status} />
                 <PriorityBadge priority={groupedIssue.priority} />
               </div>
-              <SheetTitle
-                id="issue-details-title"
-                className="text-base leading-snug"
-              >
+              <h2 className="text-base leading-snug font-semibold text-foreground">
                 {groupedIssue.rule?.help ?? groupedIssue.ruleId}
-              </SheetTitle>
-              <SheetDescription id="issue-details-context">
+              </h2>
+              <p className="text-sm text-muted-foreground">
                 Affects {groupedIssue.affectedPagesCount}{" "}
                 {groupedIssue.affectedPagesCount === 1 ? "page" : "pages"} ·{" "}
                 {groupedIssue.totalInstances}{" "}
                 {groupedIssue.totalInstances === 1 ? "instance" : "instances"}
-              </SheetDescription>
+              </p>
             </SheetHeader>
 
             <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-5">
@@ -272,19 +278,110 @@ const IssueDrawer = ({
                 <StatusBadge status={violation.status} />
                 <PriorityBadge priority={violation.priority} />
               </div>
-              <SheetTitle
-                id="issue-details-title"
-                className="text-base leading-snug"
-              >
+              <h2 className="text-base leading-snug font-semibold text-foreground">
                 {violation.rule?.help ?? violation.ruleId}
-              </SheetTitle>
-              <SheetDescription id="issue-details-context">
+              </h2>
+              <p className="text-sm text-muted-foreground">
                 {violation.property?.name}
                 {violation.page ? ` · ${violation.page.title}` : ""}
-              </SheetDescription>
+              </p>
             </SheetHeader>
 
             <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-5">
+              <section aria-labelledby="drawer-actions-heading">
+                <h3
+                  id="drawer-actions-heading"
+                  className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  Actions
+                </h3>
+                <div className="flex flex-wrap gap-4">
+                  <div className="flex flex-col gap-1">
+                    <label
+                      htmlFor="drawer-assignee"
+                      className="text-xs text-muted-foreground"
+                    >
+                      Assignee
+                    </label>
+                    <select
+                      id="drawer-assignee"
+                      value={violation.assigneeId ?? ""}
+                      onChange={(e) =>
+                        onUpdateViolation(violation.id, {
+                          assigneeId: e.target.value || null,
+                        })
+                      }
+                      className={drawerSelectClass}
+                    >
+                      <option value="">Unassigned</option>
+                      {violation.assignee && !violation.assignee.isActive && (
+                        <option value={violation.assignee.id} disabled>
+                          {violation.assignee.name} (inactive)
+                        </option>
+                      )}
+                      {assignableUsers.map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {u.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {violation.status === "verified" ? (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs text-muted-foreground">
+                        Status
+                      </span>
+                      <div className="flex items-center gap-2 py-1">
+                        <StatusBadge status="verified" />
+                        <span className="text-xs text-muted-foreground">
+                          Set by audit
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-1">
+                      <label
+                        htmlFor="drawer-status"
+                        className="text-xs text-muted-foreground"
+                      >
+                        Status
+                      </label>
+                      <select
+                        id="drawer-status"
+                        value={violation.status}
+                        onChange={(e) =>
+                          onUpdateViolation(violation.id, {
+                            status: e.target.value as RemediationStatus,
+                          })
+                        }
+                        className={drawerSelectClass}
+                      >
+                        {(
+                          [
+                            "open",
+                            "in-progress",
+                            "fixed",
+                            "accepted-risk",
+                          ] as RemediationStatus[]
+                        ).map((s) => (
+                          <option key={s} value={s}>
+                            {s === "open"
+                              ? "Open"
+                              : s === "in-progress"
+                                ? "In Progress"
+                                : s === "fixed"
+                                  ? "Fixed"
+                                  : "Accepted Risk"}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              <Separator />
+
               {violation.rule?.whyItMatters && (
                 <section aria-labelledby="drawer-why-heading-flat">
                   <h3

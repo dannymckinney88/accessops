@@ -1,15 +1,16 @@
-import { violations, scanPages, pages, properties, rules, scanRuns } from "../seeds";
+import { violations, scanPages, pages, properties, rules, scanRuns, users } from "../seeds";
 import { enrichRule } from "./shared";
-import type { ViolationInstance, Rule, Page, Property } from "../types/domain";
+import type { ViolationInstance, Rule, Page, Property, User } from "../types/domain";
 
 /**
  * A 'Hydrated' violation includes the full objects for its
- * related rule, page, and property for easier UI rendering.
+ * related rule, page, property, and assignee for easier UI rendering.
  */
 export type HydratedViolation = ViolationInstance & {
   rule: Rule | undefined;
   page: Page | undefined;
   property: Property | undefined;
+  assignee: User | undefined;
 };
 
 /**
@@ -41,6 +42,7 @@ export const getHydratedViolations = async (): Promise<HydratedViolation[]> => {
   );
 
   const ruleMap = new Map(rules.map((rule) => [rule.ruleId, enrichRule(rule)]));
+  const userMap = new Map(users.map((user) => [user.id, user]));
 
   return violations
     .filter((v) => currentScanRunIds.has(v.scanRunId))
@@ -49,12 +51,16 @@ export const getHydratedViolations = async (): Promise<HydratedViolation[]> => {
       const page = scanPage ? pageMap.get(scanPage.pageId) : undefined;
       const property = page ? propertyMap.get(page.propertyId) : undefined;
       const rule = ruleMap.get(violation.ruleId);
+      const assignee = violation.assigneeId
+        ? userMap.get(violation.assigneeId)
+        : undefined;
 
       return {
         ...violation,
         rule,
         page,
         property,
+        assignee,
       };
     });
 };

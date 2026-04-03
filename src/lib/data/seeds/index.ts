@@ -6,6 +6,7 @@ import { rules } from "./rules";
 import { violations } from "./violations";
 import { ruleContent } from "./rule-contnet";
 import { historicalScanSummaries } from "./historical-scan-summaries";
+import { users, CURRENT_USER_ID } from "./users";
 
 export {
   properties,
@@ -16,4 +17,6 @@ export {
   violations,
   ruleContent,
   historicalScanSummaries,
+  users,
+  CURRENT_USER_ID,
 };
