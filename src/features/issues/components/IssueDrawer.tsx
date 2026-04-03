@@ -3,7 +3,6 @@
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -74,8 +73,6 @@ const IssueDrawer = ({
         id="issue-details-drawer"
         side="right"
         className="flex flex-col gap-0 overflow-hidden p-0"
-        aria-labelledby="issue-details-title"
-        aria-describedby="issue-details-context"
         onCloseAutoFocus={(e) => {
           e.preventDefault();
           onFocusTrigger();
@@ -90,18 +87,15 @@ const IssueDrawer = ({
                 <StatusBadge status={groupedIssue.status} />
                 <PriorityBadge priority={groupedIssue.priority} />
               </div>
-              <SheetTitle
-                id="issue-details-title"
-                className="text-base leading-snug"
-              >
+              <h2 className="text-base leading-snug font-semibold text-foreground">
                 {groupedIssue.rule?.help ?? groupedIssue.ruleId}
-              </SheetTitle>
-              <SheetDescription id="issue-details-context">
+              </h2>
+              <p className="text-sm text-muted-foreground">
                 Affects {groupedIssue.affectedPagesCount}{" "}
                 {groupedIssue.affectedPagesCount === 1 ? "page" : "pages"} ·{" "}
                 {groupedIssue.totalInstances}{" "}
                 {groupedIssue.totalInstances === 1 ? "instance" : "instances"}
-              </SheetDescription>
+              </p>
             </SheetHeader>
 
             <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-5">
@@ -284,16 +278,13 @@ const IssueDrawer = ({
                 <StatusBadge status={violation.status} />
                 <PriorityBadge priority={violation.priority} />
               </div>
-              <SheetTitle
-                id="issue-details-title"
-                className="text-base leading-snug"
-              >
+              <h2 className="text-base leading-snug font-semibold text-foreground">
                 {violation.rule?.help ?? violation.ruleId}
-              </SheetTitle>
-              <SheetDescription id="issue-details-context">
+              </h2>
+              <p className="text-sm text-muted-foreground">
                 {violation.property?.name}
                 {violation.page ? ` · ${violation.page.title}` : ""}
-              </SheetDescription>
+              </p>
             </SheetHeader>
 
             <div className="flex flex-1 flex-col gap-5 overflow-y-auto px-6 py-5">
@@ -335,46 +326,57 @@ const IssueDrawer = ({
                       ))}
                     </select>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <label
-                      htmlFor="drawer-status"
-                      className="text-xs text-muted-foreground"
-                    >
-                      Status
-                    </label>
-                    <select
-                      id="drawer-status"
-                      value={violation.status}
-                      onChange={(e) =>
-                        onUpdateViolation(violation.id, {
-                          status: e.target.value as RemediationStatus,
-                        })
-                      }
-                      className={drawerSelectClass}
-                    >
-                      {(
-                        [
-                          "open",
-                          "in-progress",
-                          "fixed",
-                          "verified",
-                          "accepted-risk",
-                        ] as RemediationStatus[]
-                      ).map((s) => (
-                        <option key={s} value={s}>
-                          {s === "open"
-                            ? "Open"
-                            : s === "in-progress"
-                              ? "In Progress"
-                              : s === "fixed"
-                                ? "Fixed"
-                                : s === "verified"
-                                  ? "Verified"
+                  {violation.status === "verified" ? (
+                    <div className="flex flex-col gap-1">
+                      <span className="text-xs text-muted-foreground">
+                        Status
+                      </span>
+                      <div className="flex items-center gap-2 py-1">
+                        <StatusBadge status="verified" />
+                        <span className="text-xs text-muted-foreground">
+                          Set by audit
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-1">
+                      <label
+                        htmlFor="drawer-status"
+                        className="text-xs text-muted-foreground"
+                      >
+                        Status
+                      </label>
+                      <select
+                        id="drawer-status"
+                        value={violation.status}
+                        onChange={(e) =>
+                          onUpdateViolation(violation.id, {
+                            status: e.target.value as RemediationStatus,
+                          })
+                        }
+                        className={drawerSelectClass}
+                      >
+                        {(
+                          [
+                            "open",
+                            "in-progress",
+                            "fixed",
+                            "accepted-risk",
+                          ] as RemediationStatus[]
+                        ).map((s) => (
+                          <option key={s} value={s}>
+                            {s === "open"
+                              ? "Open"
+                              : s === "in-progress"
+                                ? "In Progress"
+                                : s === "fixed"
+                                  ? "Fixed"
                                   : "Accepted Risk"}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
               </section>
 

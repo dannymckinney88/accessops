@@ -317,6 +317,7 @@ const IssuesTable = ({
               type="button"
               onClick={handleBulkAssignApply}
               disabled={!bulkAssignValue}
+              aria-label="Apply assignment"
               className={bulkApplyClass}
             >
               Apply
@@ -336,7 +337,6 @@ const IssuesTable = ({
                   "open",
                   "in-progress",
                   "fixed",
-                  "verified",
                   "accepted-risk",
                 ] as RemediationStatus[]
               ).map((s) => (
@@ -349,6 +349,7 @@ const IssuesTable = ({
               type="button"
               onClick={handleBulkStatusApply}
               disabled={!bulkStatusValue}
+              aria-label="Apply status change"
               className={bulkApplyClass}
             >
               Apply

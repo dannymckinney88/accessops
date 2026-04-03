@@ -127,6 +127,7 @@ const IssuesClient = ({ violations: initialViolations, properties, currentUser, 
     setViolations((prev) =>
       prev.map((v) => {
         if (!idSet.has(v.id)) return v;
+        if (v.status === "verified") return v;
         return { ...v, status };
       }),
     );
