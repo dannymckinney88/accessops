@@ -23,6 +23,7 @@ import {
   GroupedRuleRow,
   FlatViolationRow,
 } from "./IssueTableRows";
+import { EDITABLE_STATUSES, STATUS_LABEL } from "../utils/statusOptions";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -39,14 +40,6 @@ const statusOrder: Record<string, number> = {
   fixed: 2,
   verified: 3,
   "accepted-risk": 4,
-};
-
-const statusLabel: Record<RemediationStatus, string> = {
-  open: "Open",
-  "in-progress": "In Progress",
-  fixed: "Fixed",
-  verified: "Verified",
-  "accepted-risk": "Accepted Risk",
 };
 
 const GROUPED_RULE_COLUMNS = ["severity", "rule", "status", "priority", "firstSeenAt"];
@@ -292,20 +285,21 @@ const IssuesTable = ({
         <div
           role="region"
           aria-label="Bulk actions"
-          className="flex flex-wrap items-center gap-3 rounded-lg border border-input bg-muted/40 px-4 py-2.5"
+          className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-accent/20 px-4 py-2.5"
         >
-          <span className="text-sm font-medium text-foreground">
+          <span className="text-sm font-semibold text-foreground">
             {selectionCount} {selectionCount === 1 ? "issue" : "issues"} selected
           </span>
 
           <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Assign to</span>
             <select
               value={bulkAssignValue}
               onChange={(e) => setBulkAssignValue(e.target.value)}
               aria-label="Bulk assign to"
               className={bulkSelectClass}
             >
-              <option value="">Assign to…</option>
+              <option value="">Select…</option>
               <option value="unassigned">Unassign</option>
               {assignableUsers.map((u) => (
                 <option key={u.id} value={u.id}>
@@ -325,23 +319,17 @@ const IssuesTable = ({
           </div>
 
           <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground whitespace-nowrap">Set status</span>
             <select
               value={bulkStatusValue}
               onChange={(e) => setBulkStatusValue(e.target.value)}
               aria-label="Bulk set status"
               className={bulkSelectClass}
             >
-              <option value="">Set status…</option>
-              {(
-                [
-                  "open",
-                  "in-progress",
-                  "fixed",
-                  "accepted-risk",
-                ] as RemediationStatus[]
-              ).map((s) => (
+              <option value="">Select…</option>
+              {EDITABLE_STATUSES.map((s) => (
                 <option key={s} value={s}>
-                  {statusLabel[s]}
+                  {STATUS_LABEL[s]}
                 </option>
               ))}
             </select>

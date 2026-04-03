@@ -126,9 +126,9 @@
   --radius: 0.5rem;
 
   /* ── Severity — only for severity meaning ───────────────────────────── */
-  /* In :root — darker values so colored text passes on white background */
+
   --severity-critical: oklch(0.45 0.22 25);
-  --severity-serious: oklch(0.48 0.18 55);
+  --severity-serious: oklch(0.38 0.14 55);
   --severity-moderate: oklch(0.48 0.16 85);
   --severity-minor: oklch(0.45 0.08 250);
 

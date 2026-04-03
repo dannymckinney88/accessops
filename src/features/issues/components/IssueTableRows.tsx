@@ -27,7 +27,7 @@ export const formatDate = (iso: string) =>
   });
 
 const assignSelectClass =
-  "h-7 w-full min-w-24 rounded border border-input bg-background px-2 text-xs text-foreground outline-none transition-colors hover:border-interactive-border-hover focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-1";
+  "h-7 w-full min-w-24 max-w-[160px] rounded border border-input/60 bg-background px-2 text-xs text-foreground outline-none transition-colors hover:border-interactive-border-hover focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-1";
 
 // ── Interaction model ──────────────────────────────────────────────────────────
 //
@@ -262,7 +262,8 @@ export function FlatViolationRow({
 }: FlatViolationRowProps) {
   const violation = row.original;
   const currentAssignee = violation.assignee;
-  const currentAssigneeIsInactive = currentAssignee && !currentAssignee.isActive;
+  const currentAssigneeIsInactive =
+    currentAssignee && !currentAssignee.isActive;
 
   return (
     <tr

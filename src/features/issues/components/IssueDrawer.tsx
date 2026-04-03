@@ -11,6 +11,7 @@ import type { HydratedViolation } from "@/lib/data/index";
 import type { AggregatedIssue } from "../utils/aggregateIssues";
 import type { IssueViewMode } from "./IssueFilterBar";
 import type { RemediationStatus, User } from "@/lib/data/types/domain";
+import { EDITABLE_STATUSES, STATUS_LABEL } from "../utils/statusOptions";
 import SeverityBadge from "@/components/common/SeverityBadge";
 import StatusBadge from "@/components/common/StatusBadge";
 import PriorityBadge from "@/components/common/PriorityBadge";
@@ -293,10 +294,10 @@ const IssueDrawer = ({
                   id="drawer-actions-heading"
                   className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
                 >
-                  Actions
+                  Assignment
                 </h3>
-                <div className="flex flex-wrap gap-4">
-                  <div className="flex flex-col gap-1">
+                <div className="flex flex-wrap gap-3">
+                  <div className="flex min-w-[140px] flex-col gap-1">
                     <label
                       htmlFor="drawer-assignee"
                       className="text-xs text-muted-foreground"
@@ -327,7 +328,7 @@ const IssueDrawer = ({
                     </select>
                   </div>
                   {violation.status === "verified" ? (
-                    <div className="flex flex-col gap-1">
+                    <div className="flex min-w-[140px] flex-col gap-1">
                       <span className="text-xs text-muted-foreground">
                         Status
                       </span>
@@ -339,7 +340,7 @@ const IssueDrawer = ({
                       </div>
                     </div>
                   ) : (
-                    <div className="flex flex-col gap-1">
+                    <div className="flex min-w-[140px] flex-col gap-1">
                       <label
                         htmlFor="drawer-status"
                         className="text-xs text-muted-foreground"
@@ -356,22 +357,9 @@ const IssueDrawer = ({
                         }
                         className={drawerSelectClass}
                       >
-                        {(
-                          [
-                            "open",
-                            "in-progress",
-                            "fixed",
-                            "accepted-risk",
-                          ] as RemediationStatus[]
-                        ).map((s) => (
+                        {EDITABLE_STATUSES.map((s) => (
                           <option key={s} value={s}>
-                            {s === "open"
-                              ? "Open"
-                              : s === "in-progress"
-                                ? "In Progress"
-                                : s === "fixed"
-                                  ? "Fixed"
-                                  : "Accepted Risk"}
+                            {STATUS_LABEL[s]}
                           </option>
                         ))}
                       </select>
