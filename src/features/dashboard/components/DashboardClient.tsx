@@ -44,10 +44,10 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
             </p>
           </div>
           <a
-            href="/issues"
+            href="/issues?severity=critical"
             className="text-xs font-bold text-severity-critical hover:underline"
           >
-            View issues →
+            View critical issues →
           </a>
         </div>
       )}
@@ -55,40 +55,46 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
       <DashboardSignals summary={summary} />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_400px] items-stretch">
-        {/* Left Column: Property Health  */}
+        {/* Left Column: Property Health */}
         <section
           aria-labelledby="property-health-heading"
           className="flex flex-col h-full rounded-lg border bg-card p-6 shadow-sm"
         >
           <div className="flex-1">
-            <h2
-              id="property-health-heading"
-              className="text-sm font-semibold text-foreground"
-            >
-              Property Health
-            </h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              Sorted by critical count and remaining remediation work
-            </p>
-            <div className="mt-6">
+            <div className="pb-4 border-b border-border/40">
+              <h2
+                id="property-health-heading"
+                className="text-sm font-semibold text-foreground"
+              >
+                Property Health
+              </h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Sorted by critical count and remaining remediation work
+              </p>
+            </div>
+            <div className="mt-4">
               <DashboardPropertyHealth summary={summary} />
             </div>
           </div>
         </section>
 
-        {/* Right Column: Immediate Fixes  */}
+        {/* Right Column: High-Risk Areas */}
         <section
           aria-labelledby="highest-risk-heading"
           className="flex flex-col h-full rounded-lg border bg-card p-6 shadow-sm"
         >
           <div className="flex-1">
-            <h2
-              id="highest-risk-heading"
-              className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
-            >
-              Top Risk Pages
-            </h2>
-
+            <div className="pb-4 border-b border-border/40">
+              <h2
+                id="highest-risk-heading"
+                className="text-sm font-semibold text-foreground"
+              >
+                High-Risk Areas
+              </h2>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Ranked by critical unfixed issues — work top to bottom
+              </p>
+            </div>
             <DashboardHighestRisk summary={summary} />
           </div>
         </section>

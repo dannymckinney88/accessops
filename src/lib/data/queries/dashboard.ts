@@ -184,7 +184,6 @@ export const getDashboardCurrentState =
 
     const topCriticalPages = [...pageCriticalCounts.entries()]
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 4)
       .map(([pageId, count]) => {
         const pageRecord = pages.find(
           (currentPage) => currentPage.id === pageId,
@@ -193,6 +192,7 @@ export const getDashboardCurrentState =
           pageId,
           pageTitle: pageRecord?.title ?? pageId,
           pagePath: pageRecord?.path ?? "",
+          propertyId: pageRecord?.propertyId ?? "",
           propertyName: pageRecord
             ? (propertyIdToNameMap.get(pageRecord.propertyId) ?? "")
             : "",

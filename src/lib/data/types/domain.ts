@@ -157,6 +157,7 @@ export type DashboardCurrentState = {
     pageId: string;
     pageTitle: string;
     pagePath: string;
+    propertyId: string;
     propertyName: string;
     criticalCount: number;
   }>;

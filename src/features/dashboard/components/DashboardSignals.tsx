@@ -13,7 +13,7 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
       aria-label="Accessibility health metrics"
       className="grid grid-cols-2 gap-4 lg:grid-cols-4"
     >
-      {/* Unfixed Issues */}
+      {/* Unfixed Issues — primary signal */}
       <div className="rounded-lg border bg-card px-5 py-4">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Unfixed Issues
@@ -24,7 +24,7 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
         <p className="mt-1.5 text-xs text-muted-foreground">Open + In Progress</p>
       </div>
 
-      {/* Critical Unfixed */}
+      {/* Critical Unfixed — primary signal */}
       <div className="rounded-lg border bg-card px-5 py-4">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
           Critical Unfixed
@@ -39,28 +39,28 @@ const DashboardSignals = ({ summary }: DashboardSignalsProps) => {
         <p className="mt-1.5 text-xs text-muted-foreground">Highest urgency</p>
       </div>
 
-      {/* Fixed (Awaiting Verify) */}
-      <div className="rounded-lg border bg-card px-5 py-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          Fixed (Awaiting Verify)
+      {/* Fixed (Awaiting Verify) — secondary, visually demoted */}
+      <div className="rounded-lg border border-border/50 bg-card/50 px-5 py-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
+          Awaiting Verify
         </p>
-        <p className="mt-1.5 text-4xl font-bold tabular-nums leading-none text-foreground">
+        <p className="mt-1.5 text-3xl font-semibold tabular-nums leading-none text-muted-foreground">
           {fixedCount}
         </p>
-        <p className="mt-1.5 text-xs text-muted-foreground">
-          {fixedCount === 0 ? "No fixes pending" : "Completed internally"}
+        <p className="mt-1.5 text-xs text-muted-foreground/60">
+          {fixedCount === 0 ? "No fixes pending" : "Fixed, not yet confirmed"}
         </p>
       </div>
 
-      {/* Verified */}
-      <div className="rounded-lg border bg-card px-5 py-4">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      {/* Verified — secondary, visually demoted */}
+      <div className="rounded-lg border border-border/50 bg-card/50 px-5 py-4">
+        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground/70">
           Verified
         </p>
-        <p className="mt-1.5 text-4xl font-bold tabular-nums leading-none text-foreground">
+        <p className="mt-1.5 text-3xl font-semibold tabular-nums leading-none text-muted-foreground">
           {verifiedCount}
         </p>
-        <p className="mt-1.5 text-xs text-muted-foreground">
+        <p className="mt-1.5 text-xs text-muted-foreground/60">
           {verifiedCount === 0 ? "None confirmed" : "Confirmed by re-audit"}
         </p>
       </div>

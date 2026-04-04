@@ -75,15 +75,24 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
                   {criticalCount} critical
                 </span>
                 <span className="text-[10px] font-medium text-muted-foreground tabular-nums">
-                  {resolvedPct}% resolved
+                  {unfixedCount} unfixed
                 </span>
               </div>
             </div>
 
-            {/* Tightened Progress Bar */}
-            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted/40">
+            {/* Health bar — fill represents resolved work; more fill = healthier */}
+            <div
+              className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted/40"
+              aria-label={`${resolvedPct}% of issues resolved`}
+            >
               <div
-                className={`h-full transition-all duration-500 ${trend === "high-risk" ? "bg-severity-critical" : "bg-primary/80"}`}
+                className={`h-full transition-all duration-500 ${
+                  isHighRisk
+                    ? "bg-severity-critical/60"
+                    : isImproving
+                      ? "bg-emerald-500/70"
+                      : "bg-muted-foreground/40"
+                }`}
                 style={{ width: `${resolvedPct}%` }}
               />
             </div>
