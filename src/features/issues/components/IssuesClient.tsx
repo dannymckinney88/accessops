@@ -6,6 +6,11 @@ import type { HydratedViolation, Property } from "@/lib/data/index";
 import type { RemediationStatus, User } from "@/lib/data/types/domain";
 import { useIssueFilters } from "../hooks/useIssueFilters";
 import { aggregateIssues } from "../utils/aggregateIssues";
+import {
+  applyOverrides,
+  persistOverride,
+  persistOverrides,
+} from "../utils/issueOverrides";
 import IssueFilterBar, {
   type AvailablePage,
   type AvailableRule,
@@ -31,8 +36,11 @@ const IssuesClient = ({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [violations, setViolations] =
-    useState<HydratedViolation[]>(initialViolations);
+  // Initialize working issue state from seeded data plus any persisted local overrides.
+  // applyOverrides is SSR-safe and falls back to seeded data when localStorage is unavailable.
+  const [violations, setViolations] = useState<HydratedViolation[]>(() =>
+    applyOverrides(initialViolations, users),
+  );
 
   const assignableUsers = useMemo(
     () => users.filter((u) => u.isActive),
@@ -119,6 +127,7 @@ const IssuesClient = ({
   };
 
   const handleAssign = (id: string, assigneeId: string | null) => {
+    persistOverride(id, { assigneeId });
     setViolations((prev) =>
       prev.map((v) => {
         if (v.id !== id) return v;
@@ -131,6 +140,7 @@ const IssuesClient = ({
   };
 
   const handleBulkAssign = (ids: string[], assigneeId: string | null) => {
+    persistOverrides(ids, { assigneeId });
     const idSet = new Set(ids);
     setViolations((prev) =>
       prev.map((v) => {
@@ -145,6 +155,11 @@ const IssuesClient = ({
 
   const handleBulkStatus = (ids: string[], status: RemediationStatus) => {
     const idSet = new Set(ids);
+    // Only persist for violations that aren't already verified — matches the guard below
+    const eligibleIds = violations
+      .filter((v) => idSet.has(v.id) && v.status !== "verified")
+      .map((v) => v.id);
+    persistOverrides(eligibleIds, { status });
     setViolations((prev) =>
       prev.map((v) => {
         if (!idSet.has(v.id)) return v;
@@ -158,6 +173,7 @@ const IssuesClient = ({
     id: string,
     patch: { assigneeId?: string | null; status?: RemediationStatus },
   ) => {
+    persistOverride(id, patch);
     setViolations((prev) =>
       prev.map((v) => {
         if (v.id !== id) return v;
