@@ -14,13 +14,14 @@ interface IssueTableHeaderProps {
   headers: Header<HydratedViolation, unknown>[];
   viewMode: IssueViewMode;
   selectionProps?: SelectionHeaderProps;
+  showCheckboxColumn?: boolean;
 }
 
-export function IssueTableHeader({ headers, viewMode, selectionProps }: IssueTableHeaderProps) {
+export function IssueTableHeader({ headers, viewMode, selectionProps, showCheckboxColumn }: IssueTableHeaderProps) {
   return (
     <thead>
       <tr className="border-b bg-muted/50">
-        {selectionProps && (
+        {selectionProps ? (
           <th scope="col" className="w-10 px-3 py-2.5">
             <input
               type="checkbox"
@@ -33,7 +34,9 @@ export function IssueTableHeader({ headers, viewMode, selectionProps }: IssueTab
               className="rounded border-input outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
             />
           </th>
-        )}
+        ) : showCheckboxColumn ? (
+          <th scope="col" className="w-10 px-3 py-2.5" />
+        ) : null}
         {headers.map((header) => {
           const sorted = header.column.getIsSorted();
           const canSort = viewMode === "flat" && header.column.getCanSort();
