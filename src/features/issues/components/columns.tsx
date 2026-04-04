@@ -3,6 +3,7 @@ import type { HydratedViolation } from "@/lib/data/index";
 import SeverityBadge from "@/components/common/SeverityBadge";
 import StatusBadge from "@/components/common/StatusBadge";
 import PriorityBadge from "@/components/common/PriorityBadge";
+import { statusOrder } from "../utils/sortConfig";
 
 declare module "@tanstack/react-table" {
   interface TableMeta<TData> {
@@ -61,13 +62,11 @@ export const issueColumns = [
   col.accessor((row) => row.property?.name ?? "—", {
     id: "property",
     header: "Property",
-    enableSorting: false,
   }),
 
   col.accessor((row) => row.page?.title ?? "—", {
     id: "page",
     header: "Page",
-    enableSorting: false,
     cell: (info) => (
       <div>
         <p>{info.getValue()}</p>
@@ -81,12 +80,12 @@ export const issueColumns = [
   col.accessor("status", {
     header: "Status",
     cell: (info) => <StatusBadge status={info.getValue()} />,
+    sortingFn: (a, b) => statusOrder[a.original.status] - statusOrder[b.original.status],
   }),
 
   col.accessor((row) => row.assignee?.name ?? "—", {
     id: "assignee",
     header: "Assigned",
-    enableSorting: false,
   }),
 
   col.accessor("priority", {

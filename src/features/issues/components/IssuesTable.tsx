@@ -15,6 +15,15 @@ import type { RemediationStatus, User } from "@/lib/data/types/domain";
 import { issueColumns } from "./columns";
 import type { AggregatedIssue } from "../utils/aggregateIssues";
 import type { IssueViewMode } from "./IssueFilterBar";
+import {
+  SORTABLE_COLUMNS,
+  GROUPED_RULE_VISIBLE,
+  sortAggregatedIssues,
+  sortPageGroups,
+  type PageGroupData,
+  severityOrder,
+  statusOrder,
+} from "../utils/sortConfig";
 import { IssueTableHeader } from "./IssueTableHeader";
 import { IssueTablePagination, PAGE_SIZE_OPTIONS } from "./IssueTablePagination";
 import {
@@ -24,25 +33,6 @@ import {
   FlatViolationRow,
 } from "./IssueTableRows";
 import { EDITABLE_STATUSES, STATUS_LABEL } from "../utils/statusOptions";
-
-// ── Constants ──────────────────────────────────────────────────────────────────
-
-const severityOrder: Record<string, number> = {
-  critical: 0,
-  serious: 1,
-  moderate: 2,
-  minor: 3,
-};
-
-const statusOrder: Record<string, number> = {
-  open: 0,
-  "in-progress": 1,
-  fixed: 2,
-  verified: 3,
-  "accepted-risk": 4,
-};
-
-const GROUPED_RULE_COLUMNS = ["severity", "rule", "status", "priority", "firstSeenAt"];
 
 // ── Props ──────────────────────────────────────────────────────────────────────
 
@@ -156,17 +146,7 @@ const IssuesTable = ({
   const pageGroups = useMemo(() => {
     if (viewMode !== "grouped-page") return [];
 
-    const map = new Map<
-      string,
-      {
-        pageId: string;
-        pageTitle: string;
-        pagePath: string;
-        propertyName: string;
-        criticalCount: number;
-        violations: HydratedViolation[];
-      }
-    >();
+    const map = new Map<string, PageGroupData>();
 
     for (const violation of sortedViolations) {
       const key = violation.page?.id ?? "__none__";
@@ -185,30 +165,18 @@ const IssuesTable = ({
       if (violation.impact === "critical") group.criticalCount += 1;
     }
 
-    return Array.from(map.values()).sort((a, b) => {
-      if (b.criticalCount !== a.criticalCount) return b.criticalCount - a.criticalCount;
-      return b.violations.length - a.violations.length;
-    });
-  }, [sortedViolations, viewMode]);
+    return sortPageGroups(Array.from(map.values()), sorting);
+  }, [sortedViolations, viewMode, sorting]);
 
   const sortedGroupedIssues = useMemo(() => {
     if (viewMode !== "grouped-rule") return [];
-
-    return [...groupedIssues].sort((a, b) => {
-      const severityDiff = severityOrder[a.severity] - severityOrder[b.severity];
-      if (severityDiff !== 0) return severityDiff;
-      if (b.affectedPagesCount !== a.affectedPagesCount)
-        return b.affectedPagesCount - a.affectedPagesCount;
-      const statusDiff = statusOrder[a.status] - statusOrder[b.status];
-      if (statusDiff !== 0) return statusDiff;
-      return new Date(a.firstSeenAt).getTime() - new Date(b.firstSeenAt).getTime();
-    });
-  }, [groupedIssues, viewMode]);
+    return sortAggregatedIssues(groupedIssues, sorting);
+  }, [groupedIssues, viewMode, sorting]);
 
   const allHeaders = table.getHeaderGroups()[0].headers;
   const visibleHeaders = allHeaders.filter((h) => {
     if (viewMode === "grouped-page") return h.id !== "page" && h.id !== "property";
-    if (viewMode === "grouped-rule") return GROUPED_RULE_COLUMNS.includes(h.id);
+    if (viewMode === "grouped-rule") return GROUPED_RULE_VISIBLE.has(h.id);
     return true;
   });
 
@@ -362,7 +330,7 @@ const IssuesTable = ({
 
             <IssueTableHeader
               headers={visibleHeaders}
-              viewMode={viewMode}
+              sortableColumns={SORTABLE_COLUMNS[viewMode]}
               showCheckboxColumn={viewMode === "grouped-page"}
               selectionProps={
                 viewMode === "flat"

@@ -1,7 +1,6 @@
 import { flexRender, type Header } from "@tanstack/react-table";
 import { ChevronDown, ChevronUp, ChevronsUpDown } from "lucide-react";
 import type { HydratedViolation } from "@/lib/data/index";
-import type { IssueViewMode } from "./IssueFilterBar";
 
 interface SelectionHeaderProps {
   allSelected: boolean;
@@ -12,12 +11,12 @@ interface SelectionHeaderProps {
 
 interface IssueTableHeaderProps {
   headers: Header<HydratedViolation, unknown>[];
-  viewMode: IssueViewMode;
+  sortableColumns: ReadonlySet<string>;
   selectionProps?: SelectionHeaderProps;
   showCheckboxColumn?: boolean;
 }
 
-export function IssueTableHeader({ headers, viewMode, selectionProps, showCheckboxColumn }: IssueTableHeaderProps) {
+export function IssueTableHeader({ headers, sortableColumns, selectionProps, showCheckboxColumn }: IssueTableHeaderProps) {
   return (
     <thead>
       <tr className="border-b bg-muted/50">
@@ -39,7 +38,7 @@ export function IssueTableHeader({ headers, viewMode, selectionProps, showCheckb
         ) : null}
         {headers.map((header) => {
           const sorted = header.column.getIsSorted();
-          const canSort = viewMode === "flat" && header.column.getCanSort();
+          const canSort = sortableColumns.has(header.id) && header.column.getCanSort();
 
           const ariaSort =
             sorted === "asc"
