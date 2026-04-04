@@ -3,7 +3,7 @@ import type { HydratedViolation } from "@/lib/data/index";
 import SeverityBadge from "@/components/common/SeverityBadge";
 import StatusBadge from "@/components/common/StatusBadge";
 import PriorityBadge from "@/components/common/PriorityBadge";
-import { statusOrder } from "../utils/sortConfig";
+import { statusOrder, priorityOrder } from "../utils/sortConfig";
 
 declare module "@tanstack/react-table" {
   interface TableMeta<TData> {
@@ -15,13 +15,6 @@ declare module "@tanstack/react-table" {
 }
 
 const col = createColumnHelper<HydratedViolation>();
-
-const priorityOrder: Record<string, number> = {
-  urgent: 0,
-  high: 1,
-  medium: 2,
-  low: 3,
-};
 
 export const issueColumns = [
   col.accessor("impact", {

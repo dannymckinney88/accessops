@@ -20,7 +20,7 @@ export const statusOrder: Record<string, number> = {
   "accepted-risk": 4,
 };
 
-const priorityOrder: Record<string, number> = {
+export const priorityOrder: Record<string, number> = {
   urgent: 0,
   high: 1,
   medium: 2,
@@ -132,7 +132,8 @@ export function sortPageGroups(
         break;
       }
       case "assignee": {
-        // Sort groups by the name of the most-common or first assignee; fall back alphabetically
+        // When sorted by assignee, violations[0] carries the alphabetically-first
+        // assignee on the page; use that to order groups.
         const nameA = a.violations[0]?.assignee?.name ?? "";
         const nameB = b.violations[0]?.assignee?.name ?? "";
         diff = nameA.localeCompare(nameB);

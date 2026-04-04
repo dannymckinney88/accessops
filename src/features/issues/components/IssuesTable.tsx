@@ -94,6 +94,13 @@ const IssuesTable = ({
     setSelectedIds(new Set());
   }, [violations, sorting, pagination.pageIndex, pagination.pageSize, viewMode]);
 
+  // Reset collapsed groups when filters change or view mode switches.
+  // Sorting intentionally does not reset collapse — users expect groups to stay
+  // collapsed while re-ordering.
+  useEffect(() => {
+    setCollapsedGroups(new Set());
+  }, [violations, viewMode]);
+
   // ── Table instance ───────────────────────────────────────────────────────────
 
   const columnVisibility: Record<string, boolean> =
