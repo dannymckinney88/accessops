@@ -1,46 +1,67 @@
 # AccessOps
 
-AccessOps is an accessibility operations platform focused on what happens **after an audit**.
+AccessOps is an accessibility operations platform built around a gap I kept seeing in real accessibility work:
 
-It is built around a simple idea:
+**finding issues is not the hard part — managing remediation is.**
 
-> Accessibility doesn’t fail at detection — it fails in remediation.
+Most accessibility tools are good at detection.
+Far fewer are built to help teams turn an audit into focused, trackable engineering work.
 
-AccessOps turns an audit into a **working backlog**, helping teams prioritize, fix, and verify accessibility issues in real-world applications.
+AccessOps turns an accessibility audit into a **working remediation backlog** so teams can prioritize risk, assign work, fix issues, and verify what is actually resolved.
 
----
+## Live Demo
 
-## 🎯 Purpose
-
-Most tools stop at reporting issues.
-
-AccessOps focuses on the actual workflow:
-
-- **What needs to be fixed right now**
-- **Where risk is concentrated**
-- **How teams work through large accessibility backlogs**
-
-This is not a scanner UI.
-
-It is a **remediation system**.
+[Explore AccessOps](https://accessops.vercel.app/dashboard)
 
 ---
 
-## 🧠 Core Model
+## 🎯 Why I Built It
 
-AccessOps operates on a **single active audit**.
+A lot of accessibility tooling stops at reporting.
 
-- An audit establishes a backlog of issues
-- Teams work that backlog over time
-- Issues move through a lifecycle:
-  - Open → In Progress → Fixed → Verified
-- A future audit confirms what is actually resolved
+You get a scan, a list of violations, maybe a score, maybe an export.
 
-Previous audits are closed and treated as **historical summaries**, not active workflows.
+But in practice, that is where the real work starts.
+
+Teams still need to answer questions like:
+
+- What should we fix first?
+- Where is risk concentrated right now?
+- Which issues are repeated across pages?
+- What is actively being worked?
+- What is fixed but still waiting on verification?
+
+This is **not** a scanner UI.
+This is a **remediation system**.
 
 ---
 
-## 🖥️ Screens
+## 🧠 Product Model
+
+AccessOps uses a **single active audit** model.
+
+That means:
+
+- one audit defines the current backlog
+- all remediation work happens against that audit
+- issues move through a lifecycle as teams work them
+- future audits confirm what was actually resolved
+
+### Issue lifecycle
+
+- Open
+- In Progress
+- Fixed
+- Verified
+- Accepted Risk
+
+> **What needs to be fixed right now?**
+
+That is the core product question.
+
+---
+
+## 🖥️ Product Surfaces
 
 ### 📊 Dashboard — Decision Surface
 
@@ -50,30 +71,54 @@ Previous audits are closed and treated as **historical summaries**, not active w
 
 <br>
 
-The Dashboard answers:
+The Dashboard is focused on current audit state only.
 
-- What still needs to be fixed?
-- Where is the highest risk?
-- Where should we focus first?
+It helps teams understand:
 
-It reflects **current audit state only** — no trends, no history, no noise.
+- what still needs to be fixed
+- where risk is concentrated
+- which property needs attention first
 
 ---
 
-### 🔧 Issues — Remediation Workspace (Core Product)
+### 🔧 Issues — Remediation Workspace
 
 <br>
 
 ![Issues Table](public/assets/screenshots/issues.png)
 
-The Issues screen is where accessibility work actually happens.
+<br>
 
-The Issues screen is where accessibility work actually happens.
+The Issues screen is the core product.
 
-- Handles large datasets (hundreds to 1000+ issues)
-- Strong filtering across severity, status, page, and rule
-- Highlights repeated issues to expose high-leverage fixes
-- Built for real developer workflows
+Instead of treating accessibility findings like raw scan output, AccessOps treats them like **work items in an engineering backlog**.
+
+Key behaviors include:
+
+- filtering across severity, status, property, page, rule, and assignee
+- flat and grouped workflows depending on remediation strategy
+- repeated issue visibility to expose high-leverage fixes
+- assignment and status management directly in the workflow
+
+#### Grouped by Page
+
+<br>
+
+![Issues Grouped by Page](public/assets/screenshots/issues-grouped-page.png)
+
+<br>
+
+Grouping helps teams work more strategically by surfacing issue concentration at the page level while preserving actionable rows underneath.
+
+#### Bulk Actions
+
+<br>
+
+![Bulk Actions](public/assets/screenshots/issues-bulk-actions.png)
+
+<br>
+
+Bulk actions reduce workflow friction when assigning or updating multiple issues at once.
 
 #### Issue Detail Drawer
 
@@ -83,14 +128,16 @@ The Issues screen is where accessibility work actually happens.
 
 <br>
 
-Provides:
+The detail drawer turns an issue from “audit output” into something actionable.
 
-- why it matters (plain language)
+It gives engineers the context they need:
+
+- why the issue matters
 - who is impacted
-- what failed (code-level context)
+- what failed
+- where it appears
 - how to fix it
-
-This bridges the gap between audit findings and actual implementation.
+- how to update status and ownership
 
 ---
 
@@ -100,52 +147,51 @@ This bridges the gap between audit findings and actual implementation.
 
 ![Scans View](public/assets/screenshots/scans.png)
 
-Scans provides a lightweight history of audits.
+<br>
 
-Scans provides a lightweight history of audits.
+Scans is intentionally lightweight.
 
-- Current audit is the active backlog
-- Previous audits are summary-only
-- Used for reference, not day-to-day work
+- the current audit is the entry point into active remediation
+- previous audits are summary-only
+- historical scans support traceability without competing with the Issues workflow
 
 ---
 
 ### 📱 Mobile
 
+<br>
+
 ![Mobile Dashboard](public/assets/screenshots/mobile-dash.png)
 
 <br>
 
-Desktop-first design with responsive support for smaller screens.
+AccessOps is desktop-first because remediation work is data-heavy, but it remains usable on smaller screens.
 
 ---
 
 ## 🔁 Example Workflow
 
 1. A team receives a new accessibility audit
-2. The audit becomes the **active backlog**
-3. Dashboard surfaces where risk is concentrated
-4. Engineers work through issues in the Issues screen
-5. Issues are marked Fixed
-6. A future audit verifies what is resolved
+2. That audit becomes the **active backlog**
+3. Dashboard highlights where risk is concentrated
+4. Engineers work issues through the Issues screen
+5. Issues move from Open / In Progress to Fixed
+6. A future audit verifies what is actually resolved
+
+**audit → triage → remediation → verification**
 
 ---
 
-## 📊 Data Strategy
+## 📊 Seeded Data Strategy
 
-Seeded data simulates a realistic enterprise accessibility program:
+The demo data is intentionally structured to simulate a realistic enterprise accessibility program.
 
-- **Marketing Site** → healthy, well-remediated
-- **Loan Application** → highest risk, regression-heavy
-- **Customer Dashboard** → active remediation in progress
-- **Support Center** → smaller, stagnant backlog
+Each property tells a different story:
 
-The goal is to demonstrate:
-
-- prioritization
-- remediation workflows
-- repeated issue patterns
-- real-world scale
+- **Marketing Site** → healthier state, strong remediation progress
+- **Loan Application** → highest risk, regression-heavy, largest backlog
+- **Customer Dashboard** → active remediation with mixed progress
+- **Support Center** → smaller stagnant backlog
 
 ---
 
@@ -163,13 +209,16 @@ The goal is to demonstrate:
 
 ## ♿ Accessibility
 
-Accessibility is built into the product itself:
+Because the product is about accessibility operations, the product itself reflects accessibility discipline in the implementation.
+
+That includes:
 
 - semantic HTML first
-- keyboard-first interactions
+- keyboard-first interaction patterns
+- visible focus states
 - proper focus management
+- screen reader clarity across tables, filters, and drawers
 - no color-only meaning
-- screen reader clarity across states
 
 ---
 
