@@ -23,7 +23,7 @@ interface IssueDrawerProps {
   assignableUsers: User[];
   rulePageCount?: number;
   onClose: () => void;
-  onFocusTrigger: () => void;
+  onFocusTrigger: () => boolean;
   onViewAllInstances: (ruleId: string) => void;
   onUpdateViolation: (
     id: string,
@@ -75,8 +75,11 @@ const IssueDrawer = ({
         side="right"
         className="flex flex-col gap-0 overflow-hidden p-0"
         onCloseAutoFocus={(e) => {
-          e.preventDefault();
-          onFocusTrigger();
+          const restoredFocus = onFocusTrigger();
+
+          if (restoredFocus) {
+            e.preventDefault();
+          }
         }}
       >
         <SheetTitle className="sr-only">Issue details</SheetTitle>
