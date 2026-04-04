@@ -39,6 +39,13 @@ const assignSelectClass =
 
 // ── PageGroupHeader ────────────────────────────────────────────────────────────
 
+interface PageGroupSelectionProps {
+  allSelected: boolean;
+  someSelected: boolean;
+  groupViolationCount: number;
+  onSelectGroup: (checked: boolean) => void;
+}
+
 interface PageGroupHeaderProps {
   pageTitle: string;
   pagePath: string;
@@ -48,6 +55,7 @@ interface PageGroupHeaderProps {
   collapsed: boolean;
   colSpan: number;
   onToggle: () => void;
+  selectionProps?: PageGroupSelectionProps;
 }
 
 export function PageGroupHeader({
@@ -59,9 +67,24 @@ export function PageGroupHeader({
   collapsed,
   colSpan,
   onToggle,
+  selectionProps,
 }: PageGroupHeaderProps) {
   return (
     <tr className="bg-muted/50">
+      {selectionProps && (
+        <td className="w-10 px-3 py-2.5 align-middle" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={selectionProps.allSelected}
+            ref={(el) => {
+              if (el) el.indeterminate = selectionProps.someSelected && !selectionProps.allSelected;
+            }}
+            onChange={(e) => selectionProps.onSelectGroup(e.target.checked)}
+            aria-label={`Select all issues on ${pageTitle} (${selectionProps.groupViolationCount})`}
+            className="rounded border-input outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+          />
+        </td>
+      )}
       <td colSpan={colSpan} className="py-0 pl-2 pr-3">
         <button
           type="button"
@@ -111,24 +134,48 @@ export function PageGroupHeader({
 interface GroupedPageRowProps {
   violation: HydratedViolation;
   isActive: boolean;
+  isSelected: boolean;
   pageCount: number;
+  assignableUsers: User[];
   onRowClick: (id: string) => void;
+  onToggleSelect: (id: string, checked: boolean) => void;
+  onAssign: (id: string, assigneeId: string | null) => void;
 }
 
 export function GroupedPageRow({
   violation,
   isActive,
+  isSelected,
   pageCount,
+  assignableUsers,
   onRowClick,
+  onToggleSelect,
+  onAssign,
 }: GroupedPageRowProps) {
+  const currentAssignee = violation.assignee;
+  const currentAssigneeIsInactive = currentAssignee && !currentAssignee.isActive;
   return (
     <tr
       data-issue-id={violation.id}
       onClick={() => onRowClick(violation.id)}
-      className={[rowBaseClass, isActive ? rowActiveClass : ""]
+      className={[
+        rowBaseClass,
+        isActive ? rowActiveClass : "",
+        isSelected && !isActive ? rowSelectedClass : "",
+      ]
         .filter(Boolean)
         .join(" ")}
     >
+      {/* Checkbox cell — stops propagation so it doesn't open the drawer */}
+      <td className="w-10 px-3 py-2.5 align-top" onClick={(e) => e.stopPropagation()}>
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={(e) => onToggleSelect(violation.id, e.target.checked)}
+          aria-label={`Select ${violation.rule?.help ?? violation.ruleId}`}
+          className="rounded border-input outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+        />
+      </td>
       <td className="px-3 py-2.5 align-top text-sm text-foreground">
         <SeverityBadge severity={violation.impact} />
       </td>
@@ -158,8 +205,25 @@ export function GroupedPageRow({
       <td className="px-3 py-2.5 align-top text-sm text-foreground">
         <StatusBadge status={violation.status} />
       </td>
-      <td className="px-3 py-2.5 align-top text-sm text-muted-foreground">
-        {violation.assignee?.name ?? "—"}
+      <td className="px-3 py-2.5 align-top text-sm text-foreground" onClick={(e) => e.stopPropagation()}>
+        <select
+          value={violation.assigneeId ?? ""}
+          onChange={(e) => onAssign(violation.id, e.target.value || null)}
+          aria-label={`Assign ${violation.rule?.help ?? violation.ruleId}`}
+          className={assignSelectClass}
+        >
+          <option value="">Unassigned</option>
+          {currentAssigneeIsInactive && (
+            <option value={currentAssignee.id} disabled>
+              {currentAssignee.name} (inactive)
+            </option>
+          )}
+          {assignableUsers.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.name}
+            </option>
+          ))}
+        </select>
       </td>
       <td className="px-3 py-2.5 align-top text-sm text-foreground">
         <PriorityBadge priority={violation.priority} />

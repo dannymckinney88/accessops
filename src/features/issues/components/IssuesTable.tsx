@@ -270,7 +270,7 @@ const IssuesTable = ({
         : "Accessibility violations table";
 
   const selectionCount = selectedIds.size;
-  const showBulkBar = viewMode === "flat" && selectionCount > 0;
+  const showBulkBar = (viewMode === "flat" || viewMode === "grouped-page") && selectionCount > 0;
 
   const bulkSelectClass =
     "h-8 rounded-md border border-input bg-background px-3 pr-8 text-sm text-foreground outline-none transition-colors hover:border-interactive-border-hover hover:bg-interactive-hover focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-2";
@@ -363,6 +363,7 @@ const IssuesTable = ({
             <IssueTableHeader
               headers={visibleHeaders}
               viewMode={viewMode}
+              showCheckboxColumn={viewMode === "grouped-page"}
               selectionProps={
                 viewMode === "flat"
                   ? {
@@ -378,6 +379,10 @@ const IssuesTable = ({
             {viewMode === "grouped-page" ? (
               pageGroups.map((group, index) => {
                 const collapsed = collapsedGroups.has(group.pageId);
+                const groupIds = group.violations.map((v) => v.id);
+                const groupAllSelected =
+                  groupIds.length > 0 && groupIds.every((id) => selectedIds.has(id));
+                const groupSomeSelected = groupIds.some((id) => selectedIds.has(id));
                 return (
                   <tbody
                     key={group.pageId}
@@ -394,6 +399,19 @@ const IssuesTable = ({
                       collapsed={collapsed}
                       colSpan={visibleHeaders.length}
                       onToggle={() => toggleGroup(group.pageId)}
+                      selectionProps={{
+                        allSelected: groupAllSelected,
+                        someSelected: groupSomeSelected,
+                        groupViolationCount: group.violations.length,
+                        onSelectGroup: (checked) => {
+                          setSelectedIds((prev) => {
+                            const next = new Set(prev);
+                            if (checked) groupIds.forEach((id) => next.add(id));
+                            else groupIds.forEach((id) => next.delete(id));
+                            return next;
+                          });
+                        },
+                      }}
                     />
                     {!collapsed &&
                       group.violations.map((violation) => (
@@ -401,8 +419,12 @@ const IssuesTable = ({
                           key={violation.id}
                           violation={violation}
                           isActive={violation.id === activeViolationId}
+                          isSelected={selectedIds.has(violation.id)}
                           pageCount={rulePageCounts.get(violation.ruleId) ?? 1}
+                          assignableUsers={assignableUsers}
                           onRowClick={onViolationRowClick}
+                          onToggleSelect={handleToggleSelect}
+                          onAssign={onAssign}
                         />
                       ))}
                   </tbody>
