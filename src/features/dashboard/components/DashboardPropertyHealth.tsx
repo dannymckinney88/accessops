@@ -22,9 +22,11 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
           unfixedCount,
           totalViolations,
         } = item;
-        const unfixedPct =
+        const resolvedPct =
           totalViolations > 0
-            ? Math.round((unfixedCount / totalViolations) * 100)
+            ? Math.round(
+                ((totalViolations - unfixedCount) / totalViolations) * 100,
+              )
             : 0;
 
         const isHighRisk = trend === "high-risk";
@@ -78,14 +80,20 @@ const DashboardPropertyHealth = ({ summary }: DashboardPropertyHealthProps) => {
               </div>
             </div>
 
-            {/* Burden bar — fill represents remaining unfixed work */}
+            {/* Health bar — fill represents resolved work; more fill = healthier */}
             <div
               className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-muted/40"
-              aria-label={`${unfixedPct}% of issues still unfixed`}
+              aria-label={`${resolvedPct}% of issues resolved`}
             >
               <div
-                className={`h-full transition-all duration-500 ${isHighRisk ? "bg-severity-critical" : "bg-muted-foreground/40"}`}
-                style={{ width: `${unfixedPct}%` }}
+                className={`h-full transition-all duration-500 ${
+                  isHighRisk
+                    ? "bg-severity-critical/60"
+                    : isImproving
+                      ? "bg-emerald-500/70"
+                      : "bg-muted-foreground/40"
+                }`}
+                style={{ width: `${resolvedPct}%` }}
               />
             </div>
           </li>
