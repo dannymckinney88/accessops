@@ -44,10 +44,10 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
             </p>
           </div>
           <a
-            href="/issues"
+            href="/issues?severity=critical"
             className="text-xs font-bold text-severity-critical hover:underline"
           >
-            View issues →
+            View critical issues →
           </a>
         </div>
       )}
@@ -84,10 +84,13 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
           <div className="flex-1">
             <h2
               id="highest-risk-heading"
-              className="text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+              className="text-sm font-semibold text-foreground"
             >
-              Top Risk Pages
+              Highest-Risk Pages
             </h2>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Pages with the most critical unfixed issues — start here
+            </p>
 
             <DashboardHighestRisk summary={summary} />
           </div>
