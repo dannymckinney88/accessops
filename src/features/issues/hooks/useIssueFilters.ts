@@ -34,7 +34,7 @@ const toggle = <T,>(arr: T[], item: T): T[] =>
 export const useIssueFilters = (
   violations: HydratedViolation[],
   currentUserId: string,
-  initialFilters?: Pick<IssueFilters, "propertyId" | "pageId">,
+  initialFilters?: Partial<Pick<IssueFilters, "propertyId" | "pageId" | "ruleId" | "assigneeId" | "quickFilter" | "search">>,
 ) => {
   const [filters, setFilters] = useState<IssueFilters>({
     ...defaultFilters,
