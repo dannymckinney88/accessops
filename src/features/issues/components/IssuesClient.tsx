@@ -6,6 +6,11 @@ import type { HydratedViolation, Property } from "@/lib/data/index";
 import type { RemediationStatus, User } from "@/lib/data/types/domain";
 import { useIssueFilters } from "../hooks/useIssueFilters";
 import { aggregateIssues } from "../utils/aggregateIssues";
+import {
+  applyOverrides,
+  persistOverride,
+  persistOverrides,
+} from "../utils/issueOverrides";
 import IssueFilterBar, {
   type AvailablePage,
   type AvailableRule,
@@ -31,8 +36,11 @@ const IssuesClient = ({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [violations, setViolations] =
-    useState<HydratedViolation[]>(initialViolations);
+  // Initialize working issue state from seeded data plus any persisted local overrides.
+  // applyOverrides is SSR-safe and falls back to seeded data when localStorage is unavailable.
+  const [violations, setViolations] = useState<HydratedViolation[]>(() =>
+    applyOverrides(initialViolations, users),
+  );
 
   const assignableUsers = useMemo(
     () => users.filter((u) => u.isActive),
@@ -41,10 +49,10 @@ const IssuesClient = ({
 
   const activeViolationId = searchParams.get("issueId") ?? null;
   const activeGroupId = searchParams.get("groupId") ?? null;
-  const [viewMode, setViewMode] = useState<IssueViewMode>("flat");
-
-  const initialPropertyId = searchParams.get("propertyId") ?? null;
-  const initialPageId = searchParams.get("pageId") ?? null;
+  const [viewMode, setViewMode] = useState<IssueViewMode>(() => {
+    const v = searchParams.get("view");
+    return v === "grouped-page" || v === "grouped-rule" ? v : "flat";
+  });
 
   const headingRef = useRef<HTMLHeadingElement>(null);
   const triggerRowIdRef = useRef<string | null>(null);
@@ -119,6 +127,7 @@ const IssuesClient = ({
   };
 
   const handleAssign = (id: string, assigneeId: string | null) => {
+    persistOverride(id, { assigneeId });
     setViolations((prev) =>
       prev.map((v) => {
         if (v.id !== id) return v;
@@ -131,6 +140,7 @@ const IssuesClient = ({
   };
 
   const handleBulkAssign = (ids: string[], assigneeId: string | null) => {
+    persistOverrides(ids, { assigneeId });
     const idSet = new Set(ids);
     setViolations((prev) =>
       prev.map((v) => {
@@ -145,6 +155,11 @@ const IssuesClient = ({
 
   const handleBulkStatus = (ids: string[], status: RemediationStatus) => {
     const idSet = new Set(ids);
+    // Only persist for violations that aren't already verified — matches the guard below
+    const eligibleIds = violations
+      .filter((v) => idSet.has(v.id) && v.status !== "verified")
+      .map((v) => v.id);
+    persistOverrides(eligibleIds, { status });
     setViolations((prev) =>
       prev.map((v) => {
         if (!idSet.has(v.id)) return v;
@@ -158,6 +173,7 @@ const IssuesClient = ({
     id: string,
     patch: { assigneeId?: string | null; status?: RemediationStatus },
   ) => {
+    persistOverride(id, patch);
     setViolations((prev) =>
       prev.map((v) => {
         if (v.id !== id) return v;
@@ -192,26 +208,48 @@ const IssuesClient = ({
     setAll,
     reset,
   } = useIssueFilters(violations, currentUser.id, {
-    propertyId: initialPropertyId,
-    pageId: initialPageId,
+    propertyId: searchParams.get("propertyId") ?? null,
+    pageId: searchParams.get("pageId") ?? null,
+    ruleId: searchParams.get("ruleId") ?? null,
+    assigneeId: searchParams.get("assigneeId") ?? null,
+    search: searchParams.get("search") ?? "",
+    quickFilter: (() => {
+      const q = searchParams.get("quickFilter");
+      if (q === "all") return null;
+      if (q === "my-issues" || q === "needs-attention") return q;
+      return "unfixed"; // default when param is absent
+    })(),
   });
 
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
-    const urlProp = params.get("propertyId") ?? null;
-    const urlPage = params.get("pageId") ?? null;
 
-    if (urlProp === filters.propertyId && urlPage === filters.pageId) return;
+    // viewMode — omit "flat" (default) to keep URLs clean
+    if (viewMode === "flat") params.delete("view");
+    else params.set("view", viewMode);
 
+    // Nullable filter fields — omit when null/empty
     if (filters.propertyId) params.set("propertyId", filters.propertyId);
     else params.delete("propertyId");
-
     if (filters.pageId) params.set("pageId", filters.pageId);
     else params.delete("pageId");
+    if (filters.ruleId) params.set("ruleId", filters.ruleId);
+    else params.delete("ruleId");
+    if (filters.assigneeId) params.set("assigneeId", filters.assigneeId);
+    else params.delete("assigneeId");
+    if (filters.search) params.set("search", filters.search);
+    else params.delete("search");
 
-    const qs = params.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-  }, [filters.propertyId, filters.pageId]); // eslint-disable-line react-hooks/exhaustive-deps
+    // quickFilter — "unfixed" is the default (omit it); null means "show all" (explicit)
+    if (filters.quickFilter === null) params.set("quickFilter", "all");
+    else if (filters.quickFilter === "unfixed") params.delete("quickFilter");
+    else params.set("quickFilter", filters.quickFilter);
+
+    const newQs = params.toString();
+    if (newQs === searchParams.toString()) return;
+
+    router.replace(newQs ? `${pathname}?${newQs}` : pathname, { scroll: false });
+  }, [viewMode, filters.propertyId, filters.pageId, filters.ruleId, filters.assigneeId, filters.search, filters.quickFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const groupedIssues = useMemo(
     () => aggregateIssues(filteredViolations),
