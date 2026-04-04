@@ -34,6 +34,8 @@ const DashboardHighestRisk = ({ summary }: DashboardHighestRiskProps) => {
       : topCriticalPages
   ).slice(0, DISPLAY_LIMIT);
 
+  const totalCritical = visiblePages.reduce((sum, p) => sum + p.criticalCount, 0);
+
   if (topCriticalPages.length === 0) {
     return (
       <p className="mt-6 text-sm text-muted-foreground">
@@ -43,26 +45,43 @@ const DashboardHighestRisk = ({ summary }: DashboardHighestRiskProps) => {
   }
 
   return (
-    <div className="mt-4">
-      {/* Property selector */}
-      {showSelector && (
-        <select
-          value={selectedPropertyId ?? ""}
-          onChange={(e) =>
-            setSelectedPropertyId(e.target.value || null)
-          }
-          aria-label="Filter by property"
-          className="mb-4 w-full rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          <option value="">All properties</option>
-          {propertiesWithCritical.map(([propertyId, propertyName]) => (
-            <option key={propertyId} value={propertyId}>
-              {propertyName}
-            </option>
-          ))}
-        </select>
-      )}
+    <div className="mt-4 flex flex-col gap-4">
+      {/* Control row: tally on left, property filter on right */}
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-xs text-muted-foreground tabular-nums">
+          <span className="font-semibold text-severity-critical">
+            {totalCritical} critical
+          </span>{" "}
+          across {visiblePages.length}{" "}
+          {visiblePages.length === 1 ? "page" : "pages"}
+        </p>
 
+        {showSelector && (
+          <div className="flex items-center gap-1.5 shrink-0">
+            <label
+              htmlFor="high-risk-property-filter"
+              className="text-xs text-muted-foreground whitespace-nowrap"
+            >
+              Property
+            </label>
+            <select
+              id="high-risk-property-filter"
+              value={selectedPropertyId ?? ""}
+              onChange={(e) => setSelectedPropertyId(e.target.value || null)}
+              className="rounded border border-input bg-background px-1.5 py-0.5 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <option value="">All</option>
+              {propertiesWithCritical.map(([propertyId, propertyName]) => (
+                <option key={propertyId} value={propertyId}>
+                  {propertyName}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+      </div>
+
+      {/* Ranked page list */}
       {visiblePages.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           No critical issues for this property.
