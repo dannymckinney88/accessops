@@ -21,12 +21,18 @@ interface IssuesClientProps {
   users: User[];
 }
 
-const IssuesClient = ({ violations: initialViolations, properties, currentUser, users }: IssuesClientProps) => {
+const IssuesClient = ({
+  violations: initialViolations,
+  properties,
+  currentUser,
+  users,
+}: IssuesClientProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  const [violations, setViolations] = useState<HydratedViolation[]>(initialViolations);
+  const [violations, setViolations] =
+    useState<HydratedViolation[]>(initialViolations);
 
   const assignableUsers = useMemo(
     () => users.filter((u) => u.isActive),
@@ -68,7 +74,7 @@ const IssuesClient = ({ violations: initialViolations, properties, currentUser, 
     params.delete("issueId");
     params.delete("groupId");
     const qs = params.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname);
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   };
 
   const focusTriggerRow = () => {
@@ -78,12 +84,13 @@ const IssuesClient = ({ violations: initialViolations, properties, currentUser, 
       const trigger = document.querySelector<HTMLElement>(
         `[data-issue-id="${id}"] button`,
       );
+
       if (trigger) {
         requestAnimationFrame(() => {
           trigger.focus();
           triggerRowIdRef.current = null;
         });
-        return;
+        return true;
       }
     }
 
@@ -91,10 +98,24 @@ const IssuesClient = ({ violations: initialViolations, properties, currentUser, 
       "[data-issues-table] [data-issue-id] button",
     );
 
-    requestAnimationFrame(() => {
-      firstTrigger?.focus();
-      triggerRowIdRef.current = null;
-    });
+    if (firstTrigger) {
+      requestAnimationFrame(() => {
+        firstTrigger.focus();
+        triggerRowIdRef.current = null;
+      });
+      return true;
+    }
+
+    if (headingRef.current) {
+      requestAnimationFrame(() => {
+        headingRef.current?.focus();
+        triggerRowIdRef.current = null;
+      });
+      return true;
+    }
+
+    triggerRowIdRef.current = null;
+    return false;
   };
 
   const handleAssign = (id: string, assigneeId: string | null) => {
@@ -259,7 +280,8 @@ const IssuesClient = ({ violations: initialViolations, properties, currentUser, 
   }, [violations]);
 
   const ruleLabel = filters.ruleId
-    ? (violations.find((v) => v.ruleId === filters.ruleId)?.rule?.help ?? filters.ruleId)
+    ? (violations.find((v) => v.ruleId === filters.ruleId)?.rule?.help ??
+      filters.ruleId)
     : null;
 
   const rulePageCounts = useMemo(() => {
