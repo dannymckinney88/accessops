@@ -6,6 +6,7 @@ import SeverityBadge from "@/components/common/SeverityBadge";
 import StatusBadge from "@/components/common/StatusBadge";
 import PriorityBadge from "@/components/common/PriorityBadge";
 import type { AggregatedIssue } from "../utils/aggregateIssues";
+import type { PageGroupData } from "../utils/sortConfig";
 
 // ── Shared row styles ──────────────────────────────────────────────────────────
 
@@ -414,5 +415,149 @@ export function FlatViolationRow({
         );
       })}
     </tr>
+  );
+}
+
+// ── Table bodies (one per view mode) ──────────────────────────────────────────
+
+// GroupedPageBody ──────────────────────────────────────────────────────────────
+
+interface GroupedPageBodyProps {
+  pageGroups: PageGroupData[];
+  collapsedGroups: Set<string>;
+  selectedIds: Set<string>;
+  visibleHeaderCount: number;
+  activeViolationId: string | null;
+  assignableUsers: User[];
+  rulePageCounts: Map<string, number>;
+  onViolationRowClick: (id: string) => void;
+  onToggleGroup: (groupId: string) => void;
+  onToggleSelect: (id: string, checked: boolean) => void;
+  onGroupSelect: (groupIds: string[], checked: boolean) => void;
+  onAssign: (id: string, assigneeId: string | null) => void;
+}
+
+export function GroupedPageBody({
+  pageGroups,
+  collapsedGroups,
+  selectedIds,
+  visibleHeaderCount,
+  activeViolationId,
+  assignableUsers,
+  rulePageCounts,
+  onViolationRowClick,
+  onToggleGroup,
+  onToggleSelect,
+  onGroupSelect,
+  onAssign,
+}: GroupedPageBodyProps) {
+  return (
+    <>
+      {pageGroups.map((group, index) => {
+        const collapsed = collapsedGroups.has(group.pageId);
+        const groupIds = group.violations.map((v) => v.id);
+        const groupAllSelected = groupIds.length > 0 && groupIds.every((id) => selectedIds.has(id));
+        const groupSomeSelected = groupIds.some((id) => selectedIds.has(id));
+        return (
+          <tbody
+            key={group.pageId}
+            className={index > 0 ? "border-t-4 border-border/50" : "border-t border-border/30"}
+          >
+            <PageGroupHeader
+              pageTitle={group.pageTitle}
+              pagePath={group.pagePath}
+              propertyName={group.propertyName}
+              issueCount={group.violations.length}
+              criticalCount={group.criticalCount}
+              collapsed={collapsed}
+              colSpan={visibleHeaderCount}
+              onToggle={() => onToggleGroup(group.pageId)}
+              selectionProps={{
+                allSelected: groupAllSelected,
+                someSelected: groupSomeSelected,
+                groupViolationCount: group.violations.length,
+                onSelectGroup: (checked) => onGroupSelect(groupIds, checked),
+              }}
+            />
+            {!collapsed &&
+              group.violations.map((violation) => (
+                <GroupedPageRow
+                  key={violation.id}
+                  violation={violation}
+                  isActive={violation.id === activeViolationId}
+                  isSelected={selectedIds.has(violation.id)}
+                  pageCount={rulePageCounts.get(violation.ruleId) ?? 1}
+                  assignableUsers={assignableUsers}
+                  onRowClick={onViolationRowClick}
+                  onToggleSelect={onToggleSelect}
+                  onAssign={onAssign}
+                />
+              ))}
+          </tbody>
+        );
+      })}
+    </>
+  );
+}
+
+// GroupedRuleBody ──────────────────────────────────────────────────────────────
+
+interface GroupedRuleBodyProps {
+  issues: AggregatedIssue[];
+  activeGroupId: string | null;
+  onRowClick: (id: string) => void;
+}
+
+export function GroupedRuleBody({ issues, activeGroupId, onRowClick }: GroupedRuleBodyProps) {
+  return (
+    <tbody>
+      {issues.map((issue) => (
+        <GroupedRuleRow
+          key={issue.id}
+          issue={issue}
+          isActive={issue.id === activeGroupId}
+          onRowClick={onRowClick}
+        />
+      ))}
+    </tbody>
+  );
+}
+
+// FlatBody ─────────────────────────────────────────────────────────────────────
+
+interface FlatBodyProps {
+  rows: Row<HydratedViolation>[];
+  selectedIds: Set<string>;
+  activeViolationId: string | null;
+  assignableUsers: User[];
+  onRowClick: (id: string) => void;
+  onToggleSelect: (id: string, checked: boolean) => void;
+  onAssign: (id: string, assigneeId: string | null) => void;
+}
+
+export function FlatBody({
+  rows,
+  selectedIds,
+  activeViolationId,
+  assignableUsers,
+  onRowClick,
+  onToggleSelect,
+  onAssign,
+}: FlatBodyProps) {
+  return (
+    <tbody>
+      {rows.map((row) => (
+        <FlatViolationRow
+          key={row.id}
+          row={row}
+          isActive={row.original.id === activeViolationId}
+          isSelected={selectedIds.has(row.original.id)}
+          assignableUsers={assignableUsers}
+          onRowClick={onRowClick}
+          onToggleSelect={onToggleSelect}
+          onAssign={onAssign}
+        />
+      ))}
+    </tbody>
   );
 }

@@ -15,34 +15,19 @@ import type { RemediationStatus, User } from "@/lib/data/types/domain";
 import { issueColumns } from "./columns";
 import type { AggregatedIssue } from "../utils/aggregateIssues";
 import type { IssueViewMode } from "./IssueFilterBar";
+import {
+  SORTABLE_COLUMNS,
+  GROUPED_RULE_VISIBLE,
+  sortAggregatedIssues,
+  sortPageGroups,
+  type PageGroupData,
+  severityOrder,
+  statusOrder,
+} from "../utils/sortConfig";
 import { IssueTableHeader } from "./IssueTableHeader";
 import { IssueTablePagination, PAGE_SIZE_OPTIONS } from "./IssueTablePagination";
-import {
-  PageGroupHeader,
-  GroupedPageRow,
-  GroupedRuleRow,
-  FlatViolationRow,
-} from "./IssueTableRows";
-import { EDITABLE_STATUSES, STATUS_LABEL } from "../utils/statusOptions";
-
-// ── Constants ──────────────────────────────────────────────────────────────────
-
-const severityOrder: Record<string, number> = {
-  critical: 0,
-  serious: 1,
-  moderate: 2,
-  minor: 3,
-};
-
-const statusOrder: Record<string, number> = {
-  open: 0,
-  "in-progress": 1,
-  fixed: 2,
-  verified: 3,
-  "accepted-risk": 4,
-};
-
-const GROUPED_RULE_COLUMNS = ["severity", "rule", "status", "priority", "firstSeenAt"];
+import { GroupedPageBody, GroupedRuleBody, FlatBody } from "./IssueTableRows";
+import { IssuesBulkBar } from "./IssuesBulkBar";
 
 // ── Props ──────────────────────────────────────────────────────────────────────
 
@@ -77,6 +62,7 @@ const IssuesTable = ({
   onBulkAssign,
   onBulkStatus,
 }: IssuesTableProps) => {
+  // remediationSort closes over rulePageCounts so it lives here
   const remediationSort: SortingFn<HydratedViolation> = (rowA, rowB) => {
     const severityDiff =
       severityOrder[rowA.original.impact] - severityOrder[rowB.original.impact];
@@ -96,33 +82,27 @@ const IssuesTable = ({
     );
   };
 
-  const [sorting, setSorting] = useState<SortingState>([
-    { id: "severity", desc: false },
-  ]);
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 25,
-  });
+  // ── State ────────────────────────────────────────────────────────────────────
+
+  const [sorting, setSorting] = useState<SortingState>([{ id: "severity", desc: false }]);
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 25 });
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [bulkAssignValue, setBulkAssignValue] = useState("");
-  const [bulkStatusValue, setBulkStatusValue] = useState("");
 
   // Clear selection on any meaningful boundary change
   useEffect(() => {
     setSelectedIds(new Set());
   }, [violations, sorting, pagination.pageIndex, pagination.pageSize, viewMode]);
 
-  const toggleGroup = (groupId: string) => {
-    setCollapsedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(groupId)) next.delete(groupId);
-      else next.add(groupId);
-      return next;
-    });
-  };
+  // Reset collapsed groups when filters change or view mode switches.
+  // Sorting intentionally does not reset collapse — users expect groups to stay
+  // collapsed while re-ordering.
+  useEffect(() => {
+    setCollapsedGroups(new Set());
+  }, [violations, viewMode]);
 
-  // Hide "assignee" in grouped-rule; hide "page"/"property" in grouped-page
+  // ── Table instance ───────────────────────────────────────────────────────────
+
   const columnVisibility: Record<string, boolean> =
     viewMode === "grouped-page"
       ? { page: false, property: false }
@@ -147,6 +127,8 @@ const IssuesTable = ({
     autoResetPageIndex: true,
   });
 
+  // ── Derived data ─────────────────────────────────────────────────────────────
+
   const sortedViolations = useMemo(
     () => table.getSortedRowModel().rows.map((row) => row.original),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -156,18 +138,7 @@ const IssuesTable = ({
   const pageGroups = useMemo(() => {
     if (viewMode !== "grouped-page") return [];
 
-    const map = new Map<
-      string,
-      {
-        pageId: string;
-        pageTitle: string;
-        pagePath: string;
-        propertyName: string;
-        criticalCount: number;
-        violations: HydratedViolation[];
-      }
-    >();
-
+    const map = new Map<string, PageGroupData>();
     for (const violation of sortedViolations) {
       const key = violation.page?.id ?? "__none__";
       if (!map.has(key)) {
@@ -185,35 +156,22 @@ const IssuesTable = ({
       if (violation.impact === "critical") group.criticalCount += 1;
     }
 
-    return Array.from(map.values()).sort((a, b) => {
-      if (b.criticalCount !== a.criticalCount) return b.criticalCount - a.criticalCount;
-      return b.violations.length - a.violations.length;
-    });
-  }, [sortedViolations, viewMode]);
+    return sortPageGroups(Array.from(map.values()), sorting);
+  }, [sortedViolations, viewMode, sorting]);
 
   const sortedGroupedIssues = useMemo(() => {
     if (viewMode !== "grouped-rule") return [];
-
-    return [...groupedIssues].sort((a, b) => {
-      const severityDiff = severityOrder[a.severity] - severityOrder[b.severity];
-      if (severityDiff !== 0) return severityDiff;
-      if (b.affectedPagesCount !== a.affectedPagesCount)
-        return b.affectedPagesCount - a.affectedPagesCount;
-      const statusDiff = statusOrder[a.status] - statusOrder[b.status];
-      if (statusDiff !== 0) return statusDiff;
-      return new Date(a.firstSeenAt).getTime() - new Date(b.firstSeenAt).getTime();
-    });
-  }, [groupedIssues, viewMode]);
+    return sortAggregatedIssues(groupedIssues, sorting);
+  }, [groupedIssues, viewMode, sorting]);
 
   const allHeaders = table.getHeaderGroups()[0].headers;
   const visibleHeaders = allHeaders.filter((h) => {
     if (viewMode === "grouped-page") return h.id !== "page" && h.id !== "property";
-    if (viewMode === "grouped-rule") return GROUPED_RULE_COLUMNS.includes(h.id);
+    if (viewMode === "grouped-rule") return GROUPED_RULE_VISIBLE.has(h.id);
     return true;
   });
 
-  const { pageIndex, pageSize } = table.getState().pagination;
-  const total = violations.length;
+  // ── Selection handlers ───────────────────────────────────────────────────────
 
   const currentPageRows = table.getRowModel().rows;
   const currentPageIds = currentPageRows.map((r) => r.original.id);
@@ -222,19 +180,12 @@ const IssuesTable = ({
   const somePageSelected = currentPageIds.some((id) => selectedIds.has(id));
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        currentPageIds.forEach((id) => next.add(id));
-        return next;
-      });
-    } else {
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        currentPageIds.forEach((id) => next.delete(id));
-        return next;
-      });
-    }
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) currentPageIds.forEach((id) => next.add(id));
+      else currentPageIds.forEach((id) => next.delete(id));
+      return next;
+    });
   };
 
   const handleToggleSelect = (id: string, checked: boolean) => {
@@ -246,21 +197,30 @@ const IssuesTable = ({
     });
   };
 
-  const handleBulkAssignApply = () => {
-    if (!bulkAssignValue) return;
-    const ids = Array.from(selectedIds);
-    onBulkAssign(ids, bulkAssignValue === "unassigned" ? null : bulkAssignValue);
-    setSelectedIds(new Set());
-    setBulkAssignValue("");
+  const handleGroupSelect = (groupIds: string[], checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) groupIds.forEach((id) => next.add(id));
+      else groupIds.forEach((id) => next.delete(id));
+      return next;
+    });
   };
 
-  const handleBulkStatusApply = () => {
-    if (!bulkStatusValue) return;
-    const ids = Array.from(selectedIds);
-    onBulkStatus(ids, bulkStatusValue as RemediationStatus);
-    setSelectedIds(new Set());
-    setBulkStatusValue("");
+  const handleToggleGroup = (groupId: string) => {
+    setCollapsedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupId)) next.delete(groupId);
+      else next.add(groupId);
+      return next;
+    });
   };
+
+  // ── Render ───────────────────────────────────────────────────────────────────
+
+  const { pageIndex, pageSize } = table.getState().pagination;
+  const total = violations.length;
+  const showBulkBar =
+    (viewMode === "flat" || viewMode === "grouped-page") && selectedIds.size > 0;
 
   const tableCaption =
     viewMode === "grouped-rule"
@@ -269,90 +229,16 @@ const IssuesTable = ({
         ? "Accessibility issues grouped by page"
         : "Accessibility violations table";
 
-  const selectionCount = selectedIds.size;
-  const showBulkBar = (viewMode === "flat" || viewMode === "grouped-page") && selectionCount > 0;
-
-  const bulkSelectClass =
-    "h-8 rounded-md border border-input bg-background px-3 pr-8 text-sm text-foreground outline-none transition-colors hover:border-interactive-border-hover hover:bg-interactive-hover focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-2";
-
-  const bulkApplyClass =
-    "h-8 rounded-md border border-input bg-background px-3 text-sm font-medium outline-none transition-colors hover:border-interactive-border-hover hover:bg-interactive-hover hover:text-interactive-hover-foreground active:bg-interactive-active active:text-interactive-active-foreground focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-2 disabled:opacity-40 disabled:cursor-not-allowed";
-
   return (
     <div className="flex flex-col gap-3" data-issues-table>
-      {/* Bulk action bar */}
       {showBulkBar && (
-        <div
-          role="region"
-          aria-label="Bulk actions"
-          className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-accent/20 px-4 py-2.5"
-        >
-          <span className="text-sm font-semibold text-foreground">
-            {selectionCount} {selectionCount === 1 ? "issue" : "issues"} selected
-          </span>
-
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">Assign to</span>
-            <select
-              value={bulkAssignValue}
-              onChange={(e) => setBulkAssignValue(e.target.value)}
-              aria-label="Bulk assign to"
-              className={bulkSelectClass}
-            >
-              <option value="">Select…</option>
-              <option value="unassigned">Unassign</option>
-              {assignableUsers.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={handleBulkAssignApply}
-              disabled={!bulkAssignValue}
-              aria-label="Apply assignment"
-              className={bulkApplyClass}
-            >
-              Apply
-            </button>
-          </div>
-
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs text-muted-foreground whitespace-nowrap">Set status</span>
-            <select
-              value={bulkStatusValue}
-              onChange={(e) => setBulkStatusValue(e.target.value)}
-              aria-label="Bulk set status"
-              className={bulkSelectClass}
-            >
-              <option value="">Select…</option>
-              {EDITABLE_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {STATUS_LABEL[s]}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={handleBulkStatusApply}
-              disabled={!bulkStatusValue}
-              aria-label="Apply status change"
-              className={bulkApplyClass}
-            >
-              Apply
-            </button>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setSelectedIds(new Set())}
-            aria-label="Deselect all"
-            className="ml-auto h-8 rounded-md border border-transparent px-3 text-xs text-muted-foreground outline-none transition-colors hover:border-interactive-border-hover hover:bg-interactive-hover hover:text-interactive-hover-foreground focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-2"
-          >
-            Deselect all
-          </button>
-        </div>
+        <IssuesBulkBar
+          selectedIds={selectedIds}
+          assignableUsers={assignableUsers}
+          onBulkAssign={onBulkAssign}
+          onBulkStatus={onBulkStatus}
+          onClearSelection={() => setSelectedIds(new Set())}
+        />
       )}
 
       <div className="overflow-hidden rounded-lg border">
@@ -362,7 +248,7 @@ const IssuesTable = ({
 
             <IssueTableHeader
               headers={visibleHeaders}
-              viewMode={viewMode}
+              sortableColumns={SORTABLE_COLUMNS[viewMode]}
               showCheckboxColumn={viewMode === "grouped-page"}
               selectionProps={
                 viewMode === "flat"
@@ -377,85 +263,36 @@ const IssuesTable = ({
             />
 
             {viewMode === "grouped-page" ? (
-              pageGroups.map((group, index) => {
-                const collapsed = collapsedGroups.has(group.pageId);
-                const groupIds = group.violations.map((v) => v.id);
-                const groupAllSelected =
-                  groupIds.length > 0 && groupIds.every((id) => selectedIds.has(id));
-                const groupSomeSelected = groupIds.some((id) => selectedIds.has(id));
-                return (
-                  <tbody
-                    key={group.pageId}
-                    className={
-                      index > 0 ? "border-t-4 border-border/50" : "border-t border-border/30"
-                    }
-                  >
-                    <PageGroupHeader
-                      pageTitle={group.pageTitle}
-                      pagePath={group.pagePath}
-                      propertyName={group.propertyName}
-                      issueCount={group.violations.length}
-                      criticalCount={group.criticalCount}
-                      collapsed={collapsed}
-                      colSpan={visibleHeaders.length}
-                      onToggle={() => toggleGroup(group.pageId)}
-                      selectionProps={{
-                        allSelected: groupAllSelected,
-                        someSelected: groupSomeSelected,
-                        groupViolationCount: group.violations.length,
-                        onSelectGroup: (checked) => {
-                          setSelectedIds((prev) => {
-                            const next = new Set(prev);
-                            if (checked) groupIds.forEach((id) => next.add(id));
-                            else groupIds.forEach((id) => next.delete(id));
-                            return next;
-                          });
-                        },
-                      }}
-                    />
-                    {!collapsed &&
-                      group.violations.map((violation) => (
-                        <GroupedPageRow
-                          key={violation.id}
-                          violation={violation}
-                          isActive={violation.id === activeViolationId}
-                          isSelected={selectedIds.has(violation.id)}
-                          pageCount={rulePageCounts.get(violation.ruleId) ?? 1}
-                          assignableUsers={assignableUsers}
-                          onRowClick={onViolationRowClick}
-                          onToggleSelect={handleToggleSelect}
-                          onAssign={onAssign}
-                        />
-                      ))}
-                  </tbody>
-                );
-              })
+              <GroupedPageBody
+                pageGroups={pageGroups}
+                collapsedGroups={collapsedGroups}
+                selectedIds={selectedIds}
+                visibleHeaderCount={visibleHeaders.length}
+                activeViolationId={activeViolationId}
+                assignableUsers={assignableUsers}
+                rulePageCounts={rulePageCounts}
+                onViolationRowClick={onViolationRowClick}
+                onToggleGroup={handleToggleGroup}
+                onToggleSelect={handleToggleSelect}
+                onGroupSelect={handleGroupSelect}
+                onAssign={onAssign}
+              />
             ) : viewMode === "grouped-rule" ? (
-              <tbody>
-                {sortedGroupedIssues.map((issue) => (
-                  <GroupedRuleRow
-                    key={issue.id}
-                    issue={issue}
-                    isActive={issue.id === activeGroupId}
-                    onRowClick={onGroupedIssueRowClick}
-                  />
-                ))}
-              </tbody>
+              <GroupedRuleBody
+                issues={sortedGroupedIssues}
+                activeGroupId={activeGroupId}
+                onRowClick={onGroupedIssueRowClick}
+              />
             ) : (
-              <tbody>
-                {currentPageRows.map((row) => (
-                  <FlatViolationRow
-                    key={row.id}
-                    row={row}
-                    isActive={row.original.id === activeViolationId}
-                    isSelected={selectedIds.has(row.original.id)}
-                    assignableUsers={assignableUsers}
-                    onRowClick={onViolationRowClick}
-                    onToggleSelect={handleToggleSelect}
-                    onAssign={onAssign}
-                  />
-                ))}
-              </tbody>
+              <FlatBody
+                rows={currentPageRows}
+                selectedIds={selectedIds}
+                activeViolationId={activeViolationId}
+                assignableUsers={assignableUsers}
+                onRowClick={onViolationRowClick}
+                onToggleSelect={handleToggleSelect}
+                onAssign={onAssign}
+              />
             )}
           </table>
         </div>
