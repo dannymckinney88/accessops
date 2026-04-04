@@ -1,6 +1,20 @@
-import { violations, scanPages, pages, properties, rules, scanRuns, users } from "../seeds";
+import {
+  violations,
+  scanPages,
+  pages,
+  properties,
+  rules,
+  scanRuns,
+  users,
+} from "../seeds";
 import { enrichRule } from "./shared";
-import type { ViolationInstance, Rule, Page, Property, User } from "../types/domain";
+import type {
+  ViolationInstance,
+  Rule,
+  Page,
+  Property,
+  User,
+} from "../types/domain";
 
 /**
  * A 'Hydrated' violation includes the full objects for its

@@ -204,21 +204,13 @@ const IssuesClient = ({
     setStatus,
     setAssigneeId,
     setSearch,
-    setQuickFilter,
-    setAll,
     reset,
-  } = useIssueFilters(violations, currentUser.id, {
-    propertyId: searchParams.get("propertyId") ?? null,
-    pageId: searchParams.get("pageId") ?? null,
-    ruleId: searchParams.get("ruleId") ?? null,
-    assigneeId: searchParams.get("assigneeId") ?? null,
+  } = useIssueFilters(violations, {
+    propertyIds: searchParams.get("propertyId") ? [searchParams.get("propertyId")!] : [],
+    pageIds: searchParams.get("pageId") ? [searchParams.get("pageId")!] : [],
+    ruleIds: searchParams.get("ruleId") ? [searchParams.get("ruleId")!] : [],
+    assigneeIds: searchParams.get("assigneeId") ? [searchParams.get("assigneeId")!] : [],
     search: searchParams.get("search") ?? "",
-    quickFilter: (() => {
-      const q = searchParams.get("quickFilter");
-      if (q === "all") return null;
-      if (q === "my-issues" || q === "needs-attention") return q;
-      return "unfixed"; // default when param is absent
-    })(),
   });
 
   useEffect(() => {
@@ -228,28 +220,24 @@ const IssuesClient = ({
     if (viewMode === "flat") params.delete("view");
     else params.set("view", viewMode);
 
-    // Nullable filter fields — omit when null/empty
-    if (filters.propertyId) params.set("propertyId", filters.propertyId);
+    // Array-based filter fields — store first value only (single-select UI)
+    // Empty array = clear param
+    if (filters.propertyIds[0]) params.set("propertyId", filters.propertyIds[0]);
     else params.delete("propertyId");
-    if (filters.pageId) params.set("pageId", filters.pageId);
+    if (filters.pageIds[0]) params.set("pageId", filters.pageIds[0]);
     else params.delete("pageId");
-    if (filters.ruleId) params.set("ruleId", filters.ruleId);
+    if (filters.ruleIds[0]) params.set("ruleId", filters.ruleIds[0]);
     else params.delete("ruleId");
-    if (filters.assigneeId) params.set("assigneeId", filters.assigneeId);
+    if (filters.assigneeIds[0]) params.set("assigneeId", filters.assigneeIds[0]);
     else params.delete("assigneeId");
     if (filters.search) params.set("search", filters.search);
     else params.delete("search");
-
-    // quickFilter — "unfixed" is the default (omit it); null means "show all" (explicit)
-    if (filters.quickFilter === null) params.set("quickFilter", "all");
-    else if (filters.quickFilter === "unfixed") params.delete("quickFilter");
-    else params.set("quickFilter", filters.quickFilter);
 
     const newQs = params.toString();
     if (newQs === searchParams.toString()) return;
 
     router.replace(newQs ? `${pathname}?${newQs}` : pathname, { scroll: false });
-  }, [viewMode, filters.propertyId, filters.pageId, filters.ruleId, filters.assigneeId, filters.search, filters.quickFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [viewMode, filters.propertyIds.join(","), filters.pageIds.join(","), filters.ruleIds.join(","), filters.assigneeIds.join(","), filters.search]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const groupedIssues = useMemo(
     () => aggregateIssues(filteredViolations),
@@ -317,9 +305,9 @@ const IssuesClient = ({
     return result;
   }, [violations]);
 
-  const ruleLabel = filters.ruleId
-    ? (violations.find((v) => v.ruleId === filters.ruleId)?.rule?.help ??
-      filters.ruleId)
+  const ruleLabel = filters.ruleIds[0]
+    ? (violations.find((v) => v.ruleId === filters.ruleIds[0])?.rule?.help ??
+      filters.ruleIds[0])
     : null;
 
   const rulePageCounts = useMemo(() => {
@@ -429,8 +417,6 @@ const IssuesClient = ({
         onSetStatus={setStatus}
         onSetAssigneeId={setAssigneeId}
         onSetSearch={setSearch}
-        onSetQuickFilter={setQuickFilter}
-        onSetAll={setAll}
         onReset={reset}
       />
 

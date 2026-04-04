@@ -4,28 +4,26 @@ import { useState, useMemo, useEffect } from "react";
 import type { HydratedViolation } from "@/lib/data/index";
 import type { Severity, RemediationStatus } from "@/lib/data/types/domain";
 
-export type QuickFilterChip = "my-issues" | "unfixed" | "needs-attention";
-
 export type IssueFilters = {
   severity: Severity[];
   status: RemediationStatus[];
-  propertyId: string | null;
-  pageId: string | null;
-  ruleId: string | null;
-  assigneeId: string | null; // null = all, "unassigned" = no assignee, userId = specific user
+  propertyIds: string[];
+  pageIds: string[];
+  ruleIds: string[];
+  assigneeIds: string[]; // "unassigned" is a valid sentinel for issues with no assignee
   search: string;
-  quickFilter: QuickFilterChip | null;
 };
 
-const defaultFilters: IssueFilters = {
+// Default view is the unfixed remediation backlog (open + in-progress).
+// "Active filters" means anything that deviates from this default state.
+export const defaultIssueFilters: IssueFilters = {
   severity: [],
-  status: [],
-  propertyId: null,
-  pageId: null,
-  ruleId: null,
-  assigneeId: null,
+  status: ["open", "in-progress"],
+  propertyIds: [],
+  pageIds: [],
+  ruleIds: [],
+  assigneeIds: [],
   search: "",
-  quickFilter: "unfixed",
 };
 
 const toggle = <T,>(arr: T[], item: T): T[] =>
@@ -33,11 +31,10 @@ const toggle = <T,>(arr: T[], item: T): T[] =>
 
 export const useIssueFilters = (
   violations: HydratedViolation[],
-  currentUserId: string,
-  initialFilters?: Partial<Pick<IssueFilters, "propertyId" | "pageId" | "ruleId" | "assigneeId" | "quickFilter" | "search">>,
+  initialFilters?: Partial<Pick<IssueFilters, "propertyIds" | "pageIds" | "ruleIds" | "assigneeIds" | "search">>,
 ) => {
   const [filters, setFilters] = useState<IssueFilters>({
-    ...defaultFilters,
+    ...defaultIssueFilters,
     ...initialFilters,
   });
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -52,51 +49,39 @@ export const useIssueFilters = (
   const toggleSeverity = (s: Severity) =>
     setFilters((f) => ({ ...f, severity: toggle(f.severity, s) }));
 
+  // Single-value setters — store as single-element arrays to preserve the
+  // array-based model while the UI remains single-select dropdowns.
   const setPropertyId = (id: string | null) =>
-    setFilters((f) => ({ ...f, propertyId: id, pageId: null }));
+    setFilters((f) => ({ ...f, propertyIds: id ? [id] : [], pageIds: [] }));
 
   const setPageId = (id: string | null) =>
-    setFilters((f) => ({ ...f, pageId: id }));
+    setFilters((f) => ({ ...f, pageIds: id ? [id] : [] }));
 
   const setRuleId = (id: string | null) =>
-    setFilters((f) => ({ ...f, ruleId: id }));
+    setFilters((f) => ({ ...f, ruleIds: id ? [id] : [] }));
 
   const setStatus = (id: RemediationStatus | null) =>
-    setFilters((f) => ({
-      ...f,
-      status: id ? [id] : [],
-      quickFilter: id ? null : f.quickFilter,
-    }));
+    setFilters((f) => ({ ...f, status: id ? [id] : [] }));
 
   const setAssigneeId = (id: string | null) =>
-    setFilters((f) => ({ ...f, assigneeId: id }));
+    setFilters((f) => ({ ...f, assigneeIds: id ? [id] : [] }));
 
   const setSearch = (q: string) => setFilters((f) => ({ ...f, search: q }));
 
-  const setQuickFilter = (chip: QuickFilterChip | null) =>
-    setFilters((f) => ({
-      ...f,
-      quickFilter: f.quickFilter === chip ? null : chip,
-    }));
-
   const reset = () => {
-    setFilters(defaultFilters);
+    setFilters(defaultIssueFilters);
     setDebouncedSearch("");
   };
 
-  const setAll = () => {
-    setFilters({ ...defaultFilters, quickFilter: null });
-    setDebouncedSearch("");
-  };
-
+  // "Active filters" means the user has deviated from the default unfixed view.
+  const defaultStatusKey = defaultIssueFilters.status.join(",");
   const hasActiveFilters =
     filters.severity.length > 0 ||
-    filters.status.length > 0 ||
-    filters.propertyId !== null ||
-    filters.pageId !== null ||
-    filters.ruleId !== null ||
-    filters.assigneeId !== null ||
-    filters.quickFilter !== "unfixed" ||
+    filters.status.join(",") !== defaultStatusKey ||
+    filters.propertyIds.length > 0 ||
+    filters.pageIds.length > 0 ||
+    filters.ruleIds.length > 0 ||
+    filters.assigneeIds.length > 0 ||
     activeSearch !== "";
 
   const filteredViolations = useMemo(() => {
@@ -107,21 +92,22 @@ export const useIssueFilters = (
       if (filters.status.length > 0 && !filters.status.includes(v.status)) {
         return false;
       }
-      if (filters.propertyId !== null && v.property?.id !== filters.propertyId) {
+      if (filters.propertyIds.length > 0 && !filters.propertyIds.includes(v.property?.id ?? "")) {
         return false;
       }
-      if (filters.pageId !== null && v.page?.id !== filters.pageId) {
+      if (filters.pageIds.length > 0 && !filters.pageIds.includes(v.page?.id ?? "")) {
         return false;
       }
-      if (filters.ruleId !== null && v.ruleId !== filters.ruleId) {
+      if (filters.ruleIds.length > 0 && !filters.ruleIds.includes(v.ruleId)) {
         return false;
       }
-      if (filters.assigneeId !== null) {
-        if (filters.assigneeId === "unassigned") {
-          if (v.assigneeId) return false;
-        } else {
-          if (v.assigneeId !== filters.assigneeId) return false;
-        }
+      if (filters.assigneeIds.length > 0) {
+        const matchesUnassigned =
+          filters.assigneeIds.includes("unassigned") && !v.assigneeId;
+        const matchesUser = filters.assigneeIds.some(
+          (id) => id !== "unassigned" && id === v.assigneeId,
+        );
+        if (!matchesUnassigned && !matchesUser) return false;
       }
       if (activeSearch !== "") {
         const q = activeSearch.toLowerCase();
@@ -130,23 +116,9 @@ export const useIssueFilters = (
         const matchesProperty = v.property?.name.toLowerCase().includes(q) ?? false;
         if (!matchesRule && !matchesPage && !matchesProperty) return false;
       }
-      if (filters.quickFilter === "my-issues" && v.assigneeId !== currentUserId) {
-        return false;
-      }
-      if (
-        filters.quickFilter === "unfixed" &&
-        v.status !== "open" &&
-        v.status !== "in-progress"
-      ) {
-        return false;
-      }
-      if (filters.quickFilter === "needs-attention") {
-        const highSeverity = v.impact === "critical" || v.impact === "serious";
-        if (!highSeverity || v.status !== "open") return false;
-      }
       return true;
     });
-  }, [violations, filters, activeSearch, currentUserId]);
+  }, [violations, filters, activeSearch]);
 
   return {
     filters,
@@ -160,8 +132,6 @@ export const useIssueFilters = (
     setStatus,
     setAssigneeId,
     setSearch,
-    setQuickFilter,
-    setAll,
     reset,
   };
 };

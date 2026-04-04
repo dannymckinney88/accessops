@@ -1,9 +1,9 @@
 "use client";
 
-import type { IssueFilters, QuickFilterChip } from "../hooks/useIssueFilters";
+import type { IssueFilters } from "../hooks/useIssueFilters";
+import { defaultIssueFilters } from "../hooks/useIssueFilters";
 import type { Severity, RemediationStatus, User } from "@/lib/data/types/domain";
 import type { Property } from "@/lib/data/index";
-import IssueQuickFilters from "./IssueQuickFilters";
 
 export type IssueViewMode = "flat" | "grouped-page" | "grouped-rule";
 
@@ -39,8 +39,6 @@ interface IssueFilterBarProps {
   onSetStatus: (id: RemediationStatus | null) => void;
   onSetAssigneeId: (id: string | null) => void;
   onSetSearch: (q: string) => void;
-  onSetQuickFilter: (chip: QuickFilterChip | null) => void;
-  onSetAll: () => void;
   onReset: () => void;
 }
 
@@ -59,17 +57,9 @@ const statusLabel: Record<RemediationStatus, string> = {
   "accepted-risk": "Accepted Risk",
 };
 
-const quickFilterLabel: Record<QuickFilterChip, string> = {
-  "my-issues": "My Issues",
-  unfixed: "Unfixed",
-  "needs-attention": "Needs Attention",
-};
-
 const selectClass =
   "h-8 rounded-md border border-input bg-background px-3 pr-8 text-sm text-foreground outline-none transition-colors hover:border-interactive-border-hover hover:bg-interactive-hover focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-2";
 
-const inputClass =
-  "h-8 rounded-md border border-input bg-background px-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors hover:border-interactive-border-hover hover:bg-interactive-hover focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-2";
 const IssueFilterBar = ({
   filters,
   properties,
@@ -90,47 +80,48 @@ const IssueFilterBar = ({
   onSetStatus,
   onSetAssigneeId,
   onSetSearch,
-  onSetQuickFilter,
-  onSetAll,
   onReset,
 }: IssueFilterBarProps) => {
   const activeFilterLabels: string[] = [];
 
-  if (filters.quickFilter)
-    activeFilterLabels.push(quickFilterLabel[filters.quickFilter]);
   filters.severity.forEach((severity) =>
     activeFilterLabels.push(severityLabel[severity]),
   );
-  filters.status.forEach((status) =>
-    activeFilterLabels.push(statusLabel[status]),
-  );
 
-  if (filters.propertyId) {
-    const property = properties.find((item) => item.id === filters.propertyId);
+  // Only surface status labels when the user has deviated from the default unfixed view.
+  const defaultStatusKey = defaultIssueFilters.status.join(",");
+  if (filters.status.join(",") !== defaultStatusKey) {
+    filters.status.forEach((status) => activeFilterLabels.push(statusLabel[status]));
+  }
+
+  if (filters.propertyIds[0]) {
+    const property = properties.find((item) => item.id === filters.propertyIds[0]);
     if (property) activeFilterLabels.push(property.name);
   }
 
-  if (filters.pageId) {
-    const page = availablePages.find((item) => item.id === filters.pageId);
+  if (filters.pageIds[0]) {
+    const page = availablePages.find((item) => item.id === filters.pageIds[0]);
     if (page) activeFilterLabels.push(page.title);
   }
 
-  if (filters.ruleId && ruleLabel) activeFilterLabels.push(ruleLabel);
-  if (filters.assigneeId) {
-    if (filters.assigneeId === "unassigned") {
+  if (filters.ruleIds[0] && ruleLabel) activeFilterLabels.push(ruleLabel);
+  if (filters.assigneeIds[0]) {
+    if (filters.assigneeIds[0] === "unassigned") {
       activeFilterLabels.push("Unassigned");
     } else {
-      const user = assignableUsers.find((u) => u.id === filters.assigneeId);
+      const user = assignableUsers.find((u) => u.id === filters.assigneeIds[0]);
       if (user) activeFilterLabels.push(user.name);
     }
   }
   if (activeSearch) activeFilterLabels.push(`"${activeSearch}"`);
 
-  const visiblePages = filters.propertyId
-    ? availablePages.filter((page) => page.propertyId === filters.propertyId)
+  const activePropertyId = filters.propertyIds[0] ?? null;
+
+  const visiblePages = activePropertyId
+    ? availablePages.filter((page) => page.propertyId === activePropertyId)
     : availablePages;
 
-  const pagesByProperty = filters.propertyId
+  const pagesByProperty = activePropertyId
     ? null
     : visiblePages.reduce<
         Record<string, { propertyName: string; pages: AvailablePage[] }>
@@ -154,129 +145,117 @@ const IssueFilterBar = ({
 
   return (
     <div className="flex flex-col gap-2">
-      {/* Unified filter row: quick chips + search + dropdowns */}
-      <div className="flex flex-wrap items-center gap-3">
-        <IssueQuickFilters
-          filters={filters}
-          hasActiveFilters={hasActiveFilters}
-          onToggleSeverity={onToggleSeverity}
-          onSetQuickFilter={onSetQuickFilter}
-          onSetAll={onSetAll}
-          onReset={onReset}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <input
+          type="search"
+          placeholder="Search issues…"
+          value={filters.search}
+          onChange={(e) => onSetSearch(e.target.value)}
+          aria-label="Search issues"
+          className={selectClass}
         />
 
-        <div className="flex flex-wrap items-center gap-1.5">
-          <input
-            type="search"
-            placeholder="Search issues…"
-            value={filters.search}
-            onChange={(e) => onSetSearch(e.target.value)}
-            aria-label="Search issues"
-            className={selectClass}
-          />
+        <select
+          value={filters.propertyIds[0] ?? ""}
+          onChange={(e) => onSetPropertyId(e.target.value || null)}
+          aria-label="Filter by property"
+          className={`${selectClass} pr-2`}
+        >
+          <option value="">All properties</option>
+          {properties.map((property) => (
+            <option key={property.id} value={property.id}>
+              {property.name}
+            </option>
+          ))}
+        </select>
 
-          <select
-            value={filters.propertyId ?? ""}
-            onChange={(e) => onSetPropertyId(e.target.value || null)}
-            aria-label="Filter by property"
-            className={`${selectClass} pr-2`}
+        <select
+          value={filters.pageIds[0] ?? ""}
+          onChange={(e) => onSetPageId(e.target.value || null)}
+          aria-label="Filter by page"
+          className={selectClass}
+        >
+          <option value="">All pages</option>
+          {pagesByProperty
+            ? Object.entries(pagesByProperty).map(([propertyId, group]) => (
+                <optgroup key={propertyId} label={group.propertyName}>
+                  {group.pages.map((page) => (
+                    <option key={page.id} value={page.id}>
+                      {page.title}
+                    </option>
+                  ))}
+                </optgroup>
+              ))
+            : visiblePages.map((page) => (
+                <option key={page.id} value={page.id}>
+                  {page.title}
+                </option>
+              ))}
+        </select>
+
+        <select
+          value={filters.status[0] ?? ""}
+          onChange={(e) =>
+            onSetStatus((e.target.value as RemediationStatus) || null)
+          }
+          aria-label="Filter by status"
+          className={selectClass}
+        >
+          <option value="">All statuses</option>
+          {(
+            [
+              "open",
+              "in-progress",
+              "fixed",
+              "verified",
+              "accepted-risk",
+            ] as RemediationStatus[]
+          ).map((status) => (
+            <option key={status} value={status}>
+              {statusLabel[status]}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={filters.ruleIds[0] ?? ""}
+          onChange={(e) => onSetRuleId(e.target.value || null)}
+          aria-label="Filter by rule"
+          className={`${selectClass} max-w-55`}
+        >
+          <option value="">All rules</option>
+          {availableRules.map((rule) => (
+            <option key={rule.id} value={rule.id}>
+              {rule.label}
+            </option>
+          ))}
+        </select>
+
+        <select
+          value={filters.assigneeIds[0] ?? ""}
+          onChange={(e) => onSetAssigneeId(e.target.value || null)}
+          aria-label="Filter by assignee"
+          className={`${selectClass} pr-2`}
+        >
+          <option value="">All assignees</option>
+          <option value="unassigned">Unassigned</option>
+          {assignableUsers.map((user) => (
+            <option key={user.id} value={user.id}>
+              {user.name}
+            </option>
+          ))}
+        </select>
+
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={onReset}
+            aria-label="Clear all filters"
+            className="h-8 rounded-md border border-transparent px-3 text-xs text-muted-foreground outline-none transition-colors hover:border-interactive-border-hover hover:bg-interactive-hover hover:text-interactive-hover-foreground active:border-interactive-border-active active:bg-interactive-active active:text-interactive-active-foreground focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-2"
           >
-            <option value="">All properties</option>
-            {properties.map((property) => (
-              <option key={property.id} value={property.id}>
-                {property.name}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={filters.pageId ?? ""}
-            onChange={(e) => onSetPageId(e.target.value || null)}
-            aria-label="Filter by page"
-            className={selectClass}
-          >
-            <option value="">All pages</option>
-            {pagesByProperty
-              ? Object.entries(pagesByProperty).map(([propertyId, group]) => (
-                  <optgroup key={propertyId} label={group.propertyName}>
-                    {group.pages.map((page) => (
-                      <option key={page.id} value={page.id}>
-                        {page.title}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))
-              : visiblePages.map((page) => (
-                  <option key={page.id} value={page.id}>
-                    {page.title}
-                  </option>
-                ))}
-          </select>
-
-          <select
-            value={filters.status[0] ?? ""}
-            onChange={(e) =>
-              onSetStatus((e.target.value as RemediationStatus) || null)
-            }
-            aria-label="Filter by status"
-            className={selectClass}
-          >
-            <option value="">All statuses</option>
-            {(
-              [
-                "open",
-                "in-progress",
-                "fixed",
-                "verified",
-                "accepted-risk",
-              ] as RemediationStatus[]
-            ).map((status) => (
-              <option key={status} value={status}>
-                {statusLabel[status]}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={filters.ruleId ?? ""}
-            onChange={(e) => onSetRuleId(e.target.value || null)}
-            aria-label="Filter by rule"
-            className={`${selectClass} max-w-55`}
-          >
-            <option value="">All rules</option>
-            {availableRules.map((rule) => (
-              <option key={rule.id} value={rule.id}>
-                {rule.label}
-              </option>
-            ))}
-          </select>
-
-          <select
-            value={filters.assigneeId ?? ""}
-            onChange={(e) => onSetAssigneeId(e.target.value || null)}
-            aria-label="Filter by assignee"
-            className={`${selectClass} pr-2`}
-          >
-            <option value="">All assignees</option>
-            <option value="unassigned">Unassigned</option>
-            {assignableUsers.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.name}
-              </option>
-            ))}
-          </select>
-
-          {hasActiveFilters && (
-            <button
-              type="button"
-              onClick={onReset}
-              aria-label="Clear all filters"
-              className="h-8 rounded-md border border-transparent px-3 text-xs text-muted-foreground outline-none transition-colors hover:border-interactive-border-hover hover:bg-interactive-hover hover:text-interactive-hover-foreground active:border-interactive-border-active active:bg-interactive-active active:text-interactive-active-foreground focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-offset-2"
-            >
-              Clear
-            </button>
-          )}
-        </div>
+            Clear
+          </button>
+        )}
       </div>
 
       {/* Summary */}
