@@ -6,6 +6,10 @@ import type { DashboardSummary } from "../types/dashboard";
 
 const DISPLAY_LIMIT = 5;
 
+// Shared grid layout: rank | content | metric | chevron
+const ROW_GRID =
+  "grid grid-cols-[1.5rem_1fr_4rem_1rem] items-center gap-x-2 px-2";
+
 interface DashboardHighestRiskProps {
   summary: DashboardSummary;
 }
@@ -16,7 +20,6 @@ const DashboardHighestRisk = ({ summary }: DashboardHighestRiskProps) => {
     null,
   );
 
-  // Derive unique properties that have critical pages — selector options
   const propertiesWithCritical = Array.from(
     new Map(
       topCriticalPages
@@ -27,14 +30,16 @@ const DashboardHighestRisk = ({ summary }: DashboardHighestRiskProps) => {
 
   const showSelector = propertiesWithCritical.length > 1;
 
-  // Filter by selected property then take top N — list is pre-sorted by criticalCount desc
   const visiblePages = (
     selectedPropertyId
       ? topCriticalPages.filter((p) => p.propertyId === selectedPropertyId)
       : topCriticalPages
   ).slice(0, DISPLAY_LIMIT);
 
-  const totalCritical = visiblePages.reduce((sum, p) => sum + p.criticalCount, 0);
+  const totalCritical = visiblePages.reduce(
+    (sum, p) => sum + p.criticalCount,
+    0,
+  );
 
   if (topCriticalPages.length === 0) {
     return (
@@ -45,22 +50,15 @@ const DashboardHighestRisk = ({ summary }: DashboardHighestRiskProps) => {
   }
 
   return (
-    <div className="mt-4 flex flex-col gap-4">
-      {/* Control row: tally on left, property filter on right */}
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-xs text-muted-foreground tabular-nums">
-          <span className="font-semibold text-severity-critical">
-            {totalCritical} critical
-          </span>{" "}
-          across {visiblePages.length}{" "}
-          {visiblePages.length === 1 ? "page" : "pages"}
-        </p>
-
-        {showSelector && (
-          <div className="flex items-center gap-1.5 shrink-0">
+    <div className="mt-4 flex flex-col gap-2">
+      {/* Control row — same grid origin as list rows */}
+      {showSelector && (
+        <div className={ROW_GRID}>
+          <span aria-hidden="true" />
+          <div className="col-span-3 flex items-center gap-1.5">
             <label
               htmlFor="high-risk-property-filter"
-              className="text-xs text-muted-foreground whitespace-nowrap"
+              className="text-xs text-muted-foreground shrink-0"
             >
               Property
             </label>
@@ -78,53 +76,70 @@ const DashboardHighestRisk = ({ summary }: DashboardHighestRiskProps) => {
               ))}
             </select>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* Ranked page list */}
       {visiblePages.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           No critical issues for this property.
         </p>
       ) : (
-        <ol aria-label="Pages ranked by critical unfixed issue count">
-          {visiblePages.map((page, idx) => (
-            <li key={page.pageId}>
-              <a
-                href={`/issues?pageId=${page.pageId}`}
-                className="group grid grid-cols-[1.25rem_1fr_5rem] items-center gap-x-3 rounded-md px-2 py-2 transition-colors hover:bg-muted/50"
-              >
-                {/* Rank */}
-                <span
-                  className="text-right text-xs font-bold tabular-nums text-muted-foreground/40 group-hover:text-muted-foreground/70"
-                  aria-hidden="true"
+        <div>
+          {/* Ranked list */}
+          <ol aria-label="Pages ranked by critical unfixed issue count">
+            {visiblePages.map((page, idx) => (
+              <li key={page.pageId}>
+                <a
+                  href={`/issues?pageId=${page.pageId}`}
+                  className={`group ${ROW_GRID} rounded-md py-2 transition-colors hover:bg-muted/50`}
                 >
-                  {idx + 1}
-                </span>
-
-                {/* Title + metadata */}
-                <div className="flex flex-col min-w-0">
-                  <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors leading-tight truncate">
-                    {page.pageTitle}
+                  {/* Rank */}
+                  <span
+                    className="text-right text-xs font-medium tabular-nums text-muted-foreground/40 group-hover:text-muted-foreground/70"
+                    aria-hidden="true"
+                  >
+                    {idx + 1}
                   </span>
-                  <span className="mt-0.5 text-[10px] text-muted-foreground/60 truncate">
-                    {selectedPropertyId === null
-                      ? `${page.propertyName}${page.pagePath ? ` · ${page.pagePath}` : ""}`
-                      : page.pagePath}
-                  </span>
-                </div>
 
-                {/* Critical count + chevron */}
-                <div className="flex items-center justify-end gap-1">
-                  <span className="tabular-nums text-xs font-bold text-severity-critical whitespace-nowrap">
+                  {/* Title + metadata */}
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors leading-tight truncate">
+                      {page.pageTitle}
+                    </span>
+                    <span className="mt-0.5 text-[10px] text-muted-foreground/60 truncate">
+                      {selectedPropertyId === null
+                        ? `${page.propertyName}${page.pagePath ? ` · ${page.pagePath}` : ""}`
+                        : page.pagePath}
+                    </span>
+                  </div>
+
+                  {/* Critical count — dedicated column, no chevron competing */}
+                  <span className="text-right text-xs font-bold tabular-nums text-severity-critical whitespace-nowrap">
                     {page.criticalCount} critical
                   </span>
-                  <ChevronRight className="size-3 shrink-0 text-muted-foreground/20 group-hover:text-muted-foreground/50" />
-                </div>
-              </a>
-            </li>
-          ))}
-        </ol>
+
+                  {/* Chevron — own column */}
+                  <ChevronRight className="size-3 text-muted-foreground/20 group-hover:text-muted-foreground/50 justify-self-end" />
+                </a>
+              </li>
+            ))}
+          </ol>
+
+          {/* Summary row — same grid, metric column aligns with list counts */}
+          <div
+            className={`${ROW_GRID} pt-2 mt-1 border-t border-border/40`}
+            aria-label={`Top ${visiblePages.length} areas, ${totalCritical} critical total`}
+          >
+            <span aria-hidden="true" />
+            <span className="text-[10px] text-muted-foreground/50">
+              Top {visiblePages.length} areas
+            </span>
+            <span className="text-right text-xs font-bold tabular-nums text-severity-critical/70 whitespace-nowrap">
+              {totalCritical} critical
+            </span>
+            <span aria-hidden="true" />
+          </div>
+        </div>
       )}
     </div>
   );
