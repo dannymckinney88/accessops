@@ -86,10 +86,10 @@ const DashboardClient = ({ summary }: DashboardClientProps) => {
               id="highest-risk-heading"
               className="text-sm font-semibold text-foreground"
             >
-              Highest-Risk Pages
+              High-Risk Areas
             </h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Pages with the most critical unfixed issues — start here
+              Ranked by critical unfixed issues — work top to bottom
             </p>
 
             <DashboardHighestRisk summary={summary} />
