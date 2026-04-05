@@ -15,7 +15,7 @@ AccessOps turns an accessibility audit into a **working remediation backlog** so
 
 ---
 
-## 🎯 Why I Built It
+## Why I Built It
 
 A lot of accessibility tooling stops at reporting.
 
@@ -36,7 +36,7 @@ This is a **remediation system**.
 
 ---
 
-## 🧠 Product Model
+## Product Model
 
 AccessOps uses a **single active audit** model.
 
@@ -61,9 +61,27 @@ That is the core product question.
 
 ---
 
-## 🖥️ Product Surfaces
+## Accessibility
 
-### 📊 Dashboard — Decision Surface
+Because the product is about accessibility operations, the implementation reflects the same discipline.
+
+That includes:
+
+- semantic HTML throughout — tables are real tables, lists are real lists
+- keyboard-first interaction patterns across filters, tables, and drawers
+- focus management on drawer open and close, with priority-ordered restore logic
+- visible focus states on every interactive element
+- proper ARIA roles, labels, and live regions
+- sort state exposed to screen readers via `aria-sort` and `aria-describedby`
+- no color-only meaning
+
+The filter components implement full focus trapping, Escape-to-close, and screen reader status announcements. The table header exposes sort direction and next action separately from the column name to avoid redundant announcements on associated cells.
+
+---
+
+## Product Surfaces
+
+### Dashboard — Decision Surface
 
 <br>
 
@@ -81,7 +99,7 @@ It helps teams understand:
 
 ---
 
-### 🔧 Issues — Remediation Workspace
+### Issues — Remediation Workspace
 
 <br>
 
@@ -128,7 +146,7 @@ Bulk actions reduce workflow friction when assigning or updating multiple issues
 
 <br>
 
-The detail drawer turns an issue from “audit output” into something actionable.
+The detail drawer turns an issue from "audit output" into something actionable.
 
 It gives engineers the context they need:
 
@@ -141,7 +159,7 @@ It gives engineers the context they need:
 
 ---
 
-### 🔍 Scans — Audit History
+### Scans — Audit History
 
 <br>
 
@@ -157,7 +175,7 @@ Scans is intentionally lightweight.
 
 ---
 
-### 📱 Mobile
+### Mobile
 
 <br>
 
@@ -169,7 +187,7 @@ AccessOps is desktop-first because remediation work is data-heavy, but it remain
 
 ---
 
-## 🔁 Example Workflow
+## Example Workflow
 
 1. A team receives a new accessibility audit
 2. That audit becomes the **active backlog**
@@ -182,7 +200,7 @@ AccessOps is desktop-first because remediation work is data-heavy, but it remain
 
 ---
 
-## 📊 Seeded Data Strategy
+## Seeded Data Strategy
 
 The demo data is intentionally structured to simulate a realistic enterprise accessibility program.
 
@@ -195,7 +213,23 @@ Each property tells a different story:
 
 ---
 
-## ⚙️ Tech Stack
+## Technical Notes
+
+A few decisions worth explaining:
+
+**Hook separation by concern** — the Issues workspace is split across `useIssueMutations`, `useIssueFilters`, `useIssueDerivedData`, `useIssueWorkspaceState`, `useIssueSelection`, and `useGroupedPageData`. Each hook owns exactly one thing. This made the workspace significantly easier to reason about as complexity grew.
+
+**URL-synced filter state** — shareable filter state (property, page, rule, assignee, search) is synced to the URL so links work as expected. Severity and status stay session-local intentionally — the screen opens unfiltered, with active work surfaced by default sort order rather than persisted filter params.
+
+**Client-side override persistence** — assignment and status changes are persisted to `localStorage` and applied after mount to avoid hydration mismatches with server output. `applyOverrides` returns the same reference when the override map is empty, so React bails out with no re-render in a fresh session.
+
+**TanStack Table over a simpler solution** — the Issues screen needed multi-column sorting, pagination, stable row identity across sort changes, and custom sort functions per column (severity and status use domain-specific order maps, not lexicographic sort). TanStack Table handles all of this without fighting it.
+
+**Async data layer without a backend** — all data access is async by convention even though the current layer is seeded. This means swapping in a real API requires no changes to consuming code.
+
+---
+
+## Tech Stack
 
 - Next.js (App Router)
 - React + TypeScript
@@ -203,26 +237,10 @@ Each property tells a different story:
 - shadcn/ui + Radix
 - TanStack Table
 - Recharts
-- React Hook Form + Zod
 
 ---
 
-## ♿ Accessibility
-
-Because the product is about accessibility operations, the product itself reflects accessibility discipline in the implementation.
-
-That includes:
-
-- semantic HTML first
-- keyboard-first interaction patterns
-- visible focus states
-- proper focus management
-- screen reader clarity across tables, filters, and drawers
-- no color-only meaning
-
----
-
-## 🚀 Getting Started
+## Getting Started
 
 ```bash
 npm install
