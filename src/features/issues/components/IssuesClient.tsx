@@ -9,6 +9,7 @@ import { useIssueMutations } from "../hooks/useIssueMutations";
 import { useIssueDerivedData } from "../hooks/useIssueDerivedData";
 import { useIssueWorkspaceState } from "../hooks/useIssueWorkspaceState";
 import IssueFilterBar from "./IssueFilterBar";
+import ActiveFilterChips from "./ActiveFilterChips";
 import IssueDrawer from "./IssueDrawer";
 import IssuesTable from "./IssuesTable";
 import { useSearchParams } from "next/navigation";
@@ -148,6 +149,24 @@ const IssuesClient = ({
         onClearRuleIds={clearRuleIds}
         onClearAssigneeIds={clearAssigneeIds}
         onReset={reset}
+      />
+
+      <ActiveFilterChips
+        filters={filters}
+        hasActiveFilters={hasActiveFilters}
+        properties={properties}
+        assignableUsers={assignableUsers}
+        availablePages={availablePages}
+        availableRules={availableRules}
+        onToggleSeverity={toggleSeverity}
+        onToggleStatus={toggleStatus}
+        onTogglePropertyId={togglePropertyId}
+        onTogglePageId={togglePageId}
+        onToggleRuleId={toggleRuleId}
+        onToggleAssigneeId={toggleAssigneeId}
+        onClearPageIds={clearPageIds}
+        onClearRuleIds={clearRuleIds}
+        onSetSearch={setSearch}
       />
 
       {/* Table workspace */}
