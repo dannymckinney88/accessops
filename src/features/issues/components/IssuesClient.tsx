@@ -29,18 +29,17 @@ interface IssuesClientProps {
 const IssuesClient = ({
   violations: initialViolations,
   properties,
-  currentUser,
+  currentUser: _currentUser,
   users,
 }: IssuesClientProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Initialize working issue state from seeded data plus any persisted local overrides.
-  // applyOverrides is SSR-safe and falls back to seeded data when localStorage is unavailable.
-  const [violations, setViolations] = useState<HydratedViolation[]>(() =>
-    applyOverrides(initialViolations, users),
-  );
+  // Initialize from server props only — no localStorage access here so the first
+  // client render matches the server render exactly.  Overrides are applied after
+  // mount in the effect below, where localStorage is guaranteed to be available.
+  const [violations, setViolations] = useState<HydratedViolation[]>(initialViolations);
 
   const assignableUsers = useMemo(
     () => users.filter((u) => u.isActive),
@@ -56,6 +55,14 @@ const IssuesClient = ({
 
   const headingRef = useRef<HTMLHeadingElement>(null);
   const triggerRowIdRef = useRef<string | null>(null);
+
+  // Apply any localStorage overrides once, after mount.  applyOverrides returns
+  // the same reference when the override map is empty, so React bails out with
+  // no re-render in the common case of a fresh session.
+  useEffect(() => {
+    setViolations(applyOverrides(initialViolations, users));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     headingRef.current?.focus();
@@ -196,31 +203,32 @@ const IssuesClient = ({
     filters,
     filteredViolations,
     hasActiveFilters,
-    activeSearch,
     toggleSeverity,
-    setPropertyId,
-    setPageId,
+    toggleStatus,
+    togglePropertyId,
+    togglePageId,
+    toggleRuleId,
+    toggleAssigneeId,
     setRuleId,
-    setStatus,
-    setAssigneeId,
     setSearch,
-    setQuickFilter,
-    setAll,
+    clearSeverity,
+    clearStatus,
+    clearPropertyIds,
+    clearPageIds,
+    clearRuleIds,
+    clearAssigneeIds,
     reset,
-  } = useIssueFilters(violations, currentUser.id, {
-    propertyId: searchParams.get("propertyId") ?? null,
-    pageId: searchParams.get("pageId") ?? null,
-    ruleId: searchParams.get("ruleId") ?? null,
-    assigneeId: searchParams.get("assigneeId") ?? null,
+  } = useIssueFilters(violations, {
+    // Multi-value URL params: getAll returns [] when absent, which is the correct default.
+    propertyIds: searchParams.getAll("propertyId"),
+    pageIds: searchParams.getAll("pageId"),
+    ruleIds: searchParams.getAll("ruleId"),
+    assigneeIds: searchParams.getAll("assigneeId"),
     search: searchParams.get("search") ?? "",
-    quickFilter: (() => {
-      const q = searchParams.get("quickFilter");
-      if (q === "all") return null;
-      if (q === "my-issues" || q === "needs-attention") return q;
-      return "unfixed"; // default when param is absent
-    })(),
   });
 
+  // Sync filter state → URL. severity and status are intentionally not URL-synced
+  // (they reset to the unfixed default on every page load).
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
 
@@ -228,28 +236,24 @@ const IssuesClient = ({
     if (viewMode === "flat") params.delete("view");
     else params.set("view", viewMode);
 
-    // Nullable filter fields — omit when null/empty
-    if (filters.propertyId) params.set("propertyId", filters.propertyId);
-    else params.delete("propertyId");
-    if (filters.pageId) params.set("pageId", filters.pageId);
-    else params.delete("pageId");
-    if (filters.ruleId) params.set("ruleId", filters.ruleId);
-    else params.delete("ruleId");
-    if (filters.assigneeId) params.set("assigneeId", filters.assigneeId);
-    else params.delete("assigneeId");
+    // Multi-value array params: delete all then re-append
+    params.delete("propertyId");
+    filters.propertyIds.forEach((id) => params.append("propertyId", id));
+    params.delete("pageId");
+    filters.pageIds.forEach((id) => params.append("pageId", id));
+    params.delete("ruleId");
+    filters.ruleIds.forEach((id) => params.append("ruleId", id));
+    params.delete("assigneeId");
+    filters.assigneeIds.forEach((id) => params.append("assigneeId", id));
+
     if (filters.search) params.set("search", filters.search);
     else params.delete("search");
-
-    // quickFilter — "unfixed" is the default (omit it); null means "show all" (explicit)
-    if (filters.quickFilter === null) params.set("quickFilter", "all");
-    else if (filters.quickFilter === "unfixed") params.delete("quickFilter");
-    else params.set("quickFilter", filters.quickFilter);
 
     const newQs = params.toString();
     if (newQs === searchParams.toString()) return;
 
     router.replace(newQs ? `${pathname}?${newQs}` : pathname, { scroll: false });
-  }, [viewMode, filters.propertyId, filters.pageId, filters.ruleId, filters.assigneeId, filters.search, filters.quickFilter]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [viewMode, filters.propertyIds.join(","), filters.pageIds.join(","), filters.ruleIds.join(","), filters.assigneeIds.join(","), filters.search]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const groupedIssues = useMemo(
     () => aggregateIssues(filteredViolations),
@@ -317,11 +321,6 @@ const IssuesClient = ({
     return result;
   }, [violations]);
 
-  const ruleLabel = filters.ruleId
-    ? (violations.find((v) => v.ruleId === filters.ruleId)?.rule?.help ??
-      filters.ruleId)
-    : null;
-
   const rulePageCounts = useMemo(() => {
     const rulePagesMap = new Map<string, Set<string>>();
 
@@ -346,6 +345,13 @@ const IssuesClient = ({
       ? groupedIssues.length === 0
       : filteredViolations.length === 0;
 
+  const summaryText =
+    viewMode === "grouped-rule"
+      ? `Showing ${groupedIssues.length} grouped issues from ${filteredViolations.length} issue instances`
+      : viewMode === "grouped-page"
+        ? `Showing ${filteredViolations.length} issues grouped by page`
+        : `Showing ${filteredViolations.length} of ${violations.length} issues`;
+
   const baseClass =
     "h-8 px-3 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-inset";
 
@@ -357,116 +363,124 @@ const IssuesClient = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-4 border-b pb-4">
-        <div>
-          <h1
-            ref={headingRef}
-            tabIndex={-1}
-            className="text-2xl font-semibold tracking-tight outline-none"
-          >
-            Issues
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
-        </div>
-
-        <div
-          role="group"
-          aria-label="View mode"
-          className="flex shrink-0 items-center overflow-hidden rounded-md border border-input"
+      {/* Page header */}
+      <div className="border-b pb-4">
+        <h1
+          ref={headingRef}
+          tabIndex={-1}
+          className="text-2xl font-semibold tracking-tight outline-none"
         >
-          <button
-            type="button"
-            onClick={() => setViewMode("flat")}
-            aria-pressed={viewMode === "flat"}
-            className={`${baseClass} ${
-              viewMode === "flat" ? activeClass : inactiveClass
-            }`}
-          >
-            Flat
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode("grouped-page")}
-            aria-pressed={viewMode === "grouped-page"}
-            className={`${baseClass} border-l border-input ${
-              viewMode === "grouped-page" ? activeClass : inactiveClass
-            }`}
-          >
-            Group by Page
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode("grouped-rule")}
-            aria-pressed={viewMode === "grouped-rule"}
-            className={`${baseClass} border-l border-input ${
-              viewMode === "grouped-rule" ? activeClass : inactiveClass
-            }`}
-          >
-            Group by Rule
-          </button>
-        </div>
+          Issues
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
       </div>
 
+      {/* Contained filter panel */}
       <IssueFilterBar
         filters={filters}
         properties={properties}
         assignableUsers={assignableUsers}
         availablePages={availablePages}
         availableRules={availableRules}
-        ruleLabel={ruleLabel}
-        totalCount={violations.length}
-        filteredCount={filteredViolations.length}
-        groupedCount={
-          viewMode === "grouped-rule" ? groupedIssues.length : undefined
-        }
         hasActiveFilters={hasActiveFilters}
-        activeSearch={activeSearch}
-        viewMode={viewMode}
         onToggleSeverity={toggleSeverity}
-        onSetPropertyId={setPropertyId}
-        onSetPageId={setPageId}
-        onSetRuleId={setRuleId}
-        onSetStatus={setStatus}
-        onSetAssigneeId={setAssigneeId}
+        onToggleStatus={toggleStatus}
+        onTogglePropertyId={togglePropertyId}
+        onTogglePageId={togglePageId}
+        onToggleRuleId={toggleRuleId}
+        onToggleAssigneeId={toggleAssigneeId}
         onSetSearch={setSearch}
-        onSetQuickFilter={setQuickFilter}
-        onSetAll={setAll}
+        onClearSeverity={clearSeverity}
+        onClearStatus={clearStatus}
+        onClearPropertyIds={clearPropertyIds}
+        onClearPageIds={clearPageIds}
+        onClearRuleIds={clearRuleIds}
+        onClearAssigneeIds={clearAssigneeIds}
         onReset={reset}
       />
 
-      {isEmpty ? (
-        <div role="status" className="py-12 text-center">
-          <p className="text-sm text-muted-foreground">
-            {hasActiveFilters
-              ? "No issues match your current filters. Try adjusting the filters above or clear all to start over."
-              : "No violations found across all properties."}
-          </p>
-          {hasActiveFilters && (
+      {/* Table workspace */}
+      <div className="flex flex-col gap-2">
+        {/* View mode + results summary */}
+        <div className="flex items-center justify-between gap-4">
+          <div
+            role="group"
+            aria-label="View mode"
+            className="flex shrink-0 items-center overflow-hidden rounded-md border border-input"
+          >
             <button
               type="button"
-              onClick={reset}
-              className="mt-3 rounded-sm text-sm text-muted-foreground underline underline-offset-4 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              onClick={() => setViewMode("flat")}
+              aria-pressed={viewMode === "flat"}
+              className={`${baseClass} ${
+                viewMode === "flat" ? activeClass : inactiveClass
+              }`}
             >
-              Clear all filters
+              Flat
             </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("grouped-page")}
+              aria-pressed={viewMode === "grouped-page"}
+              className={`${baseClass} border-l border-input ${
+                viewMode === "grouped-page" ? activeClass : inactiveClass
+              }`}
+            >
+              Group by Page
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("grouped-rule")}
+              aria-pressed={viewMode === "grouped-rule"}
+              className={`${baseClass} border-l border-input ${
+                viewMode === "grouped-rule" ? activeClass : inactiveClass
+              }`}
+            >
+              Group by Rule
+            </button>
+          </div>
+
+          {(hasActiveFilters || viewMode !== "flat") && (
+            <p role="status" className="text-xs text-muted-foreground">
+              {summaryText}
+            </p>
           )}
         </div>
-      ) : (
-        <IssuesTable
-          violations={filteredViolations}
-          groupedIssues={groupedIssues}
-          activeViolationId={activeViolationId}
-          activeGroupId={activeGroupId}
-          rulePageCounts={rulePageCounts}
-          viewMode={viewMode}
-          assignableUsers={assignableUsers}
-          onViolationRowClick={openViolationDrawer}
-          onGroupedIssueRowClick={openGroupedIssueDrawer}
-          onAssign={handleAssign}
-          onBulkAssign={handleBulkAssign}
-          onBulkStatus={handleBulkStatus}
-        />
-      )}
+
+        {isEmpty ? (
+          <div role="status" className="py-12 text-center">
+            <p className="text-sm text-muted-foreground">
+              {hasActiveFilters
+                ? "No issues match your current filters. Try adjusting the filters above or clear all to start over."
+                : "No violations found across all properties."}
+            </p>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                onClick={reset}
+                className="mt-3 rounded-sm text-sm text-muted-foreground underline underline-offset-4 outline-none transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
+                Clear all filters
+              </button>
+            )}
+          </div>
+        ) : (
+          <IssuesTable
+            violations={filteredViolations}
+            groupedIssues={groupedIssues}
+            activeViolationId={activeViolationId}
+            activeGroupId={activeGroupId}
+            rulePageCounts={rulePageCounts}
+            viewMode={viewMode}
+            assignableUsers={assignableUsers}
+            onViolationRowClick={openViolationDrawer}
+            onGroupedIssueRowClick={openGroupedIssueDrawer}
+            onAssign={handleAssign}
+            onBulkAssign={handleBulkAssign}
+            onBulkStatus={handleBulkStatus}
+          />
+        )}
+      </div>
 
       <IssueDrawer
         viewMode={viewMode}

@@ -4,28 +4,27 @@ import { useState, useMemo, useEffect } from "react";
 import type { HydratedViolation } from "@/lib/data/index";
 import type { Severity, RemediationStatus } from "@/lib/data/types/domain";
 
-export type QuickFilterChip = "my-issues" | "unfixed" | "needs-attention";
-
 export type IssueFilters = {
   severity: Severity[];
   status: RemediationStatus[];
-  propertyId: string | null;
-  pageId: string | null;
-  ruleId: string | null;
-  assigneeId: string | null; // null = all, "unassigned" = no assignee, userId = specific user
+  propertyIds: string[];
+  pageIds: string[];
+  ruleIds: string[];
+  assigneeIds: string[]; // "unassigned" is a valid sentinel for issues with no assignee
   search: string;
-  quickFilter: QuickFilterChip | null;
 };
 
-const defaultFilters: IssueFilters = {
+// No default filters — the Issues screen opens unfiltered.
+// Active work is surfaced through default table sort order (status asc: open → in-progress first),
+// not through implicit filter state.
+export const defaultIssueFilters: IssueFilters = {
   severity: [],
   status: [],
-  propertyId: null,
-  pageId: null,
-  ruleId: null,
-  assigneeId: null,
+  propertyIds: [],
+  pageIds: [],
+  ruleIds: [],
+  assigneeIds: [],
   search: "",
-  quickFilter: "unfixed",
 };
 
 const toggle = <T,>(arr: T[], item: T): T[] =>
@@ -33,11 +32,15 @@ const toggle = <T,>(arr: T[], item: T): T[] =>
 
 export const useIssueFilters = (
   violations: HydratedViolation[],
-  currentUserId: string,
-  initialFilters?: Partial<Pick<IssueFilters, "propertyId" | "pageId" | "ruleId" | "assigneeId" | "quickFilter" | "search">>,
+  initialFilters?: Partial<
+    Pick<
+      IssueFilters,
+      "propertyIds" | "pageIds" | "ruleIds" | "assigneeIds" | "search"
+    >
+  >,
 ) => {
   const [filters, setFilters] = useState<IssueFilters>({
-    ...defaultFilters,
+    ...defaultIssueFilters,
     ...initialFilters,
   });
   const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -49,119 +52,167 @@ export const useIssueFilters = (
 
   const activeSearch = debouncedSearch.length >= 2 ? debouncedSearch : "";
 
+  // Derive page→property ownership from violations so togglePropertyId can
+  // remove only invalid page selections instead of clearing all pages blindly.
+  const pageOwnership = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const v of violations) {
+      if (v.page && v.property) map.set(v.page.id, v.property.id);
+    }
+    return map;
+  }, [violations]);
+
+  // Toggle functions (multi-select) for UI controls
   const toggleSeverity = (s: Severity) =>
     setFilters((f) => ({ ...f, severity: toggle(f.severity, s) }));
 
+  const toggleStatus = (s: RemediationStatus) =>
+    setFilters((f) => ({ ...f, status: toggle(f.status, s) }));
+
+  const togglePropertyId = (id: string) =>
+    setFilters((f) => {
+      const newPropertyIds = toggle(f.propertyIds, id);
+      // When no properties are selected, all pages are valid — preserve them.
+      // Otherwise, retain only pages that belong to one of the selected properties.
+      const newPageIds =
+        newPropertyIds.length === 0
+          ? f.pageIds
+          : f.pageIds.filter((pageId) => {
+              const ownerPropertyId = pageOwnership.get(pageId);
+              return (
+                ownerPropertyId !== undefined &&
+                newPropertyIds.includes(ownerPropertyId)
+              );
+            });
+      return { ...f, propertyIds: newPropertyIds, pageIds: newPageIds };
+    });
+
+  const togglePageId = (id: string) =>
+    setFilters((f) => ({ ...f, pageIds: toggle(f.pageIds, id) }));
+
+  const toggleRuleId = (id: string) =>
+    setFilters((f) => ({ ...f, ruleIds: toggle(f.ruleIds, id) }));
+
+  const toggleAssigneeId = (id: string) =>
+    setFilters((f) => ({ ...f, assigneeIds: toggle(f.assigneeIds, id) }));
+
+  // Single-value setters — used for programmatic control (e.g. drawer "View all instances")
   const setPropertyId = (id: string | null) =>
-    setFilters((f) => ({ ...f, propertyId: id, pageId: null }));
+    setFilters((f) => ({ ...f, propertyIds: id ? [id] : [], pageIds: [] }));
 
   const setPageId = (id: string | null) =>
-    setFilters((f) => ({ ...f, pageId: id }));
+    setFilters((f) => ({ ...f, pageIds: id ? [id] : [] }));
 
   const setRuleId = (id: string | null) =>
-    setFilters((f) => ({ ...f, ruleId: id }));
+    setFilters((f) => ({ ...f, ruleIds: id ? [id] : [] }));
 
   const setStatus = (id: RemediationStatus | null) =>
-    setFilters((f) => ({
-      ...f,
-      status: id ? [id] : [],
-      quickFilter: id ? null : f.quickFilter,
-    }));
+    setFilters((f) => ({ ...f, status: id ? [id] : [] }));
 
   const setAssigneeId = (id: string | null) =>
-    setFilters((f) => ({ ...f, assigneeId: id }));
+    setFilters((f) => ({ ...f, assigneeIds: id ? [id] : [] }));
 
   const setSearch = (q: string) => setFilters((f) => ({ ...f, search: q }));
 
-  const setQuickFilter = (chip: QuickFilterChip | null) =>
-    setFilters((f) => ({
-      ...f,
-      quickFilter: f.quickFilter === chip ? null : chip,
-    }));
+  // Dimension-level clears — reset one filter group without touching others
+  const clearSeverity = () => setFilters((f) => ({ ...f, severity: [] }));
+  const clearStatus = () => setFilters((f) => ({ ...f, status: [] }));
+  const clearPropertyIds = () =>
+    setFilters((f) => ({ ...f, propertyIds: [], pageIds: [] }));
+  const clearPageIds = () => setFilters((f) => ({ ...f, pageIds: [] }));
+  const clearRuleIds = () => setFilters((f) => ({ ...f, ruleIds: [] }));
+  const clearAssigneeIds = () => setFilters((f) => ({ ...f, assigneeIds: [] }));
 
   const reset = () => {
-    setFilters(defaultFilters);
+    setFilters(defaultIssueFilters);
     setDebouncedSearch("");
   };
 
-  const setAll = () => {
-    setFilters({ ...defaultFilters, quickFilter: null });
-    setDebouncedSearch("");
-  };
-
+  // Any non-empty selection deviates from the unfiltered default.
   const hasActiveFilters =
     filters.severity.length > 0 ||
     filters.status.length > 0 ||
-    filters.propertyId !== null ||
-    filters.pageId !== null ||
-    filters.ruleId !== null ||
-    filters.assigneeId !== null ||
-    filters.quickFilter !== "unfixed" ||
+    filters.propertyIds.length > 0 ||
+    filters.pageIds.length > 0 ||
+    filters.ruleIds.length > 0 ||
+    filters.assigneeIds.length > 0 ||
     activeSearch !== "";
 
   const filteredViolations = useMemo(() => {
     return violations.filter((v) => {
-      if (filters.severity.length > 0 && !filters.severity.includes(v.impact)) {
+      if (
+        filters.severity.length > 0 &&
+        !filters.severity.includes(v.impact)
+      ) {
         return false;
       }
       if (filters.status.length > 0 && !filters.status.includes(v.status)) {
         return false;
       }
-      if (filters.propertyId !== null && v.property?.id !== filters.propertyId) {
+      if (
+        filters.propertyIds.length > 0 &&
+        !filters.propertyIds.includes(v.property?.id ?? "")
+      ) {
         return false;
       }
-      if (filters.pageId !== null && v.page?.id !== filters.pageId) {
+      if (
+        filters.pageIds.length > 0 &&
+        !filters.pageIds.includes(v.page?.id ?? "")
+      ) {
         return false;
       }
-      if (filters.ruleId !== null && v.ruleId !== filters.ruleId) {
+      if (
+        filters.ruleIds.length > 0 &&
+        !filters.ruleIds.includes(v.ruleId)
+      ) {
         return false;
       }
-      if (filters.assigneeId !== null) {
-        if (filters.assigneeId === "unassigned") {
-          if (v.assigneeId) return false;
-        } else {
-          if (v.assigneeId !== filters.assigneeId) return false;
-        }
+      if (filters.assigneeIds.length > 0) {
+        const matchesUnassigned =
+          filters.assigneeIds.includes("unassigned") && !v.assigneeId;
+        const matchesUser = filters.assigneeIds.some(
+          (id) => id !== "unassigned" && id === v.assigneeId,
+        );
+        if (!matchesUnassigned && !matchesUser) return false;
       }
       if (activeSearch !== "") {
         const q = activeSearch.toLowerCase();
         const matchesRule = v.rule?.help.toLowerCase().includes(q) ?? false;
         const matchesPage = v.page?.title.toLowerCase().includes(q) ?? false;
-        const matchesProperty = v.property?.name.toLowerCase().includes(q) ?? false;
+        const matchesProperty =
+          v.property?.name.toLowerCase().includes(q) ?? false;
         if (!matchesRule && !matchesPage && !matchesProperty) return false;
-      }
-      if (filters.quickFilter === "my-issues" && v.assigneeId !== currentUserId) {
-        return false;
-      }
-      if (
-        filters.quickFilter === "unfixed" &&
-        v.status !== "open" &&
-        v.status !== "in-progress"
-      ) {
-        return false;
-      }
-      if (filters.quickFilter === "needs-attention") {
-        const highSeverity = v.impact === "critical" || v.impact === "serious";
-        if (!highSeverity || v.status !== "open") return false;
       }
       return true;
     });
-  }, [violations, filters, activeSearch, currentUserId]);
+  }, [violations, filters, activeSearch]);
 
   return {
     filters,
     filteredViolations,
     hasActiveFilters,
     activeSearch,
+    // toggle setters (multi-select UI)
     toggleSeverity,
+    toggleStatus,
+    togglePropertyId,
+    togglePageId,
+    toggleRuleId,
+    toggleAssigneeId,
+    // single-value setters (programmatic use)
     setPropertyId,
     setPageId,
     setRuleId,
     setStatus,
     setAssigneeId,
     setSearch,
-    setQuickFilter,
-    setAll,
+    // dimension-level clears
+    clearSeverity,
+    clearStatus,
+    clearPropertyIds,
+    clearPageIds,
+    clearRuleIds,
+    clearAssigneeIds,
     reset,
   };
 };

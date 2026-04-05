@@ -76,15 +76,20 @@ const IssuesTable = ({
       statusOrder[rowA.original.status] - statusOrder[rowB.original.status];
     if (statusDiff !== 0) return statusDiff;
 
-    return (
+    const dateDiff =
       new Date(rowA.original.firstSeenAt).getTime() -
-      new Date(rowB.original.firstSeenAt).getTime()
-    );
+      new Date(rowB.original.firstSeenAt).getTime();
+    if (dateDiff !== 0) return dateDiff;
+
+    // Stable final tiebreaker — domain ID is unique so this always resolves equal rows.
+    return rowA.original.id.localeCompare(rowB.original.id);
   };
 
   // ── State ────────────────────────────────────────────────────────────────────
 
-  const [sorting, setSorting] = useState<SortingState>([{ id: "severity", desc: false }]);
+  // Default: status asc (open → in-progress → fixed → verified → accepted-risk),
+  // surfacing active work without implicit filter state.
+  const [sorting, setSorting] = useState<SortingState>([{ id: "status", desc: false }]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 25 });
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -114,6 +119,9 @@ const IssuesTable = ({
     data: violations,
     columns: issueColumns,
     meta: { rulePageCounts },
+    // Stable row identity from domain ID prevents index-based key drift and
+    // hydration mismatches when sort order changes between server and client.
+    getRowId: (row) => row.id,
     sortingFns: { remediationSort },
     state: { sorting, pagination, columnVisibility },
     onSortingChange: (updater) => {

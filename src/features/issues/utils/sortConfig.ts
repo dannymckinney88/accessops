@@ -85,6 +85,8 @@ export function sortAggregatedIssues(
         diff = severityOrder[a.severity] - severityOrder[b.severity];
         break;
     }
+    // Stable final tiebreaker — ruleId is the natural domain key for aggregated rows.
+    if (diff === 0) diff = a.ruleId.localeCompare(b.ruleId);
     return diff * dir;
   });
 }
@@ -96,7 +98,9 @@ export function sortPageGroups(
   sorting: SortingState,
 ): PageGroupData[] {
   const fallback = (a: PageGroupData, b: PageGroupData) =>
-    b.criticalCount - a.criticalCount || b.violations.length - a.violations.length;
+    b.criticalCount - a.criticalCount ||
+    b.violations.length - a.violations.length ||
+    a.pageId.localeCompare(b.pageId);
 
   if (sorting.length === 0) return [...groups].sort(fallback);
 
@@ -142,6 +146,8 @@ export function sortPageGroups(
       default:
         return fallback(a, b);
     }
+    // Stable final tiebreaker — pageId is the natural domain key for page groups.
+    if (diff === 0) diff = a.pageId.localeCompare(b.pageId);
     return diff * dir;
   });
 }
