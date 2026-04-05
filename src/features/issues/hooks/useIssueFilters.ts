@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import type { HydratedViolation } from "@/lib/data/index";
 import type { Severity, RemediationStatus } from "@/lib/data/types/domain";
 
@@ -32,17 +33,27 @@ const toggle = <T,>(arr: T[], item: T): T[] =>
 
 export const useIssueFilters = (
   violations: HydratedViolation[],
-  initialFilters?: Partial<
+  // kept for API compatibility; URL params are now the authoritative source of truth
+  _initialFilters?: Partial<
     Pick<
       IssueFilters,
       "propertyIds" | "pageIds" | "ruleIds" | "assigneeIds" | "search"
     >
   >,
 ) => {
-  const [filters, setFilters] = useState<IssueFilters>({
-    ...defaultIssueFilters,
-    ...initialFilters,
-  });
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const [filters, setFilters] = useState<IssueFilters>(() => ({
+    severity: searchParams.getAll("severity") as Severity[],
+    status: searchParams.getAll("status") as RemediationStatus[],
+    propertyIds: searchParams.getAll("property"),
+    pageIds: searchParams.getAll("page"),
+    ruleIds: searchParams.getAll("rule"),
+    assigneeIds: searchParams.getAll("assignee"),
+    search: searchParams.get("search") ?? "",
+  }));
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
   useEffect(() => {
@@ -51,6 +62,66 @@ export const useIssueFilters = (
   }, [filters.search]);
 
   const activeSearch = debouncedSearch.length >= 2 ? debouncedSearch : "";
+
+  // Stable join-keys so the sync effect only re-runs when array contents change.
+  const severityKey = filters.severity.join(",");
+  const statusKey = filters.status.join(",");
+  const propertyIdsKey = filters.propertyIds.join(",");
+  const pageIdsKey = filters.pageIds.join(",");
+  const ruleIdsKey = filters.ruleIds.join(",");
+  const assigneeIdsKey = filters.assigneeIds.join(",");
+
+  // Sync filter state → URL. All non-filter params (issueId, groupId, view) are
+  // preserved because we start from the full current search string.
+  // Default (empty) values are omitted so clean state produces a clean URL.
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+
+    params.delete("severity");
+    filters.severity.forEach((s) => params.append("severity", s));
+
+    params.delete("status");
+    filters.status.forEach((s) => params.append("status", s));
+
+    params.delete("property");
+    filters.propertyIds.forEach((id) => params.append("property", id));
+
+    params.delete("page");
+    filters.pageIds.forEach((id) => params.append("page", id));
+
+    params.delete("rule");
+    filters.ruleIds.forEach((id) => params.append("rule", id));
+
+    params.delete("assignee");
+    filters.assigneeIds.forEach((id) => params.append("assignee", id));
+
+    if (filters.search) params.set("search", filters.search);
+    else params.delete("search");
+
+    const newQs = params.toString();
+    if (newQs === searchParams.toString()) return;
+
+    router.replace(newQs ? `${pathname}?${newQs}` : pathname, {
+      scroll: false,
+    });
+  }, [
+    severityKey,
+    statusKey,
+    propertyIdsKey,
+    pageIdsKey,
+    ruleIdsKey,
+    assigneeIdsKey,
+    filters.severity,
+    filters.status,
+    filters.propertyIds,
+    filters.pageIds,
+    filters.ruleIds,
+    filters.assigneeIds,
+    filters.search,
+    pathname,
+    router,
+    searchParams,
+  ]);
 
   // Derive page→property ownership from violations so togglePropertyId can
   // remove only invalid page selections instead of clearing all pages blindly.

@@ -2,12 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { IssueFilters } from "./useIssueFilters";
 import type { IssueViewMode } from "../components/IssueFilterBar";
 
 interface UseIssueWorkspaceStateArgs {
-  /** Current filter state — used only for URL sync. */
-  filters: IssueFilters;
+  // filter sync is now owned by useIssueFilters; this arg is kept for call-site compatibility
+  filters?: unknown;
 }
 
 /**
@@ -18,9 +17,9 @@ interface UseIssueWorkspaceStateArgs {
  * - focus restoration after drawer close
  * - URL param synchronization for filter + view state
  */
-export const useIssueWorkspaceState = ({
-  filters,
-}: UseIssueWorkspaceStateArgs) => {
+export const useIssueWorkspaceState = (
+  _args: UseIssueWorkspaceStateArgs = {},
+) => {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -41,38 +40,12 @@ export const useIssueWorkspaceState = ({
     headingRef.current?.focus();
   }, []);
 
-  const { propertyIds, pageIds, ruleIds, assigneeIds, search } = filters;
-
-  const propertyIdsKey = propertyIds.join(",");
-  const pageIdsKey = pageIds.join(",");
-  const ruleIdsKey = ruleIds.join(",");
-  const assigneeIdsKey = assigneeIds.join(",");
-
-  // Sync shareable filter state → URL. Severity and status stay session-local;
-  // on reload the Issues screen remains unfiltered, with active work surfaced
-  // by the default table sort rather than persisted filter params.
+  // Sync viewMode → URL. Omit "flat" (default) to keep URLs clean.
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
 
-    // viewMode — omit "flat" (default) to keep URLs clean
     if (viewMode === "flat") params.delete("view");
     else params.set("view", viewMode);
-
-    // Multi-value array params: delete all then re-append
-    params.delete("propertyId");
-    propertyIds.forEach((id) => params.append("propertyId", id));
-
-    params.delete("pageId");
-    pageIds.forEach((id) => params.append("pageId", id));
-
-    params.delete("ruleId");
-    ruleIds.forEach((id) => params.append("ruleId", id));
-
-    params.delete("assigneeId");
-    assigneeIds.forEach((id) => params.append("assigneeId", id));
-
-    if (search) params.set("search", search);
-    else params.delete("search");
 
     const newQs = params.toString();
     if (newQs === searchParams.toString()) return;
@@ -80,21 +53,7 @@ export const useIssueWorkspaceState = ({
     router.replace(newQs ? `${pathname}?${newQs}` : pathname, {
       scroll: false,
     });
-  }, [
-    viewMode,
-    propertyIds,
-    pageIds,
-    ruleIds,
-    assigneeIds,
-    search,
-    propertyIdsKey,
-    pageIdsKey,
-    ruleIdsKey,
-    assigneeIdsKey,
-    pathname,
-    router,
-    searchParams,
-  ]);
+  }, [viewMode, pathname, router, searchParams]);
 
   const openViolationDrawer = (id: string) => {
     triggerRowIdRef.current = id;
