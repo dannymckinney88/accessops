@@ -8,6 +8,7 @@ import type {
 } from "@/lib/data/types/domain";
 import type { Property } from "@/lib/data/index";
 import type { FilterOption } from "./filters/FilterMultiSelect";
+import type { FilterOptionGroup } from "./filters/FilterMultiSelect";
 import { FilterMultiSelect } from "./filters/FilterMultiSelect";
 
 export type IssueViewMode = "flat" | "grouped-page" | "grouped-rule";
@@ -101,6 +102,17 @@ const IssueFilterBar = ({
     label: page.title,
   }));
 
+  const pageGroups = (() => {
+    const map = new Map<string, FilterOptionGroup>();
+    for (const page of visiblePages) {
+      if (!map.has(page.propertyId)) {
+        map.set(page.propertyId, { groupLabel: page.propertyName, options: [] });
+      }
+      map.get(page.propertyId)!.options.push({ id: page.id, label: page.title });
+    }
+    return Array.from(map.values());
+  })();
+
   const assigneeOptions: FilterOption[] = [
     { id: "unassigned", label: "Unassigned" },
     ...assignableUsers.map((user) => ({ id: user.id, label: user.name })),
@@ -161,6 +173,7 @@ const IssueFilterBar = ({
           onToggle={onTogglePageId}
           onClear={onClearPageIds}
           className="w-44"
+          groups={pageGroups}
         />
 
         <FilterMultiSelect

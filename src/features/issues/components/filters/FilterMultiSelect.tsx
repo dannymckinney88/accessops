@@ -7,6 +7,11 @@ export type FilterOption<T extends string = string> = {
   label: string;
 };
 
+export type FilterOptionGroup<T extends string = string> = {
+  groupLabel: string;
+  options: FilterOption<T>[];
+};
+
 interface FilterMultiSelectProps<T extends string = string> {
   id: string;
   label: string;
@@ -15,6 +20,7 @@ interface FilterMultiSelectProps<T extends string = string> {
   onToggle: (id: T) => void;
   onClear: () => void;
   className?: string;
+  groups?: FilterOptionGroup<T>[];
 }
 
 const focusableSelector = [
@@ -41,6 +47,7 @@ export const FilterMultiSelect = <T extends string>({
   onToggle,
   onClear,
   className,
+  groups,
 }: FilterMultiSelectProps<T>) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -270,25 +277,55 @@ export const FilterMultiSelect = <T extends string>({
             <legend className="sr-only">{`${label} options`}</legend>
 
             <div className="max-h-60 overflow-y-auto px-1 py-1">
-              {options.map((option, index) => {
-                const checked = selectedIds.includes(option.id);
-
-                return (
-                  <label
-                    key={option.id}
-                    className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-interactive-hover focus-within:bg-interactive-hover"
-                  >
-                    <input
-                      ref={index === 0 ? firstCheckboxRef : undefined}
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => onToggle(option.id)}
-                      className="size-3.5 shrink-0 rounded border-input"
-                    />
-                    <span className="min-w-0 flex-1">{option.label}</span>
-                  </label>
-                );
-              })}
+              {groups && groups.length > 0 ? (
+                groups.map((group, groupIndex) => (
+                  <div key={group.groupLabel}>
+                    {groups.length > 1 && (
+                      <p className="px-2 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground first:pt-1">
+                        {group.groupLabel}
+                      </p>
+                    )}
+                    {group.options.map((option, optionIndex) => {
+                      const isFirst = groupIndex === 0 && optionIndex === 0;
+                      const checked = selectedIds.includes(option.id);
+                      return (
+                        <label
+                          key={option.id}
+                          className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-interactive-hover focus-within:bg-interactive-hover"
+                        >
+                          <input
+                            ref={isFirst ? firstCheckboxRef : undefined}
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => onToggle(option.id)}
+                            className="size-3.5 shrink-0 rounded border-input"
+                          />
+                          <span className="min-w-0 flex-1">{option.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                ))
+              ) : (
+                options.map((option, index) => {
+                  const checked = selectedIds.includes(option.id);
+                  return (
+                    <label
+                      key={option.id}
+                      className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-interactive-hover focus-within:bg-interactive-hover"
+                    >
+                      <input
+                        ref={index === 0 ? firstCheckboxRef : undefined}
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => onToggle(option.id)}
+                        className="size-3.5 shrink-0 rounded border-input"
+                      />
+                      <span className="min-w-0 flex-1">{option.label}</span>
+                    </label>
+                  );
+                })
+              )}
             </div>
           </fieldset>
 
