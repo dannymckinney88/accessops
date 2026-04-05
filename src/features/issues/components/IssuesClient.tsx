@@ -1,23 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import type { HydratedViolation, Property } from "@/lib/data/index";
-import type { RemediationStatus, User } from "@/lib/data/types/domain";
+import { useMemo } from "react";
+import type { Property } from "@/lib/data/index";
+import type { HydratedViolation } from "@/lib/data/index";
+import type { User } from "@/lib/data/types/domain";
 import { useIssueFilters } from "../hooks/useIssueFilters";
-import { aggregateIssues } from "../utils/aggregateIssues";
-import {
-  applyOverrides,
-  persistOverride,
-  persistOverrides,
-} from "../utils/issueOverrides";
-import IssueFilterBar, {
-  type AvailablePage,
-  type AvailableRule,
-  type IssueViewMode,
-} from "./IssueFilterBar";
+import { useIssueMutations } from "../hooks/useIssueMutations";
+import { useIssueDerivedData } from "../hooks/useIssueDerivedData";
+import { useIssueWorkspaceState } from "../hooks/useIssueWorkspaceState";
+import IssueFilterBar from "./IssueFilterBar";
 import IssueDrawer from "./IssueDrawer";
 import IssuesTable from "./IssuesTable";
+import { useSearchParams } from "next/navigation";
 
 interface IssuesClientProps {
   violations: HydratedViolation[];
@@ -32,173 +26,23 @@ const IssuesClient = ({
   currentUser: _currentUser,
   users,
 }: IssuesClientProps) => {
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
-
-  // Initialize from server props only — no localStorage access here so the first
-  // client render matches the server render exactly.  Overrides are applied after
-  // mount in the effect below, where localStorage is guaranteed to be available.
-  const [violations, setViolations] = useState<HydratedViolation[]>(initialViolations);
 
   const assignableUsers = useMemo(
     () => users.filter((u) => u.isActive),
     [users],
   );
 
-  const activeViolationId = searchParams.get("issueId") ?? null;
-  const activeGroupId = searchParams.get("groupId") ?? null;
-  const [viewMode, setViewMode] = useState<IssueViewMode>(() => {
-    const v = searchParams.get("view");
-    return v === "grouped-page" || v === "grouped-rule" ? v : "flat";
-  });
+  // --- Mutations: violation state + all write operations ---
+  const {
+    violations,
+    handleAssign,
+    handleBulkAssign,
+    handleBulkStatus,
+    handleUpdateViolation,
+  } = useIssueMutations(initialViolations, users);
 
-  const headingRef = useRef<HTMLHeadingElement>(null);
-  const triggerRowIdRef = useRef<string | null>(null);
-
-  // Apply any localStorage overrides once, after mount.  applyOverrides returns
-  // the same reference when the override map is empty, so React bails out with
-  // no re-render in the common case of a fresh session.
-  useEffect(() => {
-    setViolations(applyOverrides(initialViolations, users));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    headingRef.current?.focus();
-  }, []);
-
-  const openViolationDrawer = (id: string) => {
-    triggerRowIdRef.current = id;
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("issueId", id);
-    params.delete("groupId");
-    router.push(`${pathname}?${params.toString()}`);
-  };
-
-  const openGroupedIssueDrawer = (id: string) => {
-    triggerRowIdRef.current = id;
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("groupId", id);
-    params.delete("issueId");
-    router.push(`${pathname}?${params.toString()}`);
-  };
-
-  const closeDrawer = () => {
-    const params = new URLSearchParams(searchParams.toString());
-    params.delete("issueId");
-    params.delete("groupId");
-    const qs = params.toString();
-    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
-  };
-
-  const focusTriggerRow = () => {
-    const id = triggerRowIdRef.current;
-
-    if (id) {
-      const trigger = document.querySelector<HTMLElement>(
-        `[data-issue-id="${id}"] button`,
-      );
-
-      if (trigger) {
-        requestAnimationFrame(() => {
-          trigger.focus();
-          triggerRowIdRef.current = null;
-        });
-        return true;
-      }
-    }
-
-    const firstTrigger = document.querySelector<HTMLElement>(
-      "[data-issues-table] [data-issue-id] button",
-    );
-
-    if (firstTrigger) {
-      requestAnimationFrame(() => {
-        firstTrigger.focus();
-        triggerRowIdRef.current = null;
-      });
-      return true;
-    }
-
-    if (headingRef.current) {
-      requestAnimationFrame(() => {
-        headingRef.current?.focus();
-        triggerRowIdRef.current = null;
-      });
-      return true;
-    }
-
-    triggerRowIdRef.current = null;
-    return false;
-  };
-
-  const handleAssign = (id: string, assigneeId: string | null) => {
-    persistOverride(id, { assigneeId });
-    setViolations((prev) =>
-      prev.map((v) => {
-        if (v.id !== id) return v;
-        const assignee = assigneeId
-          ? (users.find((u) => u.id === assigneeId) ?? undefined)
-          : undefined;
-        return { ...v, assigneeId: assigneeId ?? undefined, assignee };
-      }),
-    );
-  };
-
-  const handleBulkAssign = (ids: string[], assigneeId: string | null) => {
-    persistOverrides(ids, { assigneeId });
-    const idSet = new Set(ids);
-    setViolations((prev) =>
-      prev.map((v) => {
-        if (!idSet.has(v.id)) return v;
-        const assignee = assigneeId
-          ? (users.find((u) => u.id === assigneeId) ?? undefined)
-          : undefined;
-        return { ...v, assigneeId: assigneeId ?? undefined, assignee };
-      }),
-    );
-  };
-
-  const handleBulkStatus = (ids: string[], status: RemediationStatus) => {
-    const idSet = new Set(ids);
-    // Only persist for violations that aren't already verified — matches the guard below
-    const eligibleIds = violations
-      .filter((v) => idSet.has(v.id) && v.status !== "verified")
-      .map((v) => v.id);
-    persistOverrides(eligibleIds, { status });
-    setViolations((prev) =>
-      prev.map((v) => {
-        if (!idSet.has(v.id)) return v;
-        if (v.status === "verified") return v;
-        return { ...v, status };
-      }),
-    );
-  };
-
-  const handleUpdateViolation = (
-    id: string,
-    patch: { assigneeId?: string | null; status?: RemediationStatus },
-  ) => {
-    persistOverride(id, patch);
-    setViolations((prev) =>
-      prev.map((v) => {
-        if (v.id !== id) return v;
-        const updated = { ...v };
-        if ("assigneeId" in patch) {
-          updated.assigneeId = patch.assigneeId ?? undefined;
-          updated.assignee = patch.assigneeId
-            ? (users.find((u) => u.id === patch.assigneeId) ?? undefined)
-            : undefined;
-        }
-        if (patch.status !== undefined) {
-          updated.status = patch.status;
-        }
-        return updated;
-      }),
-    );
-  };
-
+  // --- Filters: multi-select filter state + filtered result set ---
   const {
     filters,
     filteredViolations,
@@ -227,130 +71,37 @@ const IssuesClient = ({
     search: searchParams.get("search") ?? "",
   });
 
-  // Sync filter state → URL. severity and status are intentionally not URL-synced
-  // (they reset to the unfixed default on every page load).
-  useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
+  // --- Workspace state: URL params, view mode, drawer helpers, focus ---
+  const {
+    activeViolationId,
+    activeGroupId,
+    viewMode,
+    setViewMode,
+    headingRef,
+    openViolationDrawer,
+    openGroupedIssueDrawer,
+    closeDrawer,
+    focusTriggerRow,
+  } = useIssueWorkspaceState({ filters });
 
-    // viewMode — omit "flat" (default) to keep URLs clean
-    if (viewMode === "flat") params.delete("view");
-    else params.set("view", viewMode);
-
-    // Multi-value array params: delete all then re-append
-    params.delete("propertyId");
-    filters.propertyIds.forEach((id) => params.append("propertyId", id));
-    params.delete("pageId");
-    filters.pageIds.forEach((id) => params.append("pageId", id));
-    params.delete("ruleId");
-    filters.ruleIds.forEach((id) => params.append("ruleId", id));
-    params.delete("assigneeId");
-    filters.assigneeIds.forEach((id) => params.append("assigneeId", id));
-
-    if (filters.search) params.set("search", filters.search);
-    else params.delete("search");
-
-    const newQs = params.toString();
-    if (newQs === searchParams.toString()) return;
-
-    router.replace(newQs ? `${pathname}?${newQs}` : pathname, { scroll: false });
-  }, [viewMode, filters.propertyIds.join(","), filters.pageIds.join(","), filters.ruleIds.join(","), filters.assigneeIds.join(","), filters.search]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const groupedIssues = useMemo(
-    () => aggregateIssues(filteredViolations),
-    [filteredViolations],
-  );
-
-  const activeViolation =
-    activeViolationId !== null
-      ? (violations.find((v) => v.id === activeViolationId) ?? null)
-      : null;
-
-  const activeGroupedIssue =
-    activeGroupId !== null
-      ? (groupedIssues.find((issue) => issue.id === activeGroupId) ?? null)
-      : null;
-
-  const unfixedViolations = violations.filter(
-    (v) => v.status === "open" || v.status === "in-progress",
-  );
-  const criticalUnfixedCount = unfixedViolations.filter(
-    (v) => v.impact === "critical",
-  ).length;
-  const propertyCount = new Set(
-    unfixedViolations.map((v) => v.property?.id).filter(Boolean),
-  ).size;
-  const subtitle =
-    criticalUnfixedCount > 0
-      ? `${unfixedViolations.length} unfixed issues · ${criticalUnfixedCount} critical · ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`
-      : `${unfixedViolations.length} unfixed issues · ${propertyCount} ${propertyCount === 1 ? "property" : "properties"}`;
-
-  const availableRules = useMemo<AvailableRule[]>(() => {
-    const seen = new Map<string, string>();
-
-    for (const violation of violations) {
-      if (!seen.has(violation.ruleId)) {
-        seen.set(violation.ruleId, violation.rule?.help ?? violation.ruleId);
-      }
-    }
-
-    return Array.from(seen.entries())
-      .map(([id, label]) => ({ id, label }))
-      .sort((a, b) => a.label.localeCompare(b.label));
-  }, [violations]);
-
-  const availablePages = useMemo<AvailablePage[]>(() => {
-    const seen = new Set<string>();
-    const result: AvailablePage[] = [];
-
-    for (const violation of violations) {
-      if (
-        violation.page &&
-        violation.property &&
-        !seen.has(violation.page.id)
-      ) {
-        seen.add(violation.page.id);
-        result.push({
-          id: violation.page.id,
-          title: violation.page.title,
-          propertyId: violation.property.id,
-          propertyName: violation.property.name,
-        });
-      }
-    }
-
-    return result;
-  }, [violations]);
-
-  const rulePageCounts = useMemo(() => {
-    const rulePagesMap = new Map<string, Set<string>>();
-
-    for (const violation of violations) {
-      if (!violation.page) continue;
-      if (!rulePagesMap.has(violation.ruleId)) {
-        rulePagesMap.set(violation.ruleId, new Set());
-      }
-      rulePagesMap.get(violation.ruleId)!.add(violation.page.id);
-    }
-
-    const counts = new Map<string, number>();
-    for (const [ruleId, pages] of rulePagesMap) {
-      counts.set(ruleId, pages.size);
-    }
-
-    return counts;
-  }, [violations]);
-
-  const isEmpty =
-    viewMode === "grouped-rule"
-      ? groupedIssues.length === 0
-      : filteredViolations.length === 0;
-
-  const summaryText =
-    viewMode === "grouped-rule"
-      ? `Showing ${groupedIssues.length} grouped issues from ${filteredViolations.length} issue instances`
-      : viewMode === "grouped-page"
-        ? `Showing ${filteredViolations.length} issues grouped by page`
-        : `Showing ${filteredViolations.length} of ${violations.length} issues`;
+  // --- Derived data: grouped issues, active records, labels, filter options ---
+  const {
+    groupedIssues,
+    activeViolation,
+    activeGroupedIssue,
+    subtitle,
+    availableRules,
+    availablePages,
+    rulePageCounts,
+    isEmpty,
+    summaryText,
+  } = useIssueDerivedData({
+    violations,
+    filteredViolations,
+    viewMode,
+    activeViolationId,
+    activeGroupId,
+  });
 
   const baseClass =
     "h-8 px-3 text-xs font-medium outline-none transition-colors focus-visible:ring-2 focus-visible:ring-interactive-focus-ring focus-visible:ring-inset";
