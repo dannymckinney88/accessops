@@ -33,10 +33,11 @@ export const issueColumns = [
         info.table.options.meta?.rulePageCounts?.get(ruleId) ?? 1;
       return (
         <div>
-          <p className="font-medium text-foreground leading-snug">
+          {/* span[block] not p — this div is rendered inside a <button> in FlatViolationRow */}
+          <span className="block font-medium leading-snug text-foreground">
             {info.getValue()}
-          </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          </span>
+          <span className="block mt-0.5 text-xs text-muted-foreground">
             {info.row.original.ruleId}
             {pageCount > 1 && (
               <span
@@ -46,7 +47,7 @@ export const issueColumns = [
                 · {pageCount} pages
               </span>
             )}
-          </p>
+          </span>
         </div>
       );
     },
@@ -73,7 +74,10 @@ export const issueColumns = [
   col.accessor("status", {
     header: "Status",
     cell: (info) => <StatusBadge status={info.getValue()} />,
-    sortingFn: (a, b) => statusOrder[a.original.status] - statusOrder[b.original.status],
+    sortingFn: (a, b) => {
+      const diff = statusOrder[a.original.status] - statusOrder[b.original.status];
+      return diff !== 0 ? diff : a.original.id.localeCompare(b.original.id);
+    },
   }),
 
   col.accessor((row) => row.assignee?.name ?? "—", {
@@ -84,8 +88,10 @@ export const issueColumns = [
   col.accessor("priority", {
     header: "Priority",
     cell: (info) => <PriorityBadge priority={info.getValue()} />,
-    sortingFn: (a, b) =>
-      priorityOrder[a.original.priority] - priorityOrder[b.original.priority],
+    sortingFn: (a, b) => {
+      const diff = priorityOrder[a.original.priority] - priorityOrder[b.original.priority];
+      return diff !== 0 ? diff : a.original.id.localeCompare(b.original.id);
+    },
   }),
 
   col.accessor("firstSeenAt", {

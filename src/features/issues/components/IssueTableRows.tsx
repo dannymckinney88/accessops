@@ -100,13 +100,14 @@ export function PageGroupHeader({
             className={`shrink-0 text-muted-foreground ${collapsed ? "-rotate-90" : ""}`}
           />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-bold leading-snug text-foreground">
+            {/* span[block] not p — these are inside a <button> */}
+            <span className="block text-sm font-bold leading-snug text-foreground">
               {pageTitle}
-            </p>
+            </span>
             {pagePath && (
-              <p className="mt-0.5 text-xs font-normal text-muted-foreground">
+              <span className="block mt-0.5 text-xs font-normal text-muted-foreground">
                 {pagePath}
-              </p>
+              </span>
             )}
           </div>
           <div className="flex shrink-0 items-center gap-4 text-xs">
@@ -188,17 +189,18 @@ export function GroupedPageRow({
           aria-controls="issue-details-drawer"
           className={triggerButtonClass}
         >
-          <p className="font-medium leading-snug text-foreground underline-offset-4 hover:underline">
+          {/* span[block] not p — <p> inside <button> is invalid HTML */}
+          <span className="block font-medium leading-snug text-foreground underline-offset-4 hover:underline">
             {violation.rule?.help ?? violation.ruleId}
-          </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          </span>
+          <span className="block mt-0.5 text-xs text-muted-foreground">
             {violation.ruleId}
             {pageCount > 1 && (
               <span className="ml-2 text-muted-foreground">
                 · {pageCount} pages
               </span>
             )}
-          </p>
+          </span>
           <span className="sr-only">, open details</span>
         </button>
       </td>
@@ -268,10 +270,11 @@ export function GroupedRuleRow({
           aria-controls="issue-details-drawer"
           className={triggerButtonClass}
         >
-          <p className="font-medium leading-snug text-foreground underline-offset-4 hover:underline">
+          {/* span[block] not p — <p> inside <button> is invalid HTML */}
+          <span className="block font-medium leading-snug text-foreground underline-offset-4 hover:underline">
             {issue.rule?.help ?? issue.ruleId}
-          </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
+          </span>
+          <span className="block mt-0.5 text-xs text-muted-foreground">
             {issue.ruleId}
             <span className="ml-2 text-muted-foreground">
               · affects {issue.affectedPagesCount}{" "}
@@ -286,7 +289,7 @@ export function GroupedRuleRow({
                 ? (issue.affectedProperties[0]?.name ?? "—")
                 : `${issue.affectedPropertiesCount} properties`}
             </span>
-          </p>
+          </span>
           <span className="sr-only">, open details</span>
         </button>
       </td>
