@@ -19,11 +19,11 @@ import {
   SORTABLE_COLUMNS,
   GROUPED_RULE_VISIBLE,
   sortAggregatedIssues,
-  sortPageGroups,
-  type PageGroupData,
   severityOrder,
   statusOrder,
 } from "../utils/sortConfig";
+import { useIssueSelection } from "../hooks/useIssueSelection";
+import { useGroupedPageData } from "../hooks/useGroupedPageData";
 import { IssueTableHeader } from "./IssueTableHeader";
 import { IssueTablePagination, PAGE_SIZE_OPTIONS } from "./IssueTablePagination";
 import { GroupedPageBody, GroupedRuleBody, FlatBody } from "./IssueTableRows";
@@ -85,19 +85,13 @@ const IssuesTable = ({
     return rowA.original.id.localeCompare(rowB.original.id);
   };
 
-  // ── State ────────────────────────────────────────────────────────────────────
+  // ── Table state ──────────────────────────────────────────────────────────────
 
   // Default: status asc (open → in-progress → fixed → verified → accepted-risk),
   // surfacing active work without implicit filter state.
   const [sorting, setSorting] = useState<SortingState>([{ id: "status", desc: false }]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 25 });
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-  // Clear selection on any meaningful boundary change
-  useEffect(() => {
-    setSelectedIds(new Set());
-  }, [violations, sorting, pagination.pageIndex, pagination.pageSize, viewMode]);
 
   // Reset collapsed groups when filters change or view mode switches.
   // Sorting intentionally does not reset collapse — users expect groups to stay
@@ -135,7 +129,7 @@ const IssuesTable = ({
     autoResetPageIndex: true,
   });
 
-  // ── Derived data ─────────────────────────────────────────────────────────────
+  // ── Derived table data ───────────────────────────────────────────────────────
 
   const sortedViolations = useMemo(
     () => table.getSortedRowModel().rows.map((row) => row.original),
@@ -143,29 +137,7 @@ const IssuesTable = ({
     [table, sorting, violations],
   );
 
-  const pageGroups = useMemo(() => {
-    if (viewMode !== "grouped-page") return [];
-
-    const map = new Map<string, PageGroupData>();
-    for (const violation of sortedViolations) {
-      const key = violation.page?.id ?? "__none__";
-      if (!map.has(key)) {
-        map.set(key, {
-          pageId: key,
-          pageTitle: violation.page?.title ?? "No page",
-          pagePath: violation.page?.path ?? "",
-          propertyName: violation.property?.name ?? "",
-          criticalCount: 0,
-          violations: [],
-        });
-      }
-      const group = map.get(key)!;
-      group.violations.push(violation);
-      if (violation.impact === "critical") group.criticalCount += 1;
-    }
-
-    return sortPageGroups(Array.from(map.values()), sorting);
-  }, [sortedViolations, viewMode, sorting]);
+  const currentPageRows = table.getRowModel().rows;
 
   const sortedGroupedIssues = useMemo(() => {
     if (viewMode !== "grouped-rule") return [];
@@ -179,40 +151,31 @@ const IssuesTable = ({
     return true;
   });
 
-  // ── Selection handlers ───────────────────────────────────────────────────────
+  // ── Selection ────────────────────────────────────────────────────────────────
 
-  const currentPageRows = table.getRowModel().rows;
   const currentPageIds = currentPageRows.map((r) => r.original.id);
-  const allPageSelected =
-    currentPageIds.length > 0 && currentPageIds.every((id) => selectedIds.has(id));
-  const somePageSelected = currentPageIds.some((id) => selectedIds.has(id));
 
-  const handleSelectAll = (checked: boolean) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (checked) currentPageIds.forEach((id) => next.add(id));
-      else currentPageIds.forEach((id) => next.delete(id));
-      return next;
-    });
-  };
+  const {
+    selectedIds,
+    allPageSelected,
+    somePageSelected,
+    handleSelectAll,
+    handleToggleSelect,
+    handleGroupSelect,
+    clearSelection,
+  } = useIssueSelection({
+    currentPageIds,
+    violations,
+    sorting,
+    pagination,
+    viewMode,
+  });
 
-  const handleToggleSelect = (id: string, checked: boolean) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (checked) next.add(id);
-      else next.delete(id);
-      return next;
-    });
-  };
+  // ── Grouped-page data ────────────────────────────────────────────────────────
 
-  const handleGroupSelect = (groupIds: string[], checked: boolean) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (checked) groupIds.forEach((id) => next.add(id));
-      else groupIds.forEach((id) => next.delete(id));
-      return next;
-    });
-  };
+  const pageGroups = useGroupedPageData({ sortedViolations, viewMode, sorting });
+
+  // ── Collapse toggle ──────────────────────────────────────────────────────────
 
   const handleToggleGroup = (groupId: string) => {
     setCollapsedGroups((prev) => {
@@ -245,7 +208,7 @@ const IssuesTable = ({
           assignableUsers={assignableUsers}
           onBulkAssign={onBulkAssign}
           onBulkStatus={onBulkStatus}
-          onClearSelection={() => setSelectedIds(new Set())}
+          onClearSelection={clearSelection}
         />
       )}
 
