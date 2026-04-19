@@ -14,6 +14,8 @@ interface IssueTableHeaderProps {
   sortableColumns: ReadonlySet<string>;
   selectionProps?: SelectionHeaderProps;
   showCheckboxColumn?: boolean;
+  /** Renders a narrow trailing column header for the row open-detail chevron. */
+  showActionColumn?: boolean;
 }
 
 /** Resolve a column header def to plain text. Used to label the <th> directly
@@ -36,6 +38,7 @@ export function IssueTableHeader({
   sortableColumns,
   selectionProps,
   showCheckboxColumn,
+  showActionColumn,
 }: IssueTableHeaderProps) {
   return (
     <thead>
@@ -114,6 +117,10 @@ export function IssueTableHeader({
             </th>
           );
         })}
+        {showActionColumn && (
+          // Decorative trailing column — hidden from AT; interaction is announced via the button's sr-only text
+          <th scope="col" aria-hidden="true" className="w-8 px-2 py-2.5" />
+        )}
       </tr>
     </thead>
   );

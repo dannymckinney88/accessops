@@ -87,9 +87,9 @@ const IssuesTable = ({
 
   // ── Table state ──────────────────────────────────────────────────────────────
 
-  // Default: status asc (open → in-progress → fixed → verified → accepted-risk),
-  // surfacing active work without implicit filter state.
-  const [sorting, setSorting] = useState<SortingState>([{ id: "status", desc: false }]);
+  // Default: priority asc (urgent → high → medium → low), matching the active-work
+  // filter defaults so the highest-priority items land at the top on first load.
+  const [sorting, setSorting] = useState<SortingState>([{ id: "priority", desc: false }]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 25 });
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
@@ -221,6 +221,7 @@ const IssuesTable = ({
               headers={visibleHeaders}
               sortableColumns={SORTABLE_COLUMNS[viewMode]}
               showCheckboxColumn={viewMode === "grouped-page"}
+              showActionColumn={viewMode === "grouped-page"}
               selectionProps={
                 viewMode === "flat"
                   ? {
@@ -238,7 +239,7 @@ const IssuesTable = ({
                 pageGroups={pageGroups}
                 collapsedGroups={collapsedGroups}
                 selectedIds={selectedIds}
-                visibleHeaderCount={visibleHeaders.length}
+                visibleHeaderCount={visibleHeaders.length + 1}
                 activeViolationId={activeViolationId}
                 assignableUsers={assignableUsers}
                 rulePageCounts={rulePageCounts}

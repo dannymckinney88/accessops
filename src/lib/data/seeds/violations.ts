@@ -1322,6 +1322,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 2,
     impact: "serious",
     status: "verified",
+    group: "2",
   },
 
   // ── Personal Banking (4 = 1 remaining + 3 verified) ──────────────────────
@@ -1340,6 +1341,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 2,
     impact: "serious",
     status: "verified",
+    group: "2",
   },
   {
     scanPageId: "sp-mkt-r-personal",
@@ -1366,6 +1368,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 2,
     impact: "serious",
     status: "verified",
+    group: "2",
   },
   {
     scanPageId: "sp-mkt-r-business",
@@ -1392,6 +1395,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 1,
     impact: "serious",
     status: "verified",
+    group: "2",
   },
   {
     scanPageId: "sp-mkt-r-loans",
@@ -1418,6 +1422,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 1,
     impact: "serious",
     status: "verified",
+    group: "2",
   },
 
   // ── About Us (4 = 1 remaining + 1 fixed + 2 verified) ────────────────────
@@ -1444,6 +1449,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 1,
     impact: "serious",
     status: "verified",
+    group: "2",
   },
   {
     scanPageId: "sp-mkt-r-about",
@@ -2085,6 +2091,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 3,
     impact: "critical",
     status: "in-progress",
+    assigneeId: "u-priya",
   },
   {
     scanPageId: "sp-dash-b-overview",
@@ -2151,6 +2158,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 2,
     impact: "serious",
     status: "in-progress",
+    assigneeId: "u-priya",
   },
 
   // ── Transaction History (25) ──────────────────────────────────────────────
@@ -2177,6 +2185,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 5,
     impact: "critical",
     status: "in-progress",
+    assigneeId: "u-priya",
   },
   {
     scanPageId: "sp-dash-b-txn",
@@ -2227,6 +2236,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 4,
     impact: "critical",
     status: "in-progress",
+    assigneeId: "u-priya",
   },
   {
     scanPageId: "sp-dash-b-transfer",
@@ -2269,6 +2279,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 3,
     impact: "critical",
     status: "in-progress",
+    assigneeId: "u-marcus",
   },
   {
     scanPageId: "sp-dash-b-payments",
@@ -2319,6 +2330,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 3,
     impact: "critical",
     status: "in-progress",
+    assigneeId: "u-marcus",
   },
   {
     scanPageId: "sp-dash-b-profile",
@@ -2495,6 +2507,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 3,
     impact: "serious",
     status: "in-progress",
+    assigneeId: "u-marcus",
   },
   {
     scanPageId: "sp-dash-r-txn",
@@ -2626,6 +2639,7 @@ const violationRegistry: ViolationSeed[] = [
     count: 2,
     impact: "critical",
     status: "in-progress",
+    assigneeId: "u-marcus",
   },
   {
     scanPageId: "sp-dash-r-payments",
