@@ -25,9 +25,6 @@ export default function Topbar() {
       </div>
 
       <div className="flex items-center gap-3">
-        <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs text-muted-foreground">
-          Last scan: 2 hours ago · Completed
-        </span>
         <ThemeToggle />
       </div>
 

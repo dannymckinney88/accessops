@@ -125,6 +125,9 @@ const IssuesClient = ({
           Issues
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+        <p className="mt-2 text-xs text-muted-foreground/70">
+          Review active page groups by priority, then open any issue row for remediation details.
+        </p>
       </div>
 
       {/* Contained filter panel */}

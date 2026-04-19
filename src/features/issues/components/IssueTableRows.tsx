@@ -1,5 +1,5 @@
 import { flexRender, type Row } from "@tanstack/react-table";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import type { HydratedViolation } from "@/lib/data/index";
 import type { User } from "@/lib/data/types/domain";
 import SeverityBadge from "@/components/common/SeverityBadge";
@@ -11,7 +11,7 @@ import type { PageGroupData } from "../utils/sortConfig";
 // ── Shared row styles ──────────────────────────────────────────────────────────
 
 export const rowBaseClass =
-  "border-b last:border-0 cursor-pointer transition-colors hover:bg-muted/50";
+  "border-b last:border-0 cursor-pointer transition-colors hover:bg-muted/70";
 
 export const rowActiveClass = "border-l-2 border-l-primary bg-accent/40";
 
@@ -71,7 +71,7 @@ export function PageGroupHeader({
   selectionProps,
 }: PageGroupHeaderProps) {
   return (
-    <tr className="bg-muted/50">
+    <tr className="bg-muted">
       {selectionProps && (
         <td className="w-10 px-3 py-2.5 align-middle" onClick={(e) => e.stopPropagation()}>
           <input
@@ -162,6 +162,7 @@ export function GroupedPageRow({
       onClick={() => onRowClick(violation.id)}
       className={[
         rowBaseClass,
+        "group",
         isActive ? rowActiveClass : "",
         isSelected && !isActive ? rowSelectedClass : "",
       ]
@@ -190,7 +191,7 @@ export function GroupedPageRow({
           className={triggerButtonClass}
         >
           {/* span[block] not p — <p> inside <button> is invalid HTML */}
-          <span className="block font-medium leading-snug text-foreground underline-offset-4 hover:underline">
+          <span className="block font-medium leading-snug text-foreground underline-offset-4 group-hover:underline">
             {violation.rule?.help ?? violation.ruleId}
           </span>
           <span className="block mt-0.5 text-xs text-muted-foreground">
@@ -233,6 +234,14 @@ export function GroupedPageRow({
       </td>
       <td className="whitespace-nowrap px-3 py-2.5 align-top text-sm text-foreground">
         {formatDate(violation.firstSeenAt)}
+      </td>
+      {/* Trailing action indicator — aria-hidden; interaction is announced via the button's sr-only text */}
+      <td aria-hidden="true" className="w-8 pr-3 py-2.5 align-top text-right">
+        <ChevronRight
+          size={14}
+          aria-hidden="true"
+          className="inline-block text-muted-foreground/35 transition-colors group-hover:text-muted-foreground/75 group-focus-within:text-muted-foreground/60"
+        />
       </td>
     </tr>
   );
